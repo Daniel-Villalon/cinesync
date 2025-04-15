@@ -1,4 +1,6 @@
-import React from 'react';
+import { FIREBASE_AUTH } from '@/FirebaseConfig';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,11 +8,28 @@ import {
   TextInput,
   TouchableOpacity,
   Dimensions,
+  KeyboardAvoidingView,
 } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
 export default function SignInScreen({ navigation }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const auth = FIREBASE_AUTH;
+  const signUp = async () => {
+    setLoading(true);
+    try {
+      const response = await createUserWithEmailAndPassword(auth, email, password);
+      alert("w sign up")
+    } catch (error: any) {
+      console.log(error);
+      alert('Sign up failed: ' + error.message)
+    } finally {
+      setLoading(false);
+    }
+  }
   return (
     <View style={styles.container}>
       {/* Floating Circles */}
@@ -28,24 +47,29 @@ export default function SignInScreen({ navigation }) {
       {/* Email Field */}
       <Text style={styles.labelEmail}>Email Address*</Text>
       <TextInput
+        value={email}
         placeholder="Email"
         placeholderTextColor="#F7D491"
         style={styles.inputEmail}
         keyboardType="email-address"
         autoCapitalize="none"
+        onChangeText={(text) => setEmail(text)}
       />
 
       {/* Password Field */}
       <TextInput
+        value={password}
         placeholder="Password*"
         placeholderTextColor="#8BBCA6"
         style={styles.inputPassword}
-        secureTextEntry
+        secureTextEntry={true}
+        autoCapitalize="none"
+        onChangeText={(text) => setPassword(text)}
       />
 
       {/* Sign In Button */}
-      <TouchableOpacity style={styles.signInButton}>
-        <Text style={styles.signInText}>Sign In</Text>
+      <TouchableOpacity onPress={signUp} style={styles.signInButton}>
+        <Text style={styles.signInText}>Sign Up</Text>
       </TouchableOpacity>
     </View>
   );
@@ -156,3 +180,7 @@ const styles = StyleSheet.create({
     left: 20,
   },
 });
+function setLoading(arg0: boolean) {
+  throw new Error('Function not implemented.');
+}
+

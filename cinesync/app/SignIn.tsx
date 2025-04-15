@@ -1,4 +1,7 @@
+import { FIREBASE_AUTH } from '@/FirebaseConfig';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from '@firebase/auth';
 import React from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -6,11 +9,39 @@ import {
   TextInput,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
+  Button,
 } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
+
+
 export default function SignInScreen({ navigation }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const auth = FIREBASE_AUTH;
+
+  const signIn = async () => {
+    try {
+      const response = await signInWithEmailAndPassword(auth, email, password);
+      console.log(response);
+      alert('W sign in')
+    } catch (error: any) {
+      console.log(error);
+      alert('Sign in failed: ' + error.message)
+    } finally {
+      setLoading(false);
+    }
+  }
+  // implement
+  function register() {
+    console.log("a")
+   }
+  
+
+
   return (
     <View style={styles.container}>
       {/* Floating Circles */}
@@ -28,24 +59,40 @@ export default function SignInScreen({ navigation }) {
       {/* Email Field */}
       <Text style={styles.labelEmail}>Email Address*</Text>
       <TextInput
+        value={email}
         placeholder="Email"
         placeholderTextColor="#F7D491"
         style={styles.inputEmail}
         keyboardType="email-address"
         autoCapitalize="none"
+        onChangeText={(text) => setEmail(text)}
       />
 
       {/* Password Field */}
       <TextInput
+        value={password}
         placeholder="Password*"
         placeholderTextColor="#8BBCA6"
         style={styles.inputPassword}
-        secureTextEntry
+        secureTextEntry={true}
+        autoCapitalize="none"
+        onChangeText={(text) => setPassword(text)}
       />
+      { loading ? (
+        <ActivityIndicator size="large" color="0000ff" />
+      ) :  (
+        <>
 
       {/* Sign In Button */}
-      <TouchableOpacity style={styles.signInButton}>
-        <Text style={styles.signInText}>Sign In</Text>
+      <TouchableOpacity onPress={signIn} style={styles.signInButton}>
+        <Text style={styles.signInText} >Sign In</Text>
+      </TouchableOpacity>
+      </>
+      )}
+      {/* if someone wants to register from the sign in page, they can press the register button
+      !!! Need to implement register function to route user */}
+      <TouchableOpacity onPress={register} style={styles.registerButton}>
+        <Text style={styles.signInText} >Register</Text>
       </TouchableOpacity>
     </View>
   );
@@ -105,6 +152,13 @@ const styles = StyleSheet.create({
     color: '#2B2C5A',
     fontSize: 18,
     fontWeight: '700',
+  },
+  registerButton: {
+    backgroundColor: '#DD775C',
+    marginTop: 10,
+    paddingVertical: 18,
+    borderRadius: 30,
+    alignItems: 'center',
   },
 
   // Floating circles
