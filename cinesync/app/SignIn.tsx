@@ -2,6 +2,7 @@ import { FIREBASE_AUTH } from '@/FirebaseConfig';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from '@firebase/auth';
 import React from 'react';
 import { useState } from 'react';
+import { useRouter } from 'expo-router';
 import {
   View,
   Text,
@@ -17,7 +18,8 @@ const { width, height } = Dimensions.get('window');
 
 
 
-export default function SignInScreen({ navigation }) {
+export default function SignInScreen() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -37,7 +39,7 @@ export default function SignInScreen({ navigation }) {
   }
   // implement
   function register() {
-    console.log("a")
+    router.push('/SignUp');
    }
   
 
@@ -92,7 +94,7 @@ export default function SignInScreen({ navigation }) {
       {/* if someone wants to register from the sign in page, they can press the register button
       !!! Need to implement register function to route user */}
       <TouchableOpacity onPress={register} style={styles.registerButton}>
-        <Text style={styles.signInText} >Register</Text>
+        <Text style={styles.signInText}>Register</Text>
       </TouchableOpacity>
     </View>
   );
