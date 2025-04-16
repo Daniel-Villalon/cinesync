@@ -9,6 +9,8 @@ import {
   Dimensions,
   KeyboardAvoidingView,
 } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+
 import { styles } from '../styles/SignUp.styles';
 
 const { width, height } = Dimensions.get('window');

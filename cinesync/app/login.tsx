@@ -20,17 +20,19 @@ export default function SignInScreen() {
   const auth = FIREBASE_AUTH;
 
   const signIn = async () => {
+    setLoading(true);
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
-      console.log(response);
-      alert('W sign in')
+      console.log('Signed in!', response.user.email);
+      // layout.tsx will redirect automatically
     } catch (error: any) {
       console.log(error);
-      alert('Sign in failed: ' + error.message)
+      alert('Sign in failed: ' + error.message);
     } finally {
       setLoading(false);
     }
-  }
+  };
+  
   // implement
   function register() {
     router.push('/SignUp');
