@@ -32,6 +32,12 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
       </Link>
 
+      <Link href="/MovieSearch" asChild>
+        <TouchableOpacity style={styles.someButton}>
+          <Text style={styles.buttonText}>Test Movie Search</Text>
+        </TouchableOpacity>
+      </Link>
+
     </View>
   );
 }
@@ -68,6 +74,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   signUpButton: {
+    backgroundColor: '#F7D491',
+    paddingVertical: 16,
+    paddingHorizontal: 60,
+    borderRadius: 20,
+    width: '100%',
+    alignItems: 'center',
+  },
+  someButton: {
     backgroundColor: '#F7D491',
     paddingVertical: 16,
     paddingHorizontal: 60,
