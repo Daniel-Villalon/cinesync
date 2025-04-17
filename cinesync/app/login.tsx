@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { styles } from "../styles/SignIn.styles";
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -38,6 +39,13 @@ export default function SignInScreen() {
     router.push('/SignUp');
    }
   
+  const handleGoogleSignInComplete = (success: boolean) => {
+    if (success) {
+      // The _layout.tsx will handle the navigation
+      console.log('Google sign in successful');
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Floating Circles */}
@@ -83,6 +91,9 @@ export default function SignInScreen() {
       <TouchableOpacity onPress={signIn} style={styles.signInButton}>
         <Text style={styles.signInText} >Sign In</Text>
       </TouchableOpacity>
+
+      {/* Add the Google Sign In button */}
+      <GoogleSignInButton onSignInComplete={handleGoogleSignInComplete} />
       </>
       )}
       {/* if someone wants to register from the sign in page, they can press the register button
