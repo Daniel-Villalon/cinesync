@@ -1,5 +1,6 @@
 import { FIREBASE_AUTH } from '@/FirebaseConfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   View,
@@ -15,11 +16,12 @@ import { styles } from '../styles/SignUp.styles';
 
 const { width, height } = Dimensions.get('window');
 
-export default function SignInScreen({ navigation }) {
+export default function SignInScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const auth = FIREBASE_AUTH;
+  const router = useRouter();
   const signUp = async () => {
     setLoading(true);
     try {
@@ -32,16 +34,11 @@ export default function SignInScreen({ navigation }) {
       setLoading(false);
     }
   }
+  function login() {
+    router.push('/login');
+   }
   return (
     <View style={styles.container}>
-      {/* Floating Circles */}
-      <View style={[styles.circle, styles.circleTopLeft]} />
-      <View style={[styles.circle, styles.circleTopRight]} />
-      <View style={[styles.circle, styles.circleMidSmall]} />
-      <View style={[styles.circle, styles.circleBottomLeft]} />
-      <View style={[styles.circle, styles.circleBottomRight]} />
-      <View style={[styles.circle, styles.circleTiny]} />
-
       {/* Text Title */}
       <Text style={styles.title}>Create an</Text>
       <Text style={styles.title}>Account</Text>
@@ -51,7 +48,7 @@ export default function SignInScreen({ navigation }) {
       <TextInput
         value={email}
         placeholder="Email"
-        placeholderTextColor="#F7D491"
+        placeholderTextColor="#E8EDDF"
         style={styles.inputEmail}
         keyboardType="email-address"
         autoCapitalize="none"
@@ -62,7 +59,7 @@ export default function SignInScreen({ navigation }) {
       <TextInput
         value={password}
         placeholder="Password*"
-        placeholderTextColor="#8BBCA6"
+        placeholderTextColor="#E8EDDF"
         style={styles.inputPassword}
         secureTextEntry={true}
         autoCapitalize="none"
@@ -73,6 +70,13 @@ export default function SignInScreen({ navigation }) {
       <TouchableOpacity onPress={signUp} style={styles.signInButton}>
         <Text style={styles.signInText}>Sign Up</Text>
       </TouchableOpacity>
+
+      <View style={styles.loginButton}>
+              <Text style={styles.greyText}>Already have an account? </Text>
+              <TouchableOpacity onPress={login}>
+                <Text style={styles.registerLink}>Login</Text>
+              </TouchableOpacity>
+      </View>
     </View>
   );
 }

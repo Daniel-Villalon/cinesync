@@ -2,45 +2,44 @@
 
 import { StyleSheet, Dimensions } from 'react-native';
 
-
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2B2C5A',
+    backgroundColor: '#242423',
     paddingHorizontal: 24,
     justifyContent: 'center',
   },
   title: {
     fontSize: 48,
     fontWeight: '800',
-    color: '#F7EEDB',
+    color: '#E8EDDF',
     fontFamily: 'Georgia',
     textAlign: 'left',
     marginLeft: 6,
   },
   labelEmail: {
-    color: '#F7D491',
+    color: '#E8EDDF',
     marginTop: 32,
     marginLeft: 6,
     marginBottom: 4,
     fontWeight: '600',
   },
   inputEmail: {
-    borderColor: '#F7D491',
+    borderColor: '#E8EDDF',
     borderWidth: 2,
     borderRadius: 20,
     padding: 14,
-    color: '#F7EEDB',
+    color: '#E8EDDF',
     marginBottom: 20,
   },
   labelPassword: {
-    color: '#8BBCA6',
+    color: '#E8EDDF',
     marginLeft: 6,
     marginBottom: 4,
     fontWeight: '600',
   },
   inputPassword: {
-    borderColor: '#8BBCA6',
+    borderColor: '#E8EDDF',
     borderWidth: 2,
     borderRadius: 20,
     padding: 14,
@@ -48,23 +47,29 @@ export const styles = StyleSheet.create({
     marginBottom: 30,
   },
   signInButton: {
-    backgroundColor: '#DD775C',
+    backgroundColor: '#F5CB5C',
     paddingVertical: 18,
     borderRadius: 30,
     alignItems: 'center',
   },
   signInText: {
-    color: '#2B2C5A',
+    color: '#242423',
     fontSize: 18,
     fontWeight: '700',
   },
   registerButton: {
-    backgroundColor: '#F7D491',
-    marginTop: 10,
-    paddingVertical: 18,
-    borderRadius: 30,
-    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 16,
   },
+  greyText: {
+    color: '#AAAAAA',
+  },
+  registerLink: {
+    color: '#FFD369',
+    fontWeight: '600',
+  },
+  
   // Floating circles
   circle: {
     position: 'absolute',

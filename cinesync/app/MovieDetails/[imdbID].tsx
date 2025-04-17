@@ -89,7 +89,7 @@ export default function MovieDetailsScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#2B2C5A',
+    backgroundColor: '#242423',
   },
   centered: {
     flex: 1,

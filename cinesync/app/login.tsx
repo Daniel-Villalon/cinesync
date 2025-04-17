@@ -40,13 +40,6 @@ export default function SignInScreen() {
   
   return (
     <View style={styles.container}>
-      {/* Floating Circles */}
-      <View style={[styles.circle, styles.circleTopLeft]} />
-      <View style={[styles.circle, styles.circleTopRight]} />
-      <View style={[styles.circle, styles.circleMidSmall]} />
-      <View style={[styles.circle, styles.circleBottomLeft]} />
-      <View style={[styles.circle, styles.circleBottomRight]} />
-      <View style={[styles.circle, styles.circleTiny]} />
 
       {/* Text Title */}
       <Text style={styles.title}>Welcome</Text>
@@ -57,7 +50,7 @@ export default function SignInScreen() {
       <TextInput
         value={email}
         placeholder="Email"
-        placeholderTextColor="#F7D491"
+        placeholderTextColor="#E8EDDF"
         style={styles.inputEmail}
         keyboardType="email-address"
         autoCapitalize="none"
@@ -68,7 +61,7 @@ export default function SignInScreen() {
       <TextInput
         value={password}
         placeholder="Password*"
-        placeholderTextColor="#8BBCA6"
+        placeholderTextColor="#E8EDDF"
         style={styles.inputPassword}
         secureTextEntry={true}
         autoCapitalize="none"
@@ -87,9 +80,12 @@ export default function SignInScreen() {
       )}
       {/* if someone wants to register from the sign in page, they can press the register button
       !!! Need to implement register function to route user */}
-      <TouchableOpacity onPress={register} style={styles.registerButton}>
-        <Text style={styles.signInText}>Register</Text>
-      </TouchableOpacity>
+      <View style={styles.registerButton}>
+        <Text style={styles.greyText}>Don’t have an account? </Text>
+        <TouchableOpacity onPress={register}>
+          <Text style={styles.registerLink}>Sign Up</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

@@ -92,7 +92,7 @@ const MovieSearch: React.FC = () => {
 export default MovieSearch;
 
 const styles = StyleSheet.create({
-  safe:      { flex: 1, backgroundColor: '#2B2C5A' },
+  safe:      { flex: 1, backgroundColor: '#242423'},
   heading:   { fontSize: 24, color: '#F7EEDB', marginHorizontal: 16, marginBottom: 8 },
   input:     {
     borderWidth: 1,

@@ -30,7 +30,44 @@ export default function Homescreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#2B2C5A',
+    backgroundColor: '#242423', // dark greyr
+    paddingHorizontal: 20,
+  },
+  title: {
+    fontSize: 48,
+    fontWeight: '700',
+    color: '#E8EDDF',
+    marginTop: -40,
+    fontFamily: 'Georgia',
+  },
+  tagline: {
+    fontSize: 16,
+    color: '#E8EDDF',
+    marginBottom: 40,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  signInButton: {
+    backgroundColor: '#E8EDDF',
+    paddingVertical: 16,
+    paddingHorizontal: 60,
+    borderRadius: 20,
+    marginBottom: 20,
+    width: '100%',
+    alignItems: 'center',
+  },
+  signUpButton: {
+    backgroundColor: '#F5CB5C',
+    paddingVertical: 16,
+    paddingHorizontal: 60,
+    borderRadius: 20,
+    width: '100%',
+    alignItems: 'center',
+  },
+  buttonText: {
+    fontSize: 18,
+    color: '#242423',
+    fontWeight: '600',
   },
   header: {
     color: '#F7EEDB',
@@ -38,13 +75,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     marginVertical: 16,
-    paddingTop: 30,
+    paddingTop: 20,
   },
   logoutButton: {
     marginTop: 10,
     backgroundColor: '#DD775C',
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     marginHorizontal: 16,
     marginBottom: 20,
