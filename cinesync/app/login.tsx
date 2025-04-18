@@ -3,7 +3,7 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from '@fir
 import React from 'react';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { styles } from "../styles/SignIn.styles";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect } from 'react';
@@ -31,7 +31,6 @@ export default function SignInScreen() {
       try {
         const remembered = await AsyncStorage.getItem('rememberMe');
         const storedEmail = await AsyncStorage.getItem('rememberedEmail');
-  
         if (remembered === 'true' && storedEmail) {
           setRememberMe(true);
           setEmail(storedEmail);
@@ -111,7 +110,7 @@ export default function SignInScreen() {
         onPress={() => setRememberMe(!rememberMe)}
       >
         <View style={[styles.checkbox, rememberMe && styles.checkboxSelected]}>
-          {rememberMe && <Ionicons name="checkmark" size={20} color='black' />}
+          {rememberMe && <MaterialCommunityIcons name="check-bold" size={20} color='black' />}
         </View>
         <Text style={styles.rememberMeText}>Remember Me</Text>
       </TouchableOpacity>
