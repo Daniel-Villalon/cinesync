@@ -3,6 +3,11 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from '@fir
 import React from 'react';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { styles } from "../styles/SignIn.styles";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect } from 'react';
+
 import {
   View,
   Text,
@@ -10,20 +15,48 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { styles } from "../styles/SignIn.styles";
+
 
 export default function SignInScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const auth = FIREBASE_AUTH;
+
+  // For remembering users
+  useEffect(() => {
+    const loadRememberedInfo = async () => {
+      try {
+        const remembered = await AsyncStorage.getItem('rememberMe');
+        const storedEmail = await AsyncStorage.getItem('rememberedEmail');
+  
+        if (remembered === 'true' && storedEmail) {
+          setRememberMe(true);
+          setEmail(storedEmail);
+        }
+      } catch (error) {
+        console.log('Failed to load remembered user:', error);
+      }
+    };
+  
+    loadRememberedInfo();
+  }, []);
+  
 
   const signIn = async () => {
     setLoading(true);
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
       console.log('Signed in!', response.user.email);
+      if (rememberMe) {
+        await AsyncStorage.setItem('rememberMe', 'true');
+        await AsyncStorage.setItem('rememberedEmail', email);
+      } else {
+        await AsyncStorage.removeItem('rememberMe');
+        await AsyncStorage.removeItem('rememberedEmail');
+      }
       // layout.tsx will redirect automatically
     } catch (error: any) {
       console.log(error);
@@ -71,6 +104,17 @@ export default function SignInScreen() {
         <ActivityIndicator size="large" color="0000ff" />
       ) :  (
         <>
+
+      {/* Remember Me Button */}
+      <TouchableOpacity
+        style={styles.rememberMeContainer}
+        onPress={() => setRememberMe(!rememberMe)}
+      >
+        <View style={[styles.checkbox, rememberMe && styles.checkboxSelected]}>
+          {rememberMe && <Ionicons name="checkmark" size={20} color='black' />}
+        </View>
+        <Text style={styles.rememberMeText}>Remember Me</Text>
+      </TouchableOpacity>
 
       {/* Sign In Button */}
       <TouchableOpacity onPress={signIn} style={styles.signInButton}>

@@ -44,7 +44,7 @@ export const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 14,
     color: '#F7EEDB',
-    marginBottom: 30,
+    marginBottom: 20,
   },
   signInButton: {
     backgroundColor: '#F5CB5C',
@@ -69,53 +69,30 @@ export const styles = StyleSheet.create({
     color: '#FFD369',
     fontWeight: '600',
   },
+  rememberMeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 10,
+  },
   
-  // Floating circles
-  circle: {
-    position: 'absolute',
-    borderRadius: 999,
-    opacity: 0.9,
+  checkbox: {
+    width: 30,
+    height: 30,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#E8EDDF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+    marginBottom: 20,
   },
-  circleTopLeft: {
-    backgroundColor: '#DD775C',
-    width: 280,
-    height: 280,
-    top: -80,
-    left: -80,
+  checkboxSelected: {
+    backgroundColor: '#F5CB5C',
+    borderColor: '#F5CB5C',
   },
-  circleTopRight: {
-    backgroundColor: '#8BBCA6',
-    width: 130,
-    height: 130,
-    top: -20,
-    right: -40,
-  },
-  circleMidSmall: {
-    backgroundColor: '#F7D491',
-    width: 70,
-    height: 70,
-    top: 100,
-    right: 40,
-  },
-  circleBottomLeft: {
-    backgroundColor: '#8BBCA6',
-    width: 100,
-    height: 100,
-    bottom: 160,
-    left: -30,
-  },
-  circleBottomRight: {
-    backgroundColor: '#F7D491',
-    width: 300,
-    height: 300,
-    bottom: -60,
-    right: -100,
-  },
-  circleTiny: {
-    backgroundColor: '#DD775C',
-    width: 40,
-    height: 40,
-    bottom: 120,
-    left: 20,
+  rememberMeText: {
+    color: '#E8EDDF',
+    fontSize: 14, 
+    marginTop: -18,
   },
 });
