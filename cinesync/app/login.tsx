@@ -1,5 +1,5 @@
 import { FIREBASE_AUTH } from '@/FirebaseConfig';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from '@firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword , sendPasswordResetEmail} from '@firebase/auth';
 import React from 'react';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
@@ -42,6 +42,24 @@ export default function SignInScreen() {
   
     loadRememberedInfo();
   }, []);
+  //Forget password function
+  const forgotPassword = async () => {
+    if (!email) {
+      alert('Please enter your email address first.');
+      return;
+    }
+  
+    try {
+      await sendPasswordResetEmail(auth, email); 
+      alert('Password reset email sent!');
+    } catch (error: any) {
+      console.log('Error sending password reset email:', error);
+      alert('Failed to send reset email: ' + error.message);
+    }
+  };
+  
+  
+  
   
 
   const signIn = async () => {
@@ -105,15 +123,23 @@ export default function SignInScreen() {
         <>
 
       {/* Remember Me Button */}
-      <TouchableOpacity
-        style={styles.rememberMeContainer}
-        onPress={() => setRememberMe(!rememberMe)}
-      >
-        <View style={[styles.checkbox, rememberMe && styles.checkboxSelected]}>
-          {rememberMe && <MaterialCommunityIcons name="check-bold" size={20} color='black' />}
-        </View>
-        <Text style={styles.rememberMeText}>Remember Me</Text>
-      </TouchableOpacity>
+      <View style={styles.optionsRow}>
+        <TouchableOpacity
+          style={styles.rememberMeContainer}
+          onPress={() => setRememberMe(!rememberMe)}
+        >
+          <View style={[styles.checkbox, rememberMe && styles.checkboxSelected]}>
+            {rememberMe && <MaterialCommunityIcons name="check-bold" size={20} color='black' />}
+          </View>
+          <Text style={styles.rememberMeText}>Remember Me</Text>
+        </TouchableOpacity>
+
+        {/* Forgot Password */}
+        <TouchableOpacity onPress={forgotPassword}>
+          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+        </TouchableOpacity>
+      </View>
+
 
       {/* Sign In Button */}
       <TouchableOpacity onPress={signIn} style={styles.signInButton}>

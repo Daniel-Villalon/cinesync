@@ -92,7 +92,22 @@ export const styles = StyleSheet.create({
   },
   rememberMeText: {
     color: '#E8EDDF',
-    fontSize: 14, 
+    fontSize: 16, 
     marginTop: -18,
   },
+  optionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: 10,
+    marginTop: 10,
+  },
+  
+  forgotPasswordText: {
+    color: '#F5CB5C',
+    fontSize: 16,
+    marginTop: -18,
+  },
+  
 });
