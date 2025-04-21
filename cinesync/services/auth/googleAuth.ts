@@ -10,6 +10,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 const WEB_CLIENT_ID = "259419561288-b6i6j8kbhe4g5p7h0ti30fmh79fmfojm.apps.googleusercontent.com";
 const IOS_CLIENT_ID = "259419561288-8f4tvvmh572s0lmbpmmgdedu4be5bklo.apps.googleusercontent.com";
+// const IOS_CLIENT_ID = "259419561288-b6i6j8kbhe4g5p7h0ti30fmh79fmfojm.apps.googleusercontent.com"
 // const ANDROID_CLIENT_ID = "android-client-id";
 
 export function useGoogleAuth() {

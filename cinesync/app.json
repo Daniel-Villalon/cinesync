@@ -10,7 +10,14 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.brytak1.cinesync"
+      "bundleIdentifier": "com.brytak1.cinesync",
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": "com.googleusercontent.apps.259419561288-8f4tvvmh572s0lmbpmmgdedu4be5bklo"
+          }
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -39,6 +46,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "479e9b81-d2b0-41fc-8e68-0071be7d7999"
+      }
     }
   }
 }
