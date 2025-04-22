@@ -1,4 +1,4 @@
-import { FIREBASE_AUTH } from '@/FirebaseConfig';
+import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword , sendPasswordResetEmail} from '@firebase/auth';
 import React from 'react';
 import { useState } from 'react';
@@ -15,6 +15,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
+import { collection, addDoc, setDoc, doc } from 'firebase/firestore';
+import { FirebaseError } from 'firebase/app';
 
 
 export default function SignInScreen() {
@@ -24,6 +26,7 @@ export default function SignInScreen() {
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const auth = FIREBASE_AUTH;
+  const db = FIRESTORE_DB;
 
   // For remembering users
   useEffect(() => {
@@ -67,6 +70,7 @@ export default function SignInScreen() {
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
       console.log('Signed in!', response.user.email);
+      //set current user to uid. and check if existing in firestore
       if (rememberMe) {
         await AsyncStorage.setItem('rememberMe', 'true');
         await AsyncStorage.setItem('rememberedEmail', email);
