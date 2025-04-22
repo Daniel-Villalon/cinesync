@@ -56,7 +56,7 @@ const MovieSearch: React.FC = () => {
 
   return (
     <View style={[styles.safe, { paddingTop: 15 }]}>
-      <Text style={styles.heading}>Search for Movies</Text>
+      <Text style={styles.heading}>Add to list</Text>
       <TextInput
         style={styles.input}
         placeholder="Start typing a movie title…"
@@ -93,7 +93,7 @@ export default MovieSearch;
 
 const styles = StyleSheet.create({
   safe:      { flex: 1, backgroundColor: '#242423'},
-  heading:   { fontSize: 24, color: '#F7EEDB', marginHorizontal: 16, marginBottom: 8 },
+  heading:   { fontSize: 24, color: '#F7EEDB', marginHorizontal: 16, marginBottom: 8, textAlign: 'center', fontWeight: 'bold'},
   input:     {
     borderWidth: 1,
     borderColor: '#F7D491',
