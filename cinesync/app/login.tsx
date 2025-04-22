@@ -7,7 +7,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { styles } from "../styles/SignIn.styles";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect } from 'react';
-
+import { Link } from 'expo-router'; //remove after creating groups
 import {
   View,
   Text,
@@ -58,10 +58,6 @@ export default function SignInScreen() {
     }
   };
   
-  
-  
-  
-
   const signIn = async () => {
     setLoading(true);
     try {
@@ -138,6 +134,9 @@ export default function SignInScreen() {
         <TouchableOpacity onPress={forgotPassword}>
           <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
         </TouchableOpacity>
+        <TouchableOpacity onPress={forgotPassword}>
+          <Text style={styles.forgotPasswordText}>Groups</Text>
+        </TouchableOpacity>
       </View>
 
 
@@ -155,6 +154,16 @@ export default function SignInScreen() {
           <Text style={styles.registerLink}>Sign Up</Text>
         </TouchableOpacity>
       </View>
+      <Link href="/group" asChild>
+        <TouchableOpacity style={styles.signInButton}>
+          <Text style={[styles.signInButton, { color: '#2B2C5A' }]}>Group</Text>
+        </TouchableOpacity>
+      </Link>
+      <Link href="/addgroup" asChild>
+        <TouchableOpacity style={styles.signInButton}>
+          <Text style={[styles.signInButton, { color: '#2B2C5A' }]}>Add Group</Text>
+        </TouchableOpacity>
+      </Link>
     </View>
   );
 }
