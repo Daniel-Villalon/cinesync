@@ -35,22 +35,6 @@ export default function Groups() {
 
     let userGroups: string[] = userSnap.data().groups || [];
 
-    if (userGroups.length === 0) {
-      const newGroupRef = await addDoc(collection(db, 'groups'), {
-        name: 'Group 1',
-        admin: uid,
-        userIds: [uid],
-        createdAt: new Date(),
-      });
-
-      const newGroupId = newGroupRef.id;
-
-      await updateDoc(userRef, {
-        groups: [newGroupId],
-      });
-
-      userGroups = [newGroupId];
-    }
 
     const fetchedGroups = await Promise.all(
       userGroups.map(async (groupId) => {
