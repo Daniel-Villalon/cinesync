@@ -49,6 +49,7 @@ export default function SignInScreen() {
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
       console.log('Signed in!', response.user.email);
+  
       if (rememberMe) {
         await AsyncStorage.setItem('rememberMe', 'true');
         await AsyncStorage.setItem('rememberedEmail', email);
@@ -56,7 +57,10 @@ export default function SignInScreen() {
         await AsyncStorage.removeItem('rememberMe');
         await AsyncStorage.removeItem('rememberedEmail');
       }
-      // layout.tsx will redirect automatically
+  
+      // ✅ Send user to / so index.tsx can run the redirect
+      router.replace('/');
+  
     } catch (error: any) {
       console.log(error);
       alert('Sign in failed: ' + error.message);
@@ -64,6 +68,7 @@ export default function SignInScreen() {
       setLoading(false);
     }
   };
+  
   
   // implement
   function register() {
