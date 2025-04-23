@@ -51,22 +51,24 @@ export default StyleSheet.create({
   // ↓↓↓ These are the important updates ↓↓↓
   settingRow: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
     width: '100%',
     paddingHorizontal: 10,
     marginBottom: 12,
-    gap: 10,
+    gap: 0,
   },
   settingLabel: {
     color: '#FFF',
     fontSize: 18,
     fontWeight: '600',
-    width: 130,
-    textAlign: 'right',
-    paddingRight: 10,
-    paddingTop: 4, // adjust this for fine-tuning label alignment
+    textAlign: 'left',
+    paddingRight: 8,
+    paddingTop: 2,
   },
   settingInputWrapper: {
     flex: 1,
+    justifyContent: 'flex-start',
+    marginTop: 0,
   },
   dropdown: {
     flexDirection: 'row',
