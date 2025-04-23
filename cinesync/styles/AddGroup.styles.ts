@@ -47,8 +47,6 @@ export default StyleSheet.create({
     marginBottom: 30,
     textAlign: 'center',
   },
-
-  // ↓↓↓ These are the important updates ↓↓↓
   settingRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -73,18 +71,33 @@ export default StyleSheet.create({
   dropdown: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#FFD700',
+    justifyContent: 'space-between',
+    backgroundColor: '#1C1C1E',
     borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: '#111',
-    alignSelf: 'flex-start', // aligns to left instead of stretching
+    paddingVertical: 8,
+    paddingHorizontal: 12,
   },
+  
   dropdownText: {
-    color: '#FFD700',
+    color: '#F5CB5C',
+    fontWeight: '600',
     fontSize: 16,
-    marginRight: 6,
+  },
+  
+  dropdownMenu: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 8,
+    marginTop: 4,
+    overflow: 'hidden',
+  },
+  
+  dropdownItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  dropdownItemText: {
+    color: '#8E8E93',
+    fontSize: 16,
   },
   menuContent: {
     backgroundColor: '#222',
@@ -113,7 +126,7 @@ export default StyleSheet.create({
     fontSize: 14,
   },
   toggleTextActive: {
-    color: '#FFD700',
+    color: '#F5CB5C',
   },
   toggleTextInactive: {
     color: '#777',

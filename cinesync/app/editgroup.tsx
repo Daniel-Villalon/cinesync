@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import styles from '../styles/Group.styles';
+import styles from '../styles/EditGroup.styles';
 
 const groups = [
   { name: 'Group 1', color: '#F6C343' },
