@@ -1,4 +1,4 @@
-import { FIREBASE_AUTH } from '@/FirebaseConfig';
+import { FIREBASE_AUTH } from '../FirebaseConfig';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword , sendPasswordResetEmail} from '@firebase/auth';
 import React from 'react';
 import { useState } from 'react';
@@ -7,6 +7,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { styles } from "../styles/SignIn.styles";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect } from 'react';
+import { DismissKeyboardView } from '../services/DismissKeyboardView';
 
 import {
   View,
@@ -89,7 +90,7 @@ export default function SignInScreen() {
    }
   
   return (
-    <View style={styles.container}>
+    <DismissKeyboardView style={styles.container}>
 
       {/* Text Title */}
       <Text style={styles.title}>Welcome</Text>
@@ -155,6 +156,6 @@ export default function SignInScreen() {
           <Text style={styles.registerLink}>Sign Up</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </DismissKeyboardView>
   );
 }

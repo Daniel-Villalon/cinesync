@@ -1,4 +1,4 @@
-// components/MovieSearch.tsx
+// app/MovieSearch.tsx
 
 import React, { useState, useMemo, useEffect } from 'react';
 import {
@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import debounce from 'lodash.debounce';
 import { useRouter } from 'expo-router';
 import { searchMovies, MovieSummary } from '../services/MoviesService';
+import { DismissKeyboardView } from '../services/DismissKeyboardView';
 
 const MovieSearch: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -55,7 +56,7 @@ const MovieSearch: React.FC = () => {
   };
 
   return (
-    <View style={[styles.safe, { paddingTop: 15 }]}>
+    <DismissKeyboardView style={[styles.safe, { paddingTop: 15 }]}>
       <Text style={styles.heading}>Add to list</Text>
       <TextInput
         style={styles.input}
@@ -85,7 +86,7 @@ const MovieSearch: React.FC = () => {
         contentContainerStyle={{ paddingBottom: 80 }}
         keyboardShouldPersistTaps="handled"
       />
-    </View>
+    </DismissKeyboardView>
   );
 };
 

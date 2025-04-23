@@ -1,4 +1,4 @@
-import { FIREBASE_AUTH } from '@/FirebaseConfig';
+import { FIREBASE_AUTH } from '../FirebaseConfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -13,6 +13,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { styles } from '../styles/SignUp.styles';
+import { DismissKeyboardView } from '../services/DismissKeyboardView';
 
 const { width, height } = Dimensions.get('window');
 
@@ -38,7 +39,7 @@ export default function SignInScreen() {
     router.push('/login');
    }
   return (
-    <View style={styles.container}>
+    <DismissKeyboardView style={styles.container}>
       {/* Text Title */}
       <Text style={styles.title}>Create an</Text>
       <Text style={styles.title}>Account</Text>
@@ -77,6 +78,6 @@ export default function SignInScreen() {
                 <Text style={styles.registerLink}>Login</Text>
               </TouchableOpacity>
       </View>
-    </View>
+    </DismissKeyboardView>
   );
 }
