@@ -1,91 +1,119 @@
+// styles/AddGroup.styles.ts
+
 import { StyleSheet } from 'react-native';
 
 export default StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: '#111',
+    paddingTop: 60,
     paddingHorizontal: 20,
-    paddingTop: 40,
-  },
-  avatarContainer: {
     alignItems: 'center',
-    marginBottom: 30,
   },
-  avatar: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: '#F3CF57',
+  imageWrapper: {
+    position: 'relative',
+    marginBottom: 20,
+  },
+  groupImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    resizeMode: 'cover',
+  },
+  defaultImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#C9A84F',
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
   },
   editIcon: {
     position: 'absolute',
-    right: -5,
-    top: -5,
-    backgroundColor: '#F3CF57',
-    borderRadius: 20,
-    padding: 6,
-    borderWidth: 2,
-    borderColor: '#121212',
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#FFD700',
+    borderRadius: 14,
+    padding: 4,
   },
-  groupName: {
-    color: '#fff',
-    fontSize: 26,
-    fontWeight: '500',
-    marginTop: 15,
-    borderWidth: 1,
-    borderColor: '#444',
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    textAlign: 'center',
-    width: 200,
-  },
-  section: {
+  groupNameInput: {
+    color: '#FFF',
+    fontSize: 22,
+    fontWeight: '600',
+    borderBottomWidth: 1,
+    borderBottomColor: '#444',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     marginBottom: 30,
+    textAlign: 'center',
   },
-  sectionLabel: {
-    color: '#fff',
+
+  // ↓↓↓ These are the important updates ↓↓↓
+  settingRow: {
+    flexDirection: 'row',
+    width: '100%',
+    paddingHorizontal: 10,
+    marginBottom: 12,
+    gap: 10,
+  },
+  settingLabel: {
+    color: '#FFF',
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 10,
+    width: 130,
+    textAlign: 'right',
+    paddingRight: 10,
+    paddingTop: 4, // adjust this for fine-tuning label alignment
   },
-  pickerWrapper: {
-    backgroundColor: '#1E1E1E',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#555',
+  settingInputWrapper: {
+    flex: 1,
   },
-  picker: {
-    color: '#FFD366',
-    height: 50,
-    paddingHorizontal: 10,
-  },
-  toggleContainer: {
+  dropdown: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FFD700',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#111',
+    alignSelf: 'flex-start', // aligns to left instead of stretching
+  },
+  dropdownText: {
+    color: '#FFD700',
+    fontSize: 16,
+    marginRight: 6,
+  },
+  menuContent: {
+    backgroundColor: '#222',
+  },
+  menuItem: {
+    color: '#FFD700',
+  },
+  fairnessToggleWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
   },
   toggleButton: {
-    backgroundColor: '#333',
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    marginRight: 10,
+    borderRadius: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    marginHorizontal: 2,
   },
-  toggleButtonActive: {
-    backgroundColor: '#FFD366',
+  toggleActive: {
+    backgroundColor: '#333',
+  },
+  toggleInactive: {
+    backgroundColor: '#222',
   },
   toggleText: {
-    color: '#888',
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 14,
   },
   toggleTextActive: {
-    color: '#000',
+    color: '#FFD700',
   },
-  infoButton: {
-    marginLeft: 5,
+  toggleTextInactive: {
+    color: '#777',
   },
 });

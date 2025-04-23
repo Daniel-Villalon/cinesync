@@ -134,9 +134,6 @@ export default function SignInScreen() {
         <TouchableOpacity onPress={forgotPassword}>
           <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={forgotPassword}>
-          <Text style={styles.forgotPasswordText}>Groups</Text>
-        </TouchableOpacity>
       </View>
 
 
