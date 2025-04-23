@@ -10,14 +10,12 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import styles from '../styles/AddGroup.styles';
 
-const sortOptions = ['Rotten Tomatoes Rating', 'Liked', 'Not seen'];
-
 const AddGroupScreen = () => {
   const [groupName, setGroupName] = useState('New Group');
-  const [groupImage, setGroupImage] = useState(null);
+  const [groupImage, setGroupImage] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState('Rotten Tomatoes Rating');
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [fairnessFilter, setFairnessFilter] = useState(true);
+  const [dropdownOpen, setDropdownOpen] = useState<null | 'sort' | 'fairness'>(null);
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -40,7 +38,7 @@ const AddGroupScreen = () => {
           <Image source={{ uri: groupImage }} style={styles.groupImage} />
         ) : (
           <View style={styles.defaultImage}>
-            <Ionicons name="person" size={64} color="#FFD700" />
+            <Ionicons name="person" size={64} color="#C9A84F" />
           </View>
         )}
         <View style={styles.editIcon}>
@@ -60,28 +58,32 @@ const AddGroupScreen = () => {
         <Text style={styles.settingLabel}>Sort by:</Text>
         <View style={{ flex: 1 }}>
           <TouchableOpacity
-            onPress={() => setDropdownOpen(!dropdownOpen)}
+            onPress={() => setDropdownOpen(dropdownOpen === 'sort' ? null : 'sort')}
             style={styles.dropdown}
           >
             <Text style={styles.dropdownText}>{sortBy}</Text>
-            <Ionicons name={dropdownOpen ? "chevron-up" : "chevron-down"} size={16} color="#FFD700" />
+            <Ionicons
+              name={dropdownOpen === 'sort' ? 'chevron-up' : 'chevron-down'}
+              size={16}
+              color="#FFD700"
+            />
           </TouchableOpacity>
-          {dropdownOpen && (
+          {dropdownOpen === 'sort' && (
             <View style={styles.dropdownMenu}>
-              {sortOptions
+              {['Rotten Tomatoes Rating', 'Liked', 'Not seen']
                 .filter(option => option !== sortBy)
                 .map(option => (
                   <TouchableOpacity
                     key={option}
                     onPress={() => {
                       setSortBy(option);
-                      setDropdownOpen(false);
+                      setDropdownOpen(null);
                     }}
                     style={styles.dropdownItem}
                   >
                     <Text style={styles.dropdownItemText}>{option}</Text>
                   </TouchableOpacity>
-              ))}
+                ))}
             </View>
           )}
         </View>
@@ -90,47 +92,36 @@ const AddGroupScreen = () => {
       {/* Fairness Filter */}
       <View style={styles.settingRow}>
         <Text style={styles.settingLabel}>Fairness filter:</Text>
-        <View style={styles.settingInputWrapper}>
-          <View style={styles.fairnessToggleWrapper}>
-            <TouchableOpacity
-              style={[
-                styles.toggleButton,
-                fairnessFilter ? styles.toggleActive : styles.toggleInactive,
-              ]}
-              onPress={() => setFairnessFilter(true)}
-            >
-              <Text
-                style={[
-                  styles.toggleText,
-                  fairnessFilter ? styles.toggleTextActive : styles.toggleTextInactive,
-                ]}
-              >
-                On
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.toggleButton,
-                !fairnessFilter ? styles.toggleActive : styles.toggleInactive,
-              ]}
-              onPress={() => setFairnessFilter(false)}
-            >
-              <Text
-                style={[
-                  styles.toggleText,
-                  !fairnessFilter ? styles.toggleTextActive : styles.toggleTextInactive,
-                ]}
-              >
-                Off
-              </Text>
-            </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <TouchableOpacity
+            onPress={() => setDropdownOpen(dropdownOpen === 'fairness' ? null : 'fairness')}
+            style={styles.dropdown}
+          >
+            <Text style={styles.dropdownText}>{fairnessFilter ? 'On' : 'Off'}</Text>
             <Ionicons
-              name="information-circle"
-              size={20}
+              name={dropdownOpen === 'fairness' ? 'chevron-up' : 'chevron-down'}
+              size={16}
               color="#FFD700"
-              style={{ marginLeft: 10 }}
             />
-          </View>
+          </TouchableOpacity>
+          {dropdownOpen === 'fairness' && (
+            <View style={styles.dropdownMenu}>
+              {['On', 'Off']
+                .filter(option => option !== (fairnessFilter ? 'On' : 'Off'))
+                .map(option => (
+                  <TouchableOpacity
+                    key={option}
+                    onPress={() => {
+                      setFairnessFilter(option === 'On');
+                      setDropdownOpen(null);
+                    }}
+                    style={styles.dropdownItem}
+                  >
+                    <Text style={styles.dropdownItemText}>{option}</Text>
+                  </TouchableOpacity>
+                ))}
+            </View>
+          )}
         </View>
       </View>
     </View>
