@@ -30,11 +30,12 @@ export default StyleSheet.create({
   },
   editIcon: {
     position: 'absolute',
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#FFD700',
-    borderRadius: 14,
-    padding: 4,
+    top: 4,
+    right: 4,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 2,
+    elevation: 2,
   },
   groupNameInput: {
     color: '#FFF',

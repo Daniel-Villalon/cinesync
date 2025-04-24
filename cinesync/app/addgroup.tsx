@@ -43,7 +43,7 @@ const AddGroupScreen = () => {
           </View>
         )}
         <View style={styles.editIcon}>
-          <Ionicons name="pencil" size={16} color="#000" />
+          <Ionicons name="pencil" size={32} color="#000" />
         </View>
       </TouchableOpacity>
 
@@ -133,7 +133,7 @@ const AddGroupScreen = () => {
             )}
             </View>
             {/* Info Icon*/}
-            <TouchableOpacity onPress={() => Alert.alert('AAAAAAAAAAAAAA')}>
+            <TouchableOpacity onPress={() => Alert.alert("The user whose movie was most recently watched will have all their movies removed from view in the watchlist until a different user's movie is watched.")}>
                 <Ionicons
                     name="information-circle"
                     size={20}
