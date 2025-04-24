@@ -151,7 +151,7 @@ export default function SignInScreen() {
           <Text style={styles.registerLink}>Sign Up</Text>
         </TouchableOpacity>
       </View>
-      <Link href="/editgroup" asChild>
+      <Link href="/group" asChild>
         <TouchableOpacity style={styles.signInButton}>
           <Text style={[styles.signInButton, { color: '#2B2C5A' }]}>Group</Text>
         </TouchableOpacity>
