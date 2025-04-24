@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import styles from '../styles/Group.styles';
 
 const groups = [
   { name: 'Group 1', color: '#F6C343' },
   { name: 'Group 3', color: '#F6C343' },
   { name: 'Group 4', color: '#F6C343' },
-  { name: 'Group 5', color: '#F6C343' },
 ];
 
 export default function GroupsScreen() {
   const [isEditing, setIsEditing] = useState(false);
-
+  const router = useRouter();
   const toggleEdit = () => {
     setIsEditing(!isEditing);
   };
@@ -52,14 +52,18 @@ export default function GroupsScreen() {
               <Text style={styles.groupLabel}>{group.name}</Text>
             </View>
           ))}
-
-          {/* Add Group */}
-          <TouchableOpacity style={styles.groupWrapper}>
-            <View style={styles.avatarCircleLarge}>
-              <Ionicons name="add" size={48} color="#ccc" />
-            </View>
-            <Text style={styles.addGroupText}>Add Group</Text>
-          </TouchableOpacity>
+        {/* Add Group */}
+        {!isEditing && (
+            <TouchableOpacity style={styles.groupWrapper} onPress={() => router.push('/addgroup')}>
+                <View style={styles.avatarCircleLarge}>
+                <Ionicons name="add" size={48} color="#ccc" />
+                </View>
+                <Text style={styles.addGroupText}>Add Group</Text>
+            </TouchableOpacity>
+        )}
+        {(groups.length + (!isEditing ? 1 : 0)) % 2 !== 0 && (
+            <View style={[styles.groupWrapper, { opacity: 0 }]} />
+        )}
         </View>
       </ScrollView>
 
