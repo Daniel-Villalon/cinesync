@@ -1,6 +1,7 @@
 // app/MovieSearch.tsx
 
 import React, { useState, useMemo, useEffect } from 'react';
+import CheckBox from "expo-checkbox";
 import {
   View,
   Text,
@@ -76,6 +77,7 @@ const MovieSearch: React.FC = () => {
         data={results}
         keyExtractor={item => item.imdbID}
         renderItem={({ item }) => (
+          
           <TouchableOpacity
             style={styles.item}
             onPress={() => openDetails(item.imdbID)}
