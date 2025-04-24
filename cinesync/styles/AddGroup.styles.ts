@@ -111,4 +111,18 @@ export default StyleSheet.create({
     alignItems: 'center',
     marginTop: 2,
   },
+  deleteButton: {
+    marginBottom: 20,
+    backgroundColor: '#D64545',
+    paddingVertical: 14,
+    marginHorizontal: 32,
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+
+  deleteText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });

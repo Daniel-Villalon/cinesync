@@ -143,6 +143,9 @@ const AddGroupScreen = () => {
             </TouchableOpacity>
         </View>
         </View>
+        <TouchableOpacity style={styles.deleteButton}>
+                  <Text style={styles.deleteText}>Delete</Text>
+                </TouchableOpacity>
 
     </View>
   );
