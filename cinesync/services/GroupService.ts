@@ -1,18 +1,20 @@
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+// services/GroupService.ts
+import { createGroupDoc, addGroupMember } from '../data/groups';
 import { FIRESTORE_DB } from '@/FirebaseConfig';
-import { MovieSummary } from './omdbApi';
+import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 
-export const addMovieToGroup = async (
-  groupId: string,
-  movie: MovieSummary,
-  addedBy: string
-) => {
-  const movieData = {
-    ...movie,
-    groupId,
-    addedBy,
-    addedAt: serverTimestamp(),
-  };
+export const createGroup = async (name: string, userId: string): Promise<string> => {
+  // 1. Create the group document
+  const groupRef = await createGroupDoc(name, userId);
 
-  await addDoc(collection(FIRESTORE_DB, 'movies'), movieData);
+  // 2. Add user to group_members subcollection
+  await addGroupMember(groupRef.id, userId, 'admin');
+
+  // 3. Update the user's group list
+  const userRef = doc(FIRESTORE_DB, 'users', userId);
+  await updateDoc(userRef, {
+    groups: arrayUnion(groupRef.id),
+  });
+
+  return groupRef.id;
 };

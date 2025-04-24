@@ -1,7 +1,10 @@
-import { FIREBASE_AUTH } from '@/FirebaseConfig';
+import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
+import { setDoc, doc } from 'firebase/firestore';
+import { updateCurrentUser } from 'firebase/auth';
+
 import {
   View,
   Text,
@@ -21,11 +24,25 @@ export default function SignInScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const auth = FIREBASE_AUTH;
+  const db = FIRESTORE_DB;
   const router = useRouter();
   const signUp = async () => {
     setLoading(true);
     try {
-      const response = await createUserWithEmailAndPassword(auth, email, password);
+      const response = await createUserWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        const user = userCredential.user;
+        const userRef = doc(db, "users", user.uid); 
+        setDoc(userRef, {
+          email: user.email,
+          createdAt: new Date(),
+          groups: [],
+        });
+        updateCurrentUser(auth, user)
+      })
+      .catch((error) => {
+        // Handle errors
+      });
       alert("w sign up")
     } catch (error: any) {
       console.log(error);

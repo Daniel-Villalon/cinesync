@@ -9,7 +9,7 @@ import {
   Alert,
   StyleSheet,
 } from 'react-native';
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { FIRESTORE_DB } from '@/FirebaseConfig';
 import { useRouter } from 'expo-router';
 import {
@@ -24,23 +24,34 @@ export default function GroupsScreen() {
   const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [newGroupName, setNewGroupName] = useState('');
+  const [authChecked, setAuthChecked] = useState(false);
   const router = useRouter();
   const user = getAuth().currentUser;
 
+  // 🔐 Auth protection
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(getAuth(), (currentUser) => {
+      if (!currentUser) {
+        router.replace('/login');
+      }
+      setAuthChecked(true);
+    });
+    return unsubscribe;
+  }, []);
+
+  // 📦 Load groups the user belongs to
   const fetchUserGroups = async () => {
     if (!user) return;
 
     try {
       const groupCollection = collection(FIRESTORE_DB, 'groups');
       const groupSnapshot = await getDocs(groupCollection);
-
       const userGroups: any[] = [];
 
       for (const docSnap of groupSnapshot.docs) {
         const groupId = docSnap.id;
         const memberRef = doc(FIRESTORE_DB, `groups/${groupId}/group_members/${user.uid}`);
         const memberDoc = await getDoc(memberRef);
-
         if (memberDoc.exists()) {
           userGroups.push({ id: groupId, ...docSnap.data() });
         }
@@ -54,10 +65,7 @@ export default function GroupsScreen() {
     }
   };
 
-  const handleSelectGroup = (groupId: string) => {
-    router.push({ pathname: '/homescreen', params: { groupId } });
-  };
-
+  // 🚀 Handle group creation
   const handleCreateGroup = async () => {
     if (!newGroupName.trim()) {
       Alert.alert('Group name is required');
@@ -68,16 +76,23 @@ export default function GroupsScreen() {
       const groupId = await createGroup(newGroupName.trim(), user!.uid);
       setNewGroupName('');
       Alert.alert('Group created!');
-      fetchUserGroups();
+      fetchUserGroups(); // refresh
     } catch (err) {
       console.error(err);
       Alert.alert('Failed to create group');
     }
   };
 
+  // 📍 Go to homescreen with group ID
+  const handleSelectGroup = (groupId: string) => {
+    router.push({ pathname: '/homescreen', params: { groupId } });
+  };
+
   useEffect(() => {
     fetchUserGroups();
   }, []);
+
+  if (!authChecked) return null;
 
   return (
     <View style={styles.container}>
@@ -114,10 +129,9 @@ export default function GroupsScreen() {
         />
       )}
 
+      {/* Optional: dev-only go back */}
       <TouchableOpacity style={styles.goBackButton} onPress={() => router.replace('/login')}>
-
-
-        <Text style={styles.goBackText}>← Go Back</Text>
+        <Text style={styles.goBackText}>← Back to Login</Text>
       </TouchableOpacity>
     </View>
   );
