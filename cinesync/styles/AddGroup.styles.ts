@@ -110,25 +110,4 @@ export default StyleSheet.create({
     alignItems: 'center',
     marginTop: 2,
   },
-  toggleButton: {
-    borderRadius: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    marginHorizontal: 2,
-  },
-  toggleActive: {
-    backgroundColor: '#333',
-  },
-  toggleInactive: {
-    backgroundColor: '#222',
-  },
-  toggleText: {
-    fontSize: 14,
-  },
-  toggleTextActive: {
-    color: '#F5CB5C',
-  },
-  toggleTextInactive: {
-    color: '#777',
-  },
 });
