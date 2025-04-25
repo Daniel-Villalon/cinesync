@@ -1,4 +1,3 @@
-// app/MovieDetails/[imdbID].tsx
 import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
@@ -8,6 +7,7 @@ import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
+  TouchableOpacity,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import {
@@ -15,20 +15,102 @@ import {
   getPosterUrl,
   MovieDetails as MD,
 } from '../../services/MoviesService';
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+} from 'firebase/firestore';
+import { FIRESTORE_DB } from '@/FirebaseConfig';
+import { getAuth } from 'firebase/auth';
 
-// map OMDb source names to shorter labelsr
-const SOURCE_LABELS: Record<string,string> = {
+const SOURCE_LABELS: Record<string, string> = {
   'Internet Movie Database': 'IMDb',
-  'Rotten Tomatoes':           'Rotten Tomatoes',
-  'Metacritic':                'Metacritic',
+  'Rotten Tomatoes': 'Rotten Tomatoes',
+  'Metacritic': 'Metacritic',
 };
-
 
 export default function MovieDetailsScreen() {
   const { imdbID } = useLocalSearchParams<{ imdbID: string }>();
   const [movie, setMovie] = useState<MD | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const db = FIRESTORE_DB;
+
+  async function toggleWatchlistStatus() {
+    const user = getAuth().currentUser;
+    if (!user || !imdbID) return;
+
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        console.error('User document not found');
+        return;
+      }
+
+      const listId = userSnap.data()?.list;
+      if (!listId) {
+        console.error('No list ID found for this user');
+        return;
+      }
+
+      const movieListRef = doc(db, 'movieLists', listId);
+      const listSnap = await getDoc(movieListRef);
+
+      if (!listSnap.exists()) {
+        await setDoc(movieListRef, {
+          userId: user.uid,
+          createdAt: new Date(),
+          movies: [imdbID],
+        });
+        setIsInWatchlist(true);
+        return;
+      }
+
+      const currentMovies: string[] = listSnap.data()?.movies || [];
+      const alreadyInList = currentMovies.includes(imdbID);
+
+      await updateDoc(movieListRef, {
+        movies: alreadyInList
+          ? arrayRemove(imdbID)
+          : arrayUnion(imdbID),
+      });
+
+      setIsInWatchlist(!alreadyInList);
+    } catch (err) {
+      console.error('Error updating watchlist:', err);
+    }
+  }
+
+  async function checkIfInWatchlist() {
+    const user = getAuth().currentUser;
+    if (!user || !imdbID) return;
+
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) return;
+
+      const listId = userSnap.data()?.list;
+      if (!listId) return;
+
+      const movieListRef = doc(db, 'movieLists', listId);
+      const listSnap = await getDoc(movieListRef);
+
+      if (!listSnap.exists()) return;
+
+      const currentMovies: string[] = listSnap.data()?.movies || [];
+      setIsInWatchlist(currentMovies.includes(imdbID));
+    } catch (err) {
+      console.error('Error checking watchlist:', err);
+    }
+  }
 
   useEffect(() => {
     if (!imdbID) return;
@@ -36,11 +118,14 @@ export default function MovieDetailsScreen() {
       .then((m) => setMovie(m))
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
+
+    checkIfInWatchlist();
   }, [imdbID]);
 
   if (loading) {
     return <ActivityIndicator style={styles.centered} color="#F7EEDB" />;
   }
+
   if (error) {
     return (
       <View style={styles.centered}>
@@ -48,6 +133,7 @@ export default function MovieDetailsScreen() {
       </View>
     );
   }
+
   if (!movie) {
     return (
       <View style={styles.centered}>
@@ -68,13 +154,18 @@ export default function MovieDetailsScreen() {
         <Text style={styles.info}>Year: {movie.Year}</Text>
         <Text style={styles.info}>Genre: {movie.Genre}</Text>
 
-        {/* Ratings */}
+        <TouchableOpacity onPress={toggleWatchlistStatus}>
+          <Text style={{ color: '#F7EEDB', marginVertical: 10 }}>
+            {isInWatchlist ? '➖ Remove from Watchlist' : '➕ Add to Watchlist'}
+          </Text>
+        </TouchableOpacity>
+
         {movie.Ratings && movie.Ratings.length > 0 && (
           <View style={styles.ratingsContainer}>
             <Text style={styles.sectionHeading}>Ratings</Text>
             {movie.Ratings.map((r) => (
               <Text key={r.Source} style={styles.ratingText}>
-                {r.Source}: {r.Value}
+                {SOURCE_LABELS[r.Source] ?? r.Source}: {r.Value}
               </Text>
             ))}
           </View>

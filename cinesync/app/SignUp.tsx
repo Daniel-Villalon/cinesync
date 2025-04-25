@@ -1,5 +1,5 @@
-import { FIREBASE_AUTH } from '../FirebaseConfig';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
+import { createUserWithEmailAndPassword, updateCurrentUser } from 'firebase/auth';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -10,10 +10,8 @@ import {
   Dimensions,
   KeyboardAvoidingView,
 } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-
+import { setDoc, doc, addDoc, collection, getDoc } from 'firebase/firestore';
 import { styles } from '../styles/SignUp.styles';
-import { DismissKeyboardView } from '../services/DismissKeyboardView';
 
 const { width, height } = Dimensions.get('window');
 
@@ -22,29 +20,56 @@ export default function SignInScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const auth = FIREBASE_AUTH;
+  const db = FIRESTORE_DB;
   const router = useRouter();
+
   const signUp = async () => {
     setLoading(true);
     try {
-      const response = await createUserWithEmailAndPassword(auth, email, password);
-      alert("w sign up")
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      const userRef = doc(db, "users", user.uid);
+
+
+      // Create new empty movie list
+      const newListRef = await addDoc(collection(db, 'movieLists'), {
+        userId: user.uid,
+        createdAt: new Date(),
+        movies: [],
+      });
+
+      const newListId = newListRef.id;
+
+      // Merge new data safely
+      await setDoc(userRef, {
+        id: user.uid,
+        email: user.email,
+        createdAt: new Date(),
+        groups: [],
+        list: newListId,
+      }, { merge: true });
+
+      // Optionally update the current user in auth context
+      await updateCurrentUser(auth, user);
+
+      alert("✅ Sign-up successful!");
     } catch (error: any) {
-      console.log(error);
-      alert('Sign up failed: ' + error.message)
+      console.error("Sign-up error:", error);
+      alert('Sign up failed: ' + error.message);
     } finally {
       setLoading(false);
     }
-  }
-  function login() {
+  };
+
+  const login = () => {
     router.push('/login');
-   }
+  };
+
   return (
-    <DismissKeyboardView style={styles.container}>
-      {/* Text Title */}
+    <View style={styles.container}>
       <Text style={styles.title}>Create an</Text>
       <Text style={styles.title}>Account</Text>
 
-      {/* Email Field */}
       <Text style={styles.labelEmail}>Email Address*</Text>
       <TextInput
         value={email}
@@ -56,7 +81,6 @@ export default function SignInScreen() {
         onChangeText={(text) => setEmail(text)}
       />
 
-      {/* Password Field */}
       <TextInput
         value={password}
         placeholder="Password*"
@@ -67,17 +91,16 @@ export default function SignInScreen() {
         onChangeText={(text) => setPassword(text)}
       />
 
-      {/* Sign In Button */}
       <TouchableOpacity onPress={signUp} style={styles.signInButton}>
         <Text style={styles.signInText}>Sign Up</Text>
       </TouchableOpacity>
 
       <View style={styles.loginButton}>
-              <Text style={styles.greyText}>Already have an account? </Text>
-              <TouchableOpacity onPress={login}>
-                <Text style={styles.registerLink}>Login</Text>
-              </TouchableOpacity>
+        <Text style={styles.greyText}>Already have an account? </Text>
+        <TouchableOpacity onPress={login}>
+          <Text style={styles.registerLink}>Login</Text>
+        </TouchableOpacity>
       </View>
-    </DismissKeyboardView>
+    </View>
   );
 }
