@@ -29,7 +29,7 @@ export default function Layout() {
 
     // Redirect authenticated user to homescreen if on login
     if (user && currentPage === 'login') {
-      router.replace('/group');
+      router.replace('/homescreen');
     }
   }, [ready, user, segments]);
 

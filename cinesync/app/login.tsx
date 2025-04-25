@@ -156,6 +156,11 @@ export default function SignInScreen() {
           <Text style={[styles.signInButton, { color: '#2B2C5A' }]}>User</Text>
         </TouchableOpacity>
       </Link>
+      <Link href="/group" asChild>
+        <TouchableOpacity style={styles.signInButton}>
+          <Text style={[styles.signInButton, { color: '#2B2C5A' }]}>Group</Text>
+        </TouchableOpacity>
+      </Link>
     </View>
   );
 }

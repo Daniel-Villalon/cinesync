@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Pressable, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import styles from '../styles/User.styles';
 
 const User = () => {
-    const [username, setUsername] = useState('User54');
+    const [username, setUsername] = useState('User');
     const [bio, setBio] = useState('');
     const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-
     const isDarkMode = theme === 'dark';
+
+    const navigation = useNavigation();
 
     const themeStyles = {
         backgroundColor: isDarkMode ? '#121212' : '#ffffff',
@@ -21,6 +23,19 @@ const User = () => {
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={[styles.container, { backgroundColor: themeStyles.backgroundColor }]}>
+                
+                {/* Header */}
+                <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <Text style={[styles.backText, { color: themeStyles.highlightColor }]}>{'< Back'}</Text>
+                </TouchableOpacity>
+                <Text style={[styles.headerTitle, { color: themeStyles.textColor }]}>Profile</Text>
+                <TouchableOpacity>
+                    <Text style={[styles.saveButtonText, { color: themeStyles.textColor }]}>Save</Text>
+                </TouchableOpacity>
+                </View>
+
+                {/* Existing content */}
                 <TouchableOpacity style={styles.avatarContainer}>
                     <View style={[styles.avatar, { backgroundColor: themeStyles.highlightColor }]}>
                         <Ionicons name="person" size={80} color={isDarkMode ? '#121212' : '#ffffff'} />
@@ -63,7 +78,7 @@ const User = () => {
                         maxLength={250}
                         numberOfLines={4}
                     />
-                    <Text style={[styles.charCount, { color: '#888' }]}>{bio.length}/250</Text>
+                    <Text style={[styles.charCount, { color: '#888' }]}>{bio.length}/150</Text>
                 </View>
 
                 <View style={styles.infoSection}>
