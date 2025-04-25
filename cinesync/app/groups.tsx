@@ -73,7 +73,7 @@ export default function GroupsScreen() {
     }
 
     try {
-      const groupId = await createGroup(newGroupName.trim(), user!.uid);
+      // const groupId = await createGroup(newGroupName.trim(), user!.uid);
       setNewGroupName('');
       Alert.alert('Group created!');
       fetchUserGroups(); // refresh

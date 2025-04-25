@@ -29,31 +29,34 @@ export default function SignInScreen() {
   const signUp = async () => {
     setLoading(true);
     try {
-      const response = await createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        const user = userCredential.user;
-        const userRef = doc(db, "users", user.uid); 
-        setDoc(userRef, {
-          email: user.email,
-          createdAt: new Date(),
-          groups: [],
+      await createUserWithEmailAndPassword(auth, email, password)
+        .then(async (userCredential) => {
+          const user = userCredential.user;
+          const userRef = doc(db, "users", user.uid); 
+          await setDoc(userRef, {
+            email: user.email,
+            createdAt: new Date(),
+            groups: [],
+          });
+          await updateCurrentUser(auth, user);
+          router.replace('/groups');
+        })
+        .catch((error) => {
+          console.error(error);
+          alert('Sign up failed: ' + error.message);
         });
-        updateCurrentUser(auth, user)
-      })
-      .catch((error) => {
-        // Handle errors
-      });
-      alert("w sign up")
     } catch (error: any) {
-      console.log(error);
-      alert('Sign up failed: ' + error.message)
+      console.error(error);
+      alert('Sign up failed: ' + error.message);
     } finally {
       setLoading(false);
     }
   }
-  function login() {
+  
+
+  function login(): void {
     router.push('/login');
-   }
+  }
   return (
     <View style={styles.container}>
       {/* Text Title */}
