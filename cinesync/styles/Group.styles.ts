@@ -98,19 +98,4 @@ export default StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 6,
   },
-
-  deleteButton: {
-    marginBottom: 20,
-    backgroundColor: '#D64545',
-    paddingVertical: 12,
-    marginHorizontal: 32,
-    borderRadius: 14,
-    alignItems: 'center',
-  },
-
-  deleteText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
 });

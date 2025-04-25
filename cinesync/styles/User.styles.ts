@@ -1,0 +1,94 @@
+import { StyleSheet } from 'react-native';
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#121212',
+        padding: 20,
+    },
+    avatarContainer: {
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    avatar: {
+        width: 150,
+        height: 150,
+        borderRadius: 75,
+        backgroundColor: '#f0c94d',
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'relative',
+    },
+    editIcon: {
+        position: 'absolute',
+        bottom: 10,
+        right: 10,
+        backgroundColor: '#f0c94d',
+        borderRadius: 20,
+        padding: 5,
+    },
+    usernameInput: {
+        color: '#ffffff',
+        fontSize: 28,
+        fontWeight: '500',
+        textAlign: 'center',
+        marginTop: 20,
+        borderColor: '#ffffff',
+        borderWidth: 1,
+        borderRadius: 10,
+        paddingVertical: 5,
+        paddingHorizontal: 15,
+        alignSelf: 'center',
+    },
+    bioContainer: {
+        marginTop: 20,
+        position: 'relative',
+    },
+    bioInput: {
+        borderColor: '#444',
+        borderWidth: 1,
+        borderRadius: 10,
+        color: '#ffffff',
+        padding: 15,
+        fontSize: 16,
+        height: 120,
+        textAlignVertical: 'top',
+    },
+    charCount: {
+        position: 'absolute',
+        bottom: 8,
+        right: 10,
+        color: '#888',
+        fontSize: 12,
+    },
+    infoSection: {
+        marginTop: 30,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    label: {
+        color: '#ffffff',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    infoText: {
+        color: '#f0c94d',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    logoutButton: {
+        backgroundColor: '#eef0e9',
+        paddingVertical: 15,
+        paddingHorizontal: 20,
+        borderRadius: 15,
+        marginTop: 50,
+        alignItems: 'center',
+    },
+    logoutText: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#000000',
+    },
+});
+
+export default styles;
