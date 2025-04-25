@@ -1,6 +1,7 @@
-// components/MovieSearch.tsx
+// app/MovieSearch.tsx
 
 import React, { useState, useMemo, useEffect } from 'react';
+// import CheckBox from "expo-checkbox";
 import {
   View,
   Text,
@@ -14,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import debounce from 'lodash.debounce';
 import { useRouter } from 'expo-router';
 import { searchMovies, MovieSummary } from '../services/MoviesService';
+import { DismissKeyboardView } from '../services/DismissKeyboardView';
 
 const MovieSearch: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -55,8 +57,8 @@ const MovieSearch: React.FC = () => {
   };
 
   return (
-    <View style={[styles.safe, { paddingTop: 15 }]}>
-      <Text style={styles.heading}>Search for Movies</Text>
+    <DismissKeyboardView style={[styles.safe, { paddingTop: 15 }]}>
+      <Text style={styles.heading}>Add to list</Text>
       <TextInput
         style={styles.input}
         placeholder="Start typing a movie title…"
@@ -75,6 +77,7 @@ const MovieSearch: React.FC = () => {
         data={results}
         keyExtractor={item => item.imdbID}
         renderItem={({ item }) => (
+          
           <TouchableOpacity
             style={styles.item}
             onPress={() => openDetails(item.imdbID)}
@@ -85,7 +88,7 @@ const MovieSearch: React.FC = () => {
         contentContainerStyle={{ paddingBottom: 80 }}
         keyboardShouldPersistTaps="handled"
       />
-    </View>
+    </DismissKeyboardView>
   );
 };
 
@@ -93,7 +96,7 @@ export default MovieSearch;
 
 const styles = StyleSheet.create({
   safe:      { flex: 1, backgroundColor: '#242423'},
-  heading:   { fontSize: 24, color: '#F7EEDB', marginHorizontal: 16, marginBottom: 8 },
+  heading:   { fontSize: 24, color: '#F7EEDB', marginHorizontal: 16, marginBottom: 8, textAlign: 'center', fontWeight: 'bold'},
   input:     {
     borderWidth: 1,
     borderColor: '#F7D491',

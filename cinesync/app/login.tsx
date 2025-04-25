@@ -1,5 +1,5 @@
-import { FIREBASE_AUTH } from '@/FirebaseConfig';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from '@firebase/auth';
+import { FIREBASE_AUTH } from '../FirebaseConfig';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword , sendPasswordResetEmail} from '@firebase/auth';
 import React from 'react';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
@@ -7,6 +7,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { styles } from "../styles/SignIn.styles";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect } from 'react';
+import { DismissKeyboardView } from '../services/DismissKeyboardView';
 
 import {
   View,
@@ -42,6 +43,24 @@ export default function SignInScreen() {
   
     loadRememberedInfo();
   }, []);
+  //Forget password function
+  const forgotPassword = async () => {
+    if (!email) {
+      alert('Please enter your email address first.');
+      return;
+    }
+  
+    try {
+      await sendPasswordResetEmail(auth, email); 
+      alert('Password reset email sent!');
+    } catch (error: any) {
+      console.log('Error sending password reset email:', error);
+      alert('Failed to send reset email: ' + error.message);
+    }
+  };
+  
+  
+  
   
 
   const signIn = async () => {
@@ -76,7 +95,7 @@ export default function SignInScreen() {
    }
   
   return (
-    <View style={styles.container}>
+    <DismissKeyboardView style={styles.container}>
 
       {/* Text Title */}
       <Text style={styles.title}>Welcome</Text>
@@ -110,15 +129,23 @@ export default function SignInScreen() {
         <>
 
       {/* Remember Me Button */}
-      <TouchableOpacity
-        style={styles.rememberMeContainer}
-        onPress={() => setRememberMe(!rememberMe)}
-      >
-        <View style={[styles.checkbox, rememberMe && styles.checkboxSelected]}>
-          {rememberMe && <MaterialCommunityIcons name="check-bold" size={20} color='black' />}
-        </View>
-        <Text style={styles.rememberMeText}>Remember Me</Text>
-      </TouchableOpacity>
+      <View style={styles.optionsRow}>
+        <TouchableOpacity
+          style={styles.rememberMeContainer}
+          onPress={() => setRememberMe(!rememberMe)}
+        >
+          <View style={[styles.checkbox, rememberMe && styles.checkboxSelected]}>
+            {rememberMe && <MaterialCommunityIcons name="check-bold" size={20} color='black' />}
+          </View>
+          <Text style={styles.rememberMeText}>Remember Me</Text>
+        </TouchableOpacity>
+
+        {/* Forgot Password */}
+        <TouchableOpacity onPress={forgotPassword}>
+          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+        </TouchableOpacity>
+      </View>
+
 
       {/* Sign In Button */}
       <TouchableOpacity onPress={signIn} style={styles.signInButton}>
@@ -134,6 +161,6 @@ export default function SignInScreen() {
           <Text style={styles.registerLink}>Sign Up</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </DismissKeyboardView>
   );
 }
