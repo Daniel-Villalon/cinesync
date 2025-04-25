@@ -33,6 +33,7 @@ const AddGroupScreen = () => {
 
   return (
     <View style={styles.container}>
+      <View style={{ flex: 1, width: '100%', alignItems: 'center' }}>
       {/* Group Image */}
       <TouchableOpacity onPress={pickImage} style={styles.imageWrapper}>
         {groupImage ? (
@@ -143,11 +144,11 @@ const AddGroupScreen = () => {
             </TouchableOpacity>
         </View>
         </View>
-        <TouchableOpacity style={styles.deleteButton}>
-                  <Text style={styles.deleteText}>Delete</Text>
-                </TouchableOpacity>
-
     </View>
+    <TouchableOpacity style={styles.deleteButton}>
+      <Text style={styles.deleteText}>Delete</Text>
+    </TouchableOpacity>
+  </View>
   );
 };
 

@@ -61,18 +61,12 @@ export default function GroupsScreen() {
                 <Text style={styles.addGroupText}>Add Group</Text>
             </TouchableOpacity>
         )}
+        {/* User formatting */}
         {(groups.length + (!isEditing ? 1 : 0)) % 2 !== 0 && (
             <View style={[styles.groupWrapper, { opacity: 0 }]} />
         )}
         </View>
       </ScrollView>
-
-      {/* Delete Button (only in edit mode) */}
-      {isEditing && (
-        <TouchableOpacity style={styles.deleteButton}>
-          <Text style={styles.deleteText}>Delete</Text>
-        </TouchableOpacity>
-      )}
     </SafeAreaView>
   );
 }

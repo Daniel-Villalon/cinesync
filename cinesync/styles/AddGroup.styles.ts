@@ -112,10 +112,10 @@ export default StyleSheet.create({
     marginTop: 2,
   },
   deleteButton: {
-    marginBottom: 20,
+    marginBottom: 40,
     backgroundColor: '#D64545',
     paddingVertical: 14,
-    marginHorizontal: 32,
+    width: '100%',
     borderRadius: 14,
     alignItems: 'center',
   },
