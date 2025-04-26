@@ -16,5 +16,5 @@ export default function Index() {
 
   if (loggedIn === null) return null; // or loading spinner
 
-  return <Redirect href={loggedIn ? '/groups' : '/login'} />;
+  return <Redirect href={loggedIn ? '/group' : '/login'} />;
 }
