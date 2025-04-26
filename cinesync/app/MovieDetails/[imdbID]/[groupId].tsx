@@ -14,7 +14,7 @@ import {
   getMovieDetails,
   getPosterUrl,
   MovieDetails as MD,
-} from '../../services/MoviesService';
+} from '../../../services/MoviesService';
 import {
   doc,
   getDoc,
@@ -33,7 +33,7 @@ const SOURCE_LABELS: Record<string, string> = {
 };
 
 export default function MovieDetailsScreen() {
-  const { imdbID } = useLocalSearchParams<{ imdbID: string }>();
+  const { imdbID, groupId } = useLocalSearchParams<{ imdbID: string; groupId: string }>();
   const [movie, setMovie] = useState<MD | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,70 +43,76 @@ export default function MovieDetailsScreen() {
   async function toggleWatchlistStatus() {
     const user = getAuth().currentUser;
     if (!user || !imdbID) return;
-
+  
     try {
-      const userRef = doc(db, 'users', user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) {
-        console.error('User document not found');
+      const groupRef = doc(db, 'groups', groupId);
+      const groupSnap = await getDoc(groupRef);
+      if (!groupSnap.exists()) {
+        console.error('group document not found');
         return;
       }
-
-      const listId = userSnap.data()?.list;
+  
+      const listId = groupSnap.data()?.groupList;
       if (!listId) {
-        console.error('No list ID found for this user');
+        console.error('No list ID found for this group');
         return;
       }
-
+  
       const movieListRef = doc(db, 'movieLists', listId);
       const listSnap = await getDoc(movieListRef);
-
+  
+      const newMovieEntry = { imdbID, addedBy: user.uid };
+  
       if (!listSnap.exists()) {
         await setDoc(movieListRef, {
-          userId: user.uid,
+          groupId,
           createdAt: new Date(),
-          movies: [imdbID],
+          movies: [newMovieEntry],
         });
         setIsInWatchlist(true);
         return;
       }
-
-      const currentMovies: string[] = listSnap.data()?.movies || [];
-      const alreadyInList = currentMovies.includes(imdbID);
-
-      await updateDoc(movieListRef, {
-        movies: alreadyInList
-          ? arrayRemove(imdbID)
-          : arrayUnion(imdbID),
-      });
-
+  
+      const currentMovies: any[] = listSnap.data()?.movies || [];
+      const alreadyInList = currentMovies.some((m) => m.imdbID === imdbID);
+  
+      if (alreadyInList) {
+        const updatedMovies = currentMovies.filter((m) => m.imdbID !== imdbID);
+        await updateDoc(movieListRef, {
+          movies: updatedMovies,
+        });
+      } else {
+        await updateDoc(movieListRef, {
+          movies: arrayUnion(newMovieEntry),
+        });
+      }
+  
       setIsInWatchlist(!alreadyInList);
     } catch (err) {
       console.error('Error updating watchlist:', err);
     }
   }
-
+  
   async function checkIfInWatchlist() {
     const user = getAuth().currentUser;
     if (!user || !imdbID) return;
-
+  
     try {
-      const userRef = doc(db, 'users', user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) return;
-
-      const listId = userSnap.data()?.list;
+      const groupRef = doc(db, 'groups', groupId);
+      const groupSnap = await getDoc(groupRef);
+  
+      if (!groupSnap.exists()) return;
+  
+      const listId = groupSnap.data()?.groupList;
       if (!listId) return;
-
+  
       const movieListRef = doc(db, 'movieLists', listId);
       const listSnap = await getDoc(movieListRef);
-
+  
       if (!listSnap.exists()) return;
-
-      const currentMovies: string[] = listSnap.data()?.movies || [];
-      setIsInWatchlist(currentMovies.includes(imdbID));
+  
+      const currentMovies: any[] = listSnap.data()?.movies || [];
+      setIsInWatchlist(currentMovies.some((m) => m.imdbID === imdbID));
     } catch (err) {
       console.error('Error checking watchlist:', err);
     }
