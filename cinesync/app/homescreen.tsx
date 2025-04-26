@@ -1,27 +1,69 @@
-import React from 'react';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
-import { FIREBASE_AUTH } from '@/FirebaseConfig';
-import { signOut } from 'firebase/auth';
+import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import MovieSearch from './MovieSearch';
 
 export default function Homescreen() {
+  const router = useRouter();
+  const { groupId } = useLocalSearchParams();
+  const [authChecked, setAuthChecked] = useState(false);
+  const [groupName, setGroupName] = useState<string | null>(null);
   const user = FIREBASE_AUTH.currentUser;
+
+  // 🔐 Redirect if not logged in
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
+      if (!user) {
+        router.replace('/login');
+      }
+      setAuthChecked(true);
+    });
+    return unsubscribe;
+  }, []);
+
+  // 📦 Fetch group name
+  useEffect(() => {
+    const fetchGroupName = async () => {
+      if (!groupId) return;
+      try {
+        const groupRef = doc(FIRESTORE_DB, 'groups', groupId as string);
+        const groupSnap = await getDoc(groupRef);
+        if (groupSnap.exists()) {
+          setGroupName(groupSnap.data()?.name);
+        } else {
+          console.log('No such group!');
+        }
+      } catch (error) {
+        console.error('Failed to fetch group name:', error);
+      }
+    };
+
+    fetchGroupName();
+  }, [groupId]);
 
   const handleLogout = async () => {
     try {
       await signOut(FIREBASE_AUTH);
-      // onAuthStateChanged in _layout.tsx will redirect to /login
+      router.replace('/login');
     } catch (error) {
       console.error('Logout failed:', error);
     }
   };
 
+  if (!authChecked) return null; // Wait for auth check before showing UI
+
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Welcome, {user?.email}</Text>
+      <Text style={styles.header}>{groupName ? `Group: ${groupName}` : 'Loading Group...'}</Text>
       <MovieSearch />
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Log Out</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.logoutButton} onPress={() => router.push('/groups')}>
+        <Text style={styles.logoutText}>Go to Groups</Text>
       </TouchableOpacity>
     </View>
   );
@@ -30,44 +72,8 @@ export default function Homescreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#242423', // dark greyr
+    backgroundColor: '#242423',
     paddingHorizontal: 20,
-  },
-  title: {
-    fontSize: 48,
-    fontWeight: '700',
-    color: '#E8EDDF',
-    marginTop: -40,
-    fontFamily: 'Georgia',
-  },
-  tagline: {
-    fontSize: 16,
-    color: '#E8EDDF',
-    marginBottom: 40,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  signInButton: {
-    backgroundColor: '#E8EDDF',
-    paddingVertical: 16,
-    paddingHorizontal: 60,
-    borderRadius: 20,
-    marginBottom: 20,
-    width: '100%',
-    alignItems: 'center',
-  },
-  signUpButton: {
-    backgroundColor: '#F5CB5C',
-    paddingVertical: 16,
-    paddingHorizontal: 60,
-    borderRadius: 20,
-    width: '100%',
-    alignItems: 'center',
-  },
-  buttonText: {
-    fontSize: 18,
-    color: '#242423',
-    fontWeight: '600',
   },
   header: {
     color: '#F7EEDB',

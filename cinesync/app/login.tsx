@@ -1,4 +1,4 @@
-import { FIREBASE_AUTH } from '@/FirebaseConfig';
+import { FIREBASE_AUTH } from '../FirebaseConfig';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword , sendPasswordResetEmail} from '@firebase/auth';
 import React from 'react';
 import { useState } from 'react';
@@ -7,7 +7,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { styles } from "../styles/SignIn.styles";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect } from 'react';
-import { Link } from 'expo-router'; //remove after creating groups
+import { DismissKeyboardView } from '../services/DismissKeyboardView';
+
 import {
   View,
   Text,
@@ -63,6 +64,7 @@ export default function SignInScreen() {
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
       console.log('Signed in!', response.user.email);
+  
       if (rememberMe) {
         await AsyncStorage.setItem('rememberMe', 'true');
         await AsyncStorage.setItem('rememberedEmail', email);
@@ -70,7 +72,10 @@ export default function SignInScreen() {
         await AsyncStorage.removeItem('rememberMe');
         await AsyncStorage.removeItem('rememberedEmail');
       }
-      // layout.tsx will redirect automatically
+  
+      // ✅ Send user to / so index.tsx can run the redirect
+      router.replace('/');
+  
     } catch (error: any) {
       console.log(error);
       alert('Sign in failed: ' + error.message);
@@ -79,13 +84,14 @@ export default function SignInScreen() {
     }
   };
   
+  
   // implement
   function register() {
     router.push('/SignUp');
    }
   
   return (
-    <View style={styles.container}>
+    <DismissKeyboardView style={styles.container}>
 
       {/* Text Title */}
       <Text style={styles.title}>Welcome</Text>
@@ -151,6 +157,6 @@ export default function SignInScreen() {
           <Text style={styles.registerLink}>Sign Up</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </DismissKeyboardView>
   );
 }
