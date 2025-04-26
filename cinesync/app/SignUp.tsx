@@ -45,8 +45,6 @@ export default function SignInScreen() {
       // Optionally update the current user in auth context
       await updateCurrentUser(auth, user);
       router.replace('/groups');
-
-      alert("✅ Sign-up successful!");
     } catch (error: any) {
       console.error("Sign-up error:", error);
       alert('Sign up failed: ' + error.message);
