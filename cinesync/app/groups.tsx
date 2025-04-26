@@ -1,4 +1,3 @@
-// app/groups.tsx
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -9,6 +8,7 @@ import {
   Alert,
   StyleSheet,
 } from 'react-native';
+
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { FIRESTORE_DB } from '@/FirebaseConfig';
 import { useRouter } from 'expo-router';
@@ -18,6 +18,7 @@ import {
   getDoc,
   getDocs,
 } from 'firebase/firestore';
+
 import { createGroup } from '../services/GroupService';
 
 export default function GroupsScreen() {
@@ -25,10 +26,11 @@ export default function GroupsScreen() {
   const [loading, setLoading] = useState(true);
   const [newGroupName, setNewGroupName] = useState('');
   const [authChecked, setAuthChecked] = useState(false);
+
   const router = useRouter();
   const user = getAuth().currentUser;
 
-  // 🔐 Auth protection
+  // ✅ Check if user is logged in
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(getAuth(), (currentUser) => {
       if (!currentUser) {
@@ -39,7 +41,7 @@ export default function GroupsScreen() {
     return unsubscribe;
   }, []);
 
-  // 📦 Load groups the user belongs to
+  // 🔁 Fetch all groups where this user is a member
   const fetchUserGroups = async () => {
     if (!user) return;
 
@@ -65,7 +67,7 @@ export default function GroupsScreen() {
     }
   };
 
-  // 🚀 Handle group creation
+  // ➕ Create a new group and auto-add user to it
   const handleCreateGroup = async () => {
     if (!newGroupName.trim()) {
       Alert.alert('Group name is required');
@@ -76,18 +78,19 @@ export default function GroupsScreen() {
       const groupId = await createGroup(newGroupName.trim(), user!.uid);
       setNewGroupName('');
       Alert.alert('Group created!');
-      fetchUserGroups(); // refresh
+      fetchUserGroups(); // refresh list
     } catch (err) {
       console.error(err);
       Alert.alert('Failed to create group');
     }
   };
 
-  // 📍 Go to homescreen with group ID
+  // 🎯 Navigate to homescreen with selected group ID
   const handleSelectGroup = (groupId: string) => {
     router.push({ pathname: '/homescreen', params: { groupId } });
   };
 
+  // 🔁 Load groups on mount
   useEffect(() => {
     fetchUserGroups();
   }, []);
@@ -98,6 +101,7 @@ export default function GroupsScreen() {
     <View style={styles.container}>
       <Text style={styles.heading}>Select a Group</Text>
 
+      {/* Create group form */}
       <Text style={styles.subheading}>Create New Group</Text>
       <TextInput
         style={styles.input}
@@ -110,6 +114,7 @@ export default function GroupsScreen() {
         <Text style={styles.createButtonText}>Create Group</Text>
       </TouchableOpacity>
 
+      {/* Show group list */}
       {loading ? (
         <Text style={styles.loading}>Loading your groups...</Text>
       ) : groups.length === 0 ? (
@@ -119,17 +124,28 @@ export default function GroupsScreen() {
           data={groups}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.groupItem}
-              onPress={() => handleSelectGroup(item.id)}
-            >
-              <Text style={styles.groupText}>{item.name}</Text>
-            </TouchableOpacity>
+            <View style={styles.groupBlock}>
+              <TouchableOpacity
+                style={styles.groupItem}
+                onPress={() => handleSelectGroup(item.id)}
+              >
+                <Text style={styles.groupText}>{item.name}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => router.push(`/InviteUser?groupId=${item.id}`)}>
+                <Text style={styles.inviteLink}>+ Invite</Text>
+              </TouchableOpacity>
+            </View>
           )}
         />
       )}
 
-      {/* Optional: dev-only go back */}
+      {/* Global View Invites button */}
+      <TouchableOpacity onPress={() => router.push(`/PendingInvites`)}>
+        <Text style={styles.viewInvites}>📬 View My Invites</Text>
+      </TouchableOpacity>
+
+      {/* Dev: go back to login */}
       <TouchableOpacity style={styles.goBackButton} onPress={() => router.replace('/login')}>
         <Text style={styles.goBackText}>← Back to Login</Text>
       </TouchableOpacity>
@@ -182,16 +198,30 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: 20,
   },
-  groupItem: {
+  groupBlock: {
+    marginBottom: 16,
     backgroundColor: '#F5CB5C',
-    padding: 16,
     borderRadius: 8,
-    marginBottom: 10,
+    padding: 12,
+  },
+  groupItem: {
+    paddingBottom: 4,
   },
   groupText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#242423',
+  },
+  inviteLink: {
+    color: '#242423',
+    fontWeight: 'bold',
+    marginTop: 4,
+  },
+  viewInvites: {
+    color: '#F7EEDB',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 24,
   },
   goBackButton: {
     marginTop: 20,
