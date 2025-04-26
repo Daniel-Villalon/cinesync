@@ -16,8 +16,10 @@ import debounce from 'lodash.debounce';
 import { useRouter } from 'expo-router';
 import { searchMovies, MovieSummary } from '../services/MoviesService';
 import { DismissKeyboardView } from '../services/DismissKeyboardView';
-
-const MovieSearch: React.FC = () => {
+interface MovieSearchProps {
+  groupId: string;
+}
+const MovieSearch: React.FC<MovieSearchProps> = ({ groupId }) => {
   const insets = useSafeAreaInsets();
   const [query, setQuery]     = useState('');
   const [results, setResults] = useState<MovieSummary[]>([]);
@@ -52,8 +54,8 @@ const MovieSearch: React.FC = () => {
     return () => debouncedSearch.cancel();
   }, [query]);
 
-  const openDetails = (imdbID: string) => {
-    router.push(`/MovieDetails/${imdbID}`);
+  const openDetails = (imdbID: string, groupId: string) => {
+    router.push(`/MovieDetails/${imdbID}/${groupId}`);
   };
 
   return (
@@ -80,7 +82,7 @@ const MovieSearch: React.FC = () => {
           
           <TouchableOpacity
             style={styles.item}
-            onPress={() => openDetails(item.imdbID)}
+            onPress={() => openDetails(item.imdbID, groupId)}
           >
             <Text style={styles.title}>{item.Title} ({item.Year})</Text>
           </TouchableOpacity>

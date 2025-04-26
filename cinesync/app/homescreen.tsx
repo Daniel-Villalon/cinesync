@@ -58,7 +58,7 @@ export default function Homescreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>{groupName ? `Group: ${groupName}` : 'Loading Group...'}</Text>
-      <MovieSearch />
+      <MovieSearch groupId={groupId as string} />
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Log Out</Text>
       </TouchableOpacity>

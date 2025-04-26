@@ -34,23 +34,12 @@ export default function SignInScreen() {
       const user = userCredential.user;
       const userRef = doc(db, "users", user.uid);
 
-
-      // Create new empty movie list
-      const newListRef = await addDoc(collection(db, 'movieLists'), {
-        userId: user.uid,
-        createdAt: new Date(),
-        movies: [],
-      });
-
-      const newListId = newListRef.id;
-
-      // Merge new data safely
       await setDoc(userRef, {
         id: user.uid,
         email: user.email,
         createdAt: new Date(),
         groups: [],
-        list: newListId,
+        // list: newListId,
       }, { merge: true });
 
       // Optionally update the current user in auth context
