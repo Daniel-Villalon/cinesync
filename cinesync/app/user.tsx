@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Pressable, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import styles from '../styles/User.styles';
 
 const User = () => {
@@ -10,7 +10,7 @@ const User = () => {
     const [theme, setTheme] = useState<'light' | 'dark'>('dark');
     const isDarkMode = theme === 'dark';
 
-    const navigation = useNavigation();
+    const router = useRouter();
 
     const themeStyles = {
         backgroundColor: isDarkMode ? '#121212' : '#ffffff',
@@ -26,9 +26,10 @@ const User = () => {
                 
                 {/* Header */}
                 <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
+                <TouchableOpacity onPress={() => router.back()}>
                     <Text style={[styles.backText, { color: themeStyles.highlightColor }]}>{'< Back'}</Text>
                 </TouchableOpacity>
+
                 <Text style={[styles.headerTitle, { color: themeStyles.textColor }]}>Profile</Text>
                 <TouchableOpacity>
                     <Text style={[styles.saveButtonText, { color: themeStyles.textColor }]}>Save</Text>
