@@ -117,6 +117,68 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#000000',
     },
+    modalOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContainer: {
+        width: '80%',
+        borderRadius: 12,
+        padding: 20,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 15,
+        textAlign: 'center',
+    },
+    genreItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    genreText: {
+        fontSize: 16,
+    },
+    modalCloseButton: {
+        marginTop: 20,
+        alignItems: 'center',
+    },
+    closeButton: {
+        paddingVertical: 14,
+        borderRadius: 8,
+        alignItems: 'center',
+        marginTop: 10,
+      },
+    genreOption: {
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        borderWidth: 1,
+        marginBottom: 10,
+    },
+    modalContent: {
+        borderRadius: 12,
+        padding: 20,
+        maxHeight: '80%',
+      },
+    avatarImage: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        resizeMode: 'cover',
+    },
+    genres: {
+        color: '#f0c94d',
+        fontSize: 18,
+        marginTop: 5,
+      },
 });
 
 export default styles;
