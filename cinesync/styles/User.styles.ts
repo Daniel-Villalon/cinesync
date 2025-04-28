@@ -178,6 +178,7 @@ const styles = StyleSheet.create({
         color: '#f0c94d',
         fontSize: 18,
         marginTop: 5,
+        fontWeight: 'bold',
       },
 });
 

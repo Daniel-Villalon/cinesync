@@ -14,6 +14,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import { signOut } from 'firebase/auth';
+import { FIREBASE_AUTH } from '@/FirebaseConfig';
 import styles from '../styles/User.styles';
 
 const User = () => {
@@ -62,6 +64,15 @@ const User = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut(FIREBASE_AUTH);
+      router.replace('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
   const genreOptions = [
     'Fantasy',
     'Sci-fi',
@@ -101,9 +112,6 @@ const User = () => {
             ) : (
               <Ionicons name="person" size={80} color={isDarkMode ? '#121212' : '#ffffff'} />
             )}
-            <View style={[styles.editIcon, { backgroundColor: themeStyles.highlightColor }]}>
-              <Ionicons name="pencil" size={20} color={'#000'} />
-            </View>
           </View>
         </TouchableOpacity>
 
@@ -149,10 +157,10 @@ const User = () => {
         <View style={styles.infoSection}>
           <Text style={[styles.label, { color: themeStyles.textColor }]}>Favorite Genres:</Text>
           <TouchableOpacity onPress={() => setShowGenreSelector(true)}>
-          <Text style={styles.genres}>
-            {favoriteGenres.length > 0
+            <Text style={styles.genres}>
+              {favoriteGenres.length > 0
                 ? favoriteGenres.filter((genre) => genre.trim() !== '').join(', ')
-                : 'Select your favorites'}
+                : 'None'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -179,7 +187,10 @@ const User = () => {
         </View>
 
         {/* Logout */}
-        <Pressable style={[styles.logoutButton, { backgroundColor: isDarkMode ? '#ffffff' : '#121212' }]}>
+        <Pressable
+          style={[styles.logoutButton, { backgroundColor: isDarkMode ? '#ffffff' : '#121212' }]}
+          onPress={handleLogout}
+        >
           <Text style={[styles.logoutText, { color: isDarkMode ? '#121212' : '#ffffff' }]}>Logout</Text>
         </Pressable>
 
