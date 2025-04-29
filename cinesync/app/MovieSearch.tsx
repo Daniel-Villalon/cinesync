@@ -68,7 +68,7 @@ const MovieSearchScreen: React.FC = () => {
       />
 
       {loading && <ActivityIndicator style={{ marginTop: 12 }} color="#F7EEDB" />}
-      {error   && <Text style={styles.errorText}>{error}</Text>}
+      {error && <Text style={styles.errorText}>{error.toString()}</Text>}
 
       <FlatList
         data={results}
