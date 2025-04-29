@@ -147,7 +147,7 @@ const User = () => {
             multiline
             value={bio}
             onChangeText={setBio}
-            maxLength={250}
+            maxLength={150}
             numberOfLines={4}
           />
           <Text style={[styles.charCount, { color: '#888' }]}>{bio.length}/150</Text>
