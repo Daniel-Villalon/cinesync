@@ -108,7 +108,7 @@ export default function GroupsScreen() {
                   {isEditing && (
                     <TouchableOpacity
                       style={styles.editIcon}
-                      onPress={() => router.push(`/InviteUser?groupId=${group.id}`)}
+                      onPress={() => router.push(`/addgroup`)}
                     >
                       <MaterialCommunityIcons name="pencil" size={18} color="#000" />
                     </TouchableOpacity>

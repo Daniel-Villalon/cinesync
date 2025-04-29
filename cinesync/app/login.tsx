@@ -1,15 +1,13 @@
+// app/login.tsx
+
 import { FIREBASE_AUTH } from '../FirebaseConfig';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword , sendPasswordResetEmail} from '@firebase/auth';
-import React from 'react';
-import { useState } from 'react';
-import { useRouter } from 'expo-router';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from '@firebase/auth';
+import React, { useState, useEffect } from 'react';
+import { useRouter, Link } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { styles } from "../styles/SignIn.styles";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect } from 'react';
 import { DismissKeyboardView } from '../services/DismissKeyboardView';
-import { Link } from 'expo-router';
-
 import {
   View,
   Text,
@@ -17,7 +15,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -27,7 +24,6 @@ export default function SignInScreen() {
   const [rememberMe, setRememberMe] = useState(false);
   const auth = FIREBASE_AUTH;
 
-  // For remembering users
   useEffect(() => {
     const loadRememberedInfo = async () => {
       try {
@@ -41,31 +37,29 @@ export default function SignInScreen() {
         console.log('Failed to load remembered user:', error);
       }
     };
-  
     loadRememberedInfo();
   }, []);
-  //Forget password function
+
   const forgotPassword = async () => {
     if (!email) {
       alert('Please enter your email address first.');
       return;
     }
-  
     try {
-      await sendPasswordResetEmail(auth, email); 
+      await sendPasswordResetEmail(auth, email);
       alert('Password reset email sent!');
     } catch (error: any) {
       console.log('Error sending password reset email:', error);
       alert('Failed to send reset email: ' + error.message);
     }
   };
-  
+
   const signIn = async () => {
     setLoading(true);
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
       console.log('Signed in!', response.user.email);
-  
+
       if (rememberMe) {
         await AsyncStorage.setItem('rememberMe', 'true');
         await AsyncStorage.setItem('rememberedEmail', email);
@@ -73,10 +67,9 @@ export default function SignInScreen() {
         await AsyncStorage.removeItem('rememberMe');
         await AsyncStorage.removeItem('rememberedEmail');
       }
-  
-      // ✅ Send user to / so index.tsx can run the redirect
+
       router.replace('/');
-  
+
     } catch (error: any) {
       console.log(error);
       alert('Sign in failed: ' + error.message);
@@ -84,21 +77,16 @@ export default function SignInScreen() {
       setLoading(false);
     }
   };
-  
-  
-  // implement
+
   function register() {
     router.push('/SignUp');
-   }
-  
+  }
+
   return (
     <DismissKeyboardView style={styles.container}>
-
-      {/* Text Title */}
       <Text style={styles.title}>Welcome</Text>
       <Text style={styles.title}>Back</Text>
 
-      {/* Email Field */}
       <Text style={styles.labelEmail}>Email Address*</Text>
       <TextInput
         value={email}
@@ -110,7 +98,6 @@ export default function SignInScreen() {
         onChangeText={(text) => setEmail(text)}
       />
 
-      {/* Password Field */}
       <TextInput
         value={password}
         placeholder="Password*"
@@ -120,54 +107,57 @@ export default function SignInScreen() {
         autoCapitalize="none"
         onChangeText={(text) => setPassword(text)}
       />
-      { loading ? (
+
+      {loading ? (
         <ActivityIndicator size="large" color="0000ff" />
-      ) :  (
+      ) : (
         <>
+          <View style={styles.optionsRow}>
+            <TouchableOpacity
+              style={styles.rememberMeContainer}
+              onPress={() => setRememberMe(!rememberMe)}
+            >
+              <View style={[styles.checkbox, rememberMe && styles.checkboxSelected]}>
+                {rememberMe && <MaterialCommunityIcons name="check-bold" size={20} color="black" />}
+              </View>
+              <Text style={styles.rememberMeText}>Remember Me</Text>
+            </TouchableOpacity>
 
-      {/* Remember Me Button */}
-      <View style={styles.optionsRow}>
-        <TouchableOpacity
-          style={styles.rememberMeContainer}
-          onPress={() => setRememberMe(!rememberMe)}
-        >
-          <View style={[styles.checkbox, rememberMe && styles.checkboxSelected]}>
-            {rememberMe && <MaterialCommunityIcons name="check-bold" size={20} color='black' />}
+            <TouchableOpacity onPress={forgotPassword}>
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
           </View>
-          <Text style={styles.rememberMeText}>Remember Me</Text>
-        </TouchableOpacity>
 
-        {/* Forgot Password */}
-        <TouchableOpacity onPress={forgotPassword}>
-          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-        </TouchableOpacity>
-      </View>
-
-
-      {/* Sign In Button */}
-      <TouchableOpacity onPress={signIn} style={styles.signInButton}>
-        <Text style={styles.signInText} >Sign In</Text>
-      </TouchableOpacity>
-      </>
+          <TouchableOpacity onPress={signIn} style={styles.signInButton}>
+            <Text style={styles.signInText}>Sign In</Text>
+          </TouchableOpacity>
+        </>
       )}
-      {/* if someone wants to register from the sign in page, they can press the register button
-      !!! Need to implement register function to route user */}
+
       <View style={styles.registerButton}>
         <Text style={styles.greyText}>Don’t have an account? </Text>
         <TouchableOpacity onPress={register}>
           <Text style={styles.registerLink}>Sign Up</Text>
         </TouchableOpacity>
       </View>
+
       <Link href="/user" asChild>
-         <TouchableOpacity style={styles.signInButton}>
-           <Text style={[styles.signInButton, { color: '#2B2C5A' }]}>User</Text>
-         </TouchableOpacity>
-       </Link>
-       <Link href="/group" asChild>
-         <TouchableOpacity style={styles.signInButton}>
-           <Text style={[styles.signInButton, { color: '#2B2C5A' }]}>Group</Text>
-         </TouchableOpacity>
-       </Link>
+        <TouchableOpacity style={styles.signInButton}>
+          <Text style={{ color: '#2B2C5A' }}>User</Text>
+        </TouchableOpacity>
+      </Link>
+
+      <Link href="/group" asChild>
+        <TouchableOpacity style={styles.signInButton}>
+          <Text style={{ color: '#2B2C5A' }}>Group</Text>
+        </TouchableOpacity>
+      </Link>
+
+      <Link href="/testgroups" asChild>
+        <TouchableOpacity style={styles.signInButton}>
+          <Text style={{ color: '#2B2C5A' }}>Go to Test Groups</Text>
+        </TouchableOpacity>
+      </Link>
     </DismissKeyboardView>
   );
 }
