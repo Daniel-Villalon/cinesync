@@ -39,6 +39,7 @@ const User = () => {
 
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
     if (!permissionResult.granted) {
       alert("Permission to access media library is required!");
       return;
@@ -52,9 +53,10 @@ const User = () => {
     });
 
     if (!result.canceled) {
-      setAvatarUri(result.assets[0].uri);
+      setAvatarUri(result.assets[0].uri);  
     }
   };
+  
 
   const toggleGenre = (genre: string) => {
     if (favoriteGenres.includes(genre)) {
