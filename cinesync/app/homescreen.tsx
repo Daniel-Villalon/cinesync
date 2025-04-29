@@ -83,10 +83,11 @@ export default function Homescreen() {
   if (!currentGroup) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text style={styles.header}>Group not found.</Text>
+        <ActivityIndicator size="large" color="#F7EEDB" />
       </SafeAreaView>
     );
-  }
+  }  
+  
 
   return (
     <SafeAreaView style={styles.container}> {/* ✅ use SafeAreaView */}

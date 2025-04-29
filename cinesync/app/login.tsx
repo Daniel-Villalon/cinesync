@@ -152,12 +152,6 @@ export default function SignInScreen() {
           <Text style={{ color: '#2B2C5A' }}>Group</Text>
         </TouchableOpacity>
       </Link>
-
-      <Link href="/testgroups" asChild>
-        <TouchableOpacity style={styles.signInButton}>
-          <Text style={{ color: '#2B2C5A' }}>Go to Test Groups</Text>
-        </TouchableOpacity>
-      </Link>
     </DismissKeyboardView>
   );
 }
