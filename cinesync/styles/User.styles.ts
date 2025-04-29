@@ -98,6 +98,7 @@ const styles = StyleSheet.create({
         color: '#ffffff',
         fontSize: 18,
         fontWeight: 'bold',
+        flexWrap: 'wrap',
     },
     infoText: {
         color: '#f0c94d',
@@ -179,7 +180,13 @@ const styles = StyleSheet.create({
         fontSize: 18,
         marginTop: 5,
         fontWeight: 'bold',
-      },
+        flexWrap: 'wrap',
+    },  
+    genresContainer: {
+        marginTop: 20,
+    },
+      
+       
 });
 
 export default styles;

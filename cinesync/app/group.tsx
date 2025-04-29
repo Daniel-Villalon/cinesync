@@ -80,7 +80,7 @@ export default function GroupsScreen() {
 
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>
-            {isEditing ? 'Edit Groups' : "Who's watching"}
+            {isEditing ? 'Edit Groups' : "Who's watching?"}
           </Text>
         </View>
 

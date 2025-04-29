@@ -155,14 +155,16 @@ const User = () => {
 
         {/* Favorite Genres */}
         <View style={styles.infoSection}>
-          <Text style={[styles.label, { color: themeStyles.textColor }]}>Favorite Genres:</Text>
-          <TouchableOpacity onPress={() => setShowGenreSelector(true)}>
+        <TouchableOpacity onPress={() => setShowGenreSelector(true)}>
+            <Text style={[styles.label, { color: themeStyles.textColor }]} numberOfLines={0} >
+            Favorite Genres:{' '}
             <Text style={styles.genres}>
-              {favoriteGenres.length > 0
+                {favoriteGenres.length > 0
                 ? favoriteGenres.filter((genre) => genre.trim() !== '').join(', ')
                 : 'None'}
             </Text>
-          </TouchableOpacity>
+            </Text>
+        </TouchableOpacity>
         </View>
 
         {/* Theme Toggle */}
