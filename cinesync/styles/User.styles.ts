@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
         color: '#ffffff',
         padding: 15,
         fontSize: 16,
-        height: 120,
+        height: 150,
         textAlignVertical: 'top',
     },
     charCount: {
