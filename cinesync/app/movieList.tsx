@@ -10,12 +10,18 @@ import {
 } from 'react-native';
 import { FIRESTORE_DB } from '@/FirebaseConfig';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
-import { getPosterUrl, getMovieDetails } from '@/services/MoviesService'; // Assuming you already have OMDB API functions
+import { getMovieDetails } from '@/services/MoviesService';
 
 type MovieEntry = {
   imdbID: string;
   addedBy: string;
-  addedAt: any; // Firestore Timestamp
+  addedAt: any;
+};
+
+type MovieWithDetails = MovieEntry & {
+  title: string;
+  poster: string;
+  username: string; // ✅ Added username
 };
 
 type Props = {
@@ -23,56 +29,76 @@ type Props = {
 };
 
 const MovieList: React.FC<Props> = ({ groupId }) => {
-  const [movies, setMovies] = useState<MovieEntry[]>([]);
+  const [movies, setMovies] = useState<MovieWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!groupId) return;
+
+    let unsubscribe: () => void;
+
+    const fetchMovieDetails = async (movieEntries: MovieEntry[]) => {
+      const detailedMovies = await Promise.all(
+        movieEntries.map(async (entry) => {
+          try {
+            const details = await getMovieDetails(entry.imdbID);
+
+            // ✅ Fetch the username for the addedBy user
+            const userRef = doc(FIRESTORE_DB, 'users', entry.addedBy);
+            const userSnap = await getDoc(userRef);
+
+            const username = userSnap.exists() ? userSnap.data()?.username || 'Unknown' : 'Unknown';
+
+            return {
+              ...entry,
+              title: details.Title || 'Untitled',
+              poster: details.Poster || '',
+              username: username,
+            };
+          } catch (err) {
+            console.warn('Error fetching details for', entry.imdbID, err);
+            return {
+              ...entry,
+              title: 'Unknown',
+              poster: '',
+              username: 'Unknown',
+            };
+          }
+        })
+      );
+      setMovies(detailedMovies);
+    };
 
     const setupListener = async () => {
       try {
         const groupRef = doc(FIRESTORE_DB, 'groups', groupId);
         const groupSnap = await getDoc(groupRef);
 
-        if (!groupSnap.exists()) {
-          console.log('No such group!');
-          return;
-        }
+        if (!groupSnap.exists()) return;
 
         const listId = groupSnap.data()?.groupList;
-        if (!listId) {
-          console.log('No list ID found for this group');
-          return;
-        }
+        if (!listId) return;
 
         const movieListRef = doc(FIRESTORE_DB, 'movieLists', listId);
 
-        const unsubscribe = onSnapshot(movieListRef, (docSnap) => {
+        unsubscribe = onSnapshot(movieListRef, (docSnap) => {
           if (docSnap.exists()) {
-            const moviesArray = docSnap.data()?.movies || [];
-            setMovies(moviesArray);
+            const rawMovies = docSnap.data()?.movies || [];
+            fetchMovieDetails(rawMovies);
           } else {
             setMovies([]);
           }
           setLoading(false);
         });
-
-        return unsubscribe;
       } catch (error) {
         console.error('Error setting up movie listener:', error);
       }
     };
 
-    let unsubscribe: (() => void) | undefined;
-
-    setupListener().then((result) => {
-      unsubscribe = result;
-    });
+    setupListener();
 
     return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
+      if (unsubscribe) unsubscribe();
     };
   }, [groupId]);
 
@@ -84,42 +110,32 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
     return <Text style={styles.emptyText}>No movies added yet.</Text>;
   }
 
-  const renderMovieItem = ({ item }: { item: MovieEntry }) => {
-    return (
-      <View style={styles.movieCard}>
-        {/* Movie poster */}
-        <Image
-          source={{ uri: getPosterUrl(item.imdbID) }}
-          style={styles.poster}
-          resizeMode="cover"
-        />
-
-        {/* Movie info */}
-        <View style={styles.infoContainer}>
-          <Text style={styles.title}>Title Placeholder</Text> {/* We'll fix this later */}
-          <Text style={styles.date}>
-            {item.addedAt?.toDate().toLocaleDateString() || 'Unknown date'}
-          </Text>
-          <Text style={styles.user}>Added by {item.addedBy}</Text>
-
-          {/* Placeholder for stars */}
-          <Text style={styles.stars}>⭐ Rating Placeholder ⭐</Text>
-        </View>
-      </View>
-    );
-  };
-
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Watched</Text>
+      <Text style={styles.heading}>Watchlist</Text>
       <FlatList
         data={movies}
         keyExtractor={(item) => item.imdbID}
-        renderItem={renderMovieItem}
-        style={{ maxHeight: 400 }} // or whatever height you want
-        scrollEventThrottle={16} // for smoother scrolling
+        renderItem={({ item }) => (
+          <View style={styles.movieCard}>
+            <Image
+              source={{ uri: item.poster }}
+              style={styles.poster}
+              resizeMode="cover"
+            />
+            <View style={styles.infoContainer}>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.date}>
+                {item.addedAt?.toDate().toLocaleDateString() || 'Unknown date'}
+              </Text>
+              <Text style={styles.user}>Added by {item.username}</Text> {/* ✅ Show username */}
+              <Text style={styles.stars}>⭐ Rating Placeholder ⭐</Text>
+            </View>
+          </View>
+        )}
+        style={{ maxHeight: 400 }}
+        scrollEventThrottle={16}
       />
-
     </View>
   );
 };
@@ -147,6 +163,7 @@ const styles = StyleSheet.create({
   poster: {
     width: 100,
     height: 150,
+    backgroundColor: '#333',
   },
   infoContainer: {
     flex: 1,

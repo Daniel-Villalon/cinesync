@@ -1,20 +1,15 @@
 import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { createUserWithEmailAndPassword, updateCurrentUser } from 'firebase/auth';
-// import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
-// import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-// import { updateCurrentUser } from 'firebase/auth';
-
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   Dimensions,
-  KeyboardAvoidingView,
 } from 'react-native';
-import { setDoc, doc, addDoc, collection, getDoc } from 'firebase/firestore';
+import { setDoc, doc } from 'firebase/firestore';
 import { styles } from '../styles/SignUp.styles';
 
 const { width, height } = Dimensions.get('window');
@@ -22,6 +17,7 @@ const { width, height } = Dimensions.get('window');
 export default function SignInScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const auth = FIREBASE_AUTH;
   const db = FIRESTORE_DB;
@@ -37,12 +33,11 @@ export default function SignInScreen() {
       await setDoc(userRef, {
         id: user.uid,
         email: user.email,
+        username: username.trim(),
         createdAt: new Date(),
         groups: [],
-        // list: newListId,
       }, { merge: true });
 
-      // Optionally update the current user in auth context
       await updateCurrentUser(auth, user);
       router.replace('/group');
     } catch (error: any) {
@@ -51,17 +46,29 @@ export default function SignInScreen() {
     } finally {
       setLoading(false);
     }
-  }
-  
+  };
 
   function login(): void {
     router.push('/login');
   }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Create an</Text>
       <Text style={styles.title}>Account</Text>
 
+      {/* Username Field */}
+      <Text style={styles.labelEmail}>Username*</Text>
+      <TextInput
+        value={username}
+        placeholder="Username"
+        placeholderTextColor="#E8EDDF"
+        style={styles.inputEmail}
+        autoCapitalize="none"
+        onChangeText={(text) => setUsername(text)}
+      />
+
+      {/* Email Field */}
       <Text style={styles.labelEmail}>Email Address*</Text>
       <TextInput
         value={email}
@@ -73,6 +80,7 @@ export default function SignInScreen() {
         onChangeText={(text) => setEmail(text)}
       />
 
+      {/* Password Field */}
       <TextInput
         value={password}
         placeholder="Password*"
