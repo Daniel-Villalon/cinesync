@@ -5,6 +5,10 @@ import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import MovieSearch from './MovieSearch';
+import MovieList from './movieList';
+import { ScrollView } from 'react-native';
+
+
 
 export default function Homescreen() {
   const router = useRouter();
@@ -59,6 +63,7 @@ export default function Homescreen() {
     <View style={styles.container}>
       <Text style={styles.header}>{groupName ? `Group: ${groupName}` : 'Loading Group...'}</Text>
       <MovieSearch groupId={groupId as string} />
+      <MovieList groupId={groupId as string} />
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Log Out</Text>
       </TouchableOpacity>
