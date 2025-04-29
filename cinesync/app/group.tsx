@@ -157,20 +157,22 @@ export default function GroupsScreen() {
           )}
         </View>
       </ScrollView>
-      {/* Bottom Left Mail Icon with Notification */}
-      <TouchableOpacity style={styles.mail} onPress={() => router.push('/PendingInvites')}>
-        <View style={{ position: 'relative' }}>
-          <MaterialCommunityIcons name="email-outline" size={28} color="#000" />
-          {pendingInvites > 0 && (
-            <View style={styles.notificationBadge}>
-              <Text style={styles.notificationText}>
-                {pendingInvites > 9 ? '9+' : pendingInvites}
-              </Text>
-            </View>
-          )}
-        </View>
-      </TouchableOpacity>
-
+      
+      {/* Invite Notification Function */}
+      {!isEditing && (
+        <TouchableOpacity style={styles.mail} onPress={() => router.push('/PendingInvites')}>
+          <View style={{ position: 'relative' }}>
+            <MaterialCommunityIcons name="email-outline" size={28} color="#000" />
+            {pendingInvites > 0 && (
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationText}>
+                  {pendingInvites > 9 ? '9+' : pendingInvites}
+                </Text>
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }
