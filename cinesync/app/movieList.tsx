@@ -52,7 +52,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
             return {
               ...entry,
               title: details.Title || 'Untitled',
-              poster: details.Poster || '',
+              poster: details.Poster || '', // look here
               username: username,
             };
           } catch (err) {
@@ -60,7 +60,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
             return {
               ...entry,
               title: 'Unknown',
-              poster: '',
+              poster: '', // here
               username: 'Unknown',
             };
           }
@@ -128,8 +128,8 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
               <Text style={styles.date}>
                 {item.addedAt?.toDate().toLocaleDateString() || 'Unknown date'}
               </Text>
-              <Text style={styles.user}>Added by {item.username}</Text> {/* ✅ Show username */}
-              <Text style={styles.stars}>⭐ Rating Placeholder ⭐</Text>
+              <Text style={styles.user}>Added by {item.username || 'Unknown'}</Text>
+              <Text style={styles.stars}>Rating Placeholder</Text>
             </View>
           </View>
         )}

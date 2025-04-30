@@ -151,7 +151,7 @@ const User = () => {
           <TouchableOpacity onPress={() => setShowGenreSelector(true)}>
           <Text style={styles.genres}>
             {favoriteGenres.length > 0
-                ? favoriteGenres.filter((genre) => genre.trim() !== '').join(', ')
+                ? favoriteGenres.filter((genre) => genre.trim() !== '').join(', ') // here
                 : 'Select your favorites'}
             </Text>
           </TouchableOpacity>
