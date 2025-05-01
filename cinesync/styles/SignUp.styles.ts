@@ -19,7 +19,7 @@ export const styles = StyleSheet.create({
   },
   labelEmail: {
     color: '#E8EDDF',
-    marginTop: 32,
+    marginTop: 4,
     marginLeft: 6,
     marginBottom: 4,
     fontWeight: '600',
