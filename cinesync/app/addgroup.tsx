@@ -44,12 +44,7 @@ const AddGroupScreen = () => {
       return;
     }
     try {
-      await createGroup(groupName.trim(), user!.uid, {
-        color: '#F6C343', // Default yellow color
-        sortBy,
-        fairnessFilter,
-        image: groupImage,
-      });
+      await createGroup(groupName.trim(), user!.uid);
       router.replace('/group'); // go back to group page
     } catch (error) {
       console.error(error);

@@ -63,35 +63,32 @@ export default function MovieDetailsScreen() {
   
       const newMovieEntry = { imdbID, addedBy: user.uid };
   
-      if (!listSnap.exists()) {
-        await setDoc(movieListRef, {
-          groupId,
-          createdAt: new Date(),
-          movies: [newMovieEntry],
-        });
-        setIsInWatchlist(true);
-        return;
+      let currentMovies: any[] = [];
+      if (listSnap.exists()) {
+        currentMovies = listSnap.data()?.movies || [];
       }
   
-      const currentMovies: any[] = listSnap.data()?.movies || [];
       const alreadyInList = currentMovies.some((m) => m.imdbID === imdbID);
   
+      let updatedMovies;
       if (alreadyInList) {
-        const updatedMovies = currentMovies.filter((m) => m.imdbID !== imdbID);
-        await updateDoc(movieListRef, {
-          movies: updatedMovies,
-        });
+        updatedMovies = currentMovies.filter((m) => m.imdbID !== imdbID);
       } else {
-        await updateDoc(movieListRef, {
-          movies: arrayUnion(newMovieEntry),
-        });
+        updatedMovies = [...currentMovies, newMovieEntry];
       }
+  
+      await setDoc(movieListRef, {
+        groupId,
+        createdAt: listSnap.exists() ? listSnap.data()?.createdAt : new Date(),
+        movies: updatedMovies,
+      });
   
       setIsInWatchlist(!alreadyInList);
     } catch (err) {
       console.error('Error updating watchlist:', err);
     }
   }
+  
   
   async function checkIfInWatchlist() {
     const user = getAuth().currentUser;
