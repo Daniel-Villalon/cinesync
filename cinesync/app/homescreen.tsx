@@ -1,23 +1,25 @@
+// app/homescreen.tsx
+
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+
 import MovieSearch from './MovieSearch';
 import MovieList from './movieList';
-import { ScrollView } from 'react-native';
-
-
+import GroupDropdownBar from './components/GroupDropdownBar';
 
 export default function Homescreen() {
   const router = useRouter();
   const { groupId } = useLocalSearchParams();
   const [authChecked, setAuthChecked] = useState(false);
-  const [groupName, setGroupName] = useState<string | null>(null);
+  const [groups, setGroups] = useState<any[]>([]);
+  const [currentGroupId, setCurrentGroupId] = useState<string | null>(groupId as string);
   const user = FIREBASE_AUTH.currentUser;
 
-  // 🔐 Redirect if not logged in
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (user) => {
       if (!user) {
@@ -28,25 +30,37 @@ export default function Homescreen() {
     return unsubscribe;
   }, []);
 
-  // 📦 Fetch group name
   useEffect(() => {
-    const fetchGroupName = async () => {
-      if (!groupId) return;
+    const fetchGroups = async () => {
+      if (!user) return;
       try {
-        const groupRef = doc(FIRESTORE_DB, 'groups', groupId as string);
-        const groupSnap = await getDoc(groupRef);
-        if (groupSnap.exists()) {
-          setGroupName(groupSnap.data()?.name);
-        } else {
-          console.log('No such group!');
+        const userRef = doc(FIRESTORE_DB, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+        const groupIds = userSnap.data()?.groups || [];
+
+        const groupDocs = await Promise.all(
+          groupIds.map((id: string) => getDoc(doc(FIRESTORE_DB, 'groups', id)))
+        );
+
+        const fetchedGroups = groupDocs
+          .filter(doc => doc.exists())
+          .map(doc => ({
+            id: doc.id,
+            name: doc.data()?.name || 'Unnamed Group',
+          }));
+
+        setGroups(fetchedGroups);
+
+        if (!currentGroupId && fetchedGroups.length > 0) {
+          setCurrentGroupId(fetchedGroups[0].id);
         }
       } catch (error) {
-        console.error('Failed to fetch group name:', error);
+        console.error('Error fetching groups:', error);
       }
     };
 
-    fetchGroupName();
-  }, [groupId]);
+    fetchGroups();
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -57,20 +71,47 @@ export default function Homescreen() {
     }
   };
 
-  if (!authChecked) return null; // Wait for auth check before showing UI
+  if (!authChecked || (groups.length > 0 && !currentGroupId)) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator size="large" color="#F7EEDB" />
+      </SafeAreaView>
+    );
+  }
+
+  const currentGroup = groups.find((g) => g.id === currentGroupId);
+  if (!currentGroup) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator size="large" color="#F7EEDB" />
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>{groupName ? `Group: ${groupName}` : 'Loading Group...'}</Text>
-      <MovieSearch groupId={groupId as string} />
-      <MovieList groupId={groupId as string} />
+    <SafeAreaView style={styles.container}>
+      {/* Dropdown bar */}
+      <GroupDropdownBar
+        groups={groups.filter(Boolean)}
+        currentGroup={currentGroup}
+        onGroupSelect={(newGroupId) => {
+          setCurrentGroupId(newGroupId);
+          router.push({ pathname: '/homescreen', params: { groupId: newGroupId } });
+        }}
+      />
+
+      {/* Main content */}
+      <MovieSearch groupId={currentGroupId!} />
+      <MovieList groupId={currentGroupId!} />
+
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Log Out</Text>
       </TouchableOpacity>
+
       <TouchableOpacity style={styles.logoutButton} onPress={() => router.push('/group')}>
         <Text style={styles.logoutText}>Go to Groups</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -79,14 +120,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#242423',
     paddingHorizontal: 20,
-  },
-  header: {
-    color: '#F7EEDB',
-    fontSize: 25,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginVertical: 16,
-    paddingTop: 20,
   },
   logoutButton: {
     marginTop: 10,
