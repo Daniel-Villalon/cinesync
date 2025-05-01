@@ -59,10 +59,10 @@ export default function Homescreen() {
 
   if (!authChecked) return null; // Wait for auth check before showing UI
 
+  //<MovieSearch groupId={groupId as string} /> (Line 65)
   return (
     <View style={styles.container}>
       <Text style={styles.header}>{groupName ? `Group: ${groupName}` : 'Loading Group...'}</Text>
-      <MovieSearch groupId={groupId as string} />
       <MovieList groupId={groupId as string} />
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Log Out</Text>
