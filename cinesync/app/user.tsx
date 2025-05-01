@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import styles from '../styles/User.styles';
+import { onAuthStateChanged, getAuth } from 'firebase/auth';
+import { collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { FIRESTORE_DB } from '@/FirebaseConfig';
 
 const User = () => {
   const [username, setUsername] = useState('User');
@@ -23,10 +26,22 @@ const User = () => {
   const [favoriteGenres, setFavoriteGenres] = useState<string[]>([]);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [showGenreSelector, setShowGenreSelector] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
+  const auth = getAuth();
+  const user = auth.currentUser;
   const isDarkMode = theme === 'dark';
   const router = useRouter();
-
+  
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (!currentUser) {
+        router.replace('/login');
+      }
+      setAuthChecked(true);
+    });
+    return unsubscribe;
+  }, []);
   const themeStyles = {
     backgroundColor: isDarkMode ? '#121212' : '#ffffff',
     textColor: isDarkMode ? '#ffffff' : '#000000',
@@ -34,7 +49,33 @@ const User = () => {
     inputBorderColor: isDarkMode ? '#444' : '#ccc',
     highlightColor: '#f0c94d',
   };
+  const fetchUserInfo = async () => {
+    if (!user) return;
+    try {
+      const userRef = doc(FIRESTORE_DB, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+      const userName = userSnap.data()?.username || [];
+      const userBio = userSnap.data()?.bio || [];
+      if (userName.length === 0) {
+        setUsername("unknown");
+        return;
+      }
+      if (userBio.length === 0) {
+        setBio("");
+        return;
+      }
 
+      setUsername(userName);
+      console.log(userName);
+    } catch (err) {
+      console.error('Error loading user info:', err);
+    } 
+  };
+  useEffect(() => {
+    if (authChecked) {
+      fetchUserInfo();
+    }
+  }, [authChecked]);
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
@@ -53,7 +94,7 @@ const User = () => {
       setAvatarUri(result.assets[0].uri);
     }
   };
-
+  
   const toggleGenre = (genre: string) => {
     if (favoriteGenres.includes(genre)) {
       setFavoriteGenres(favoriteGenres.filter((g) => g !== genre));
@@ -61,7 +102,16 @@ const User = () => {
       setFavoriteGenres([...favoriteGenres, genre]);
     }
   };
-
+  const saveUserInfo = async () => {
+    if (!user) {
+      return;
+    }
+    const userRef = doc(FIRESTORE_DB, 'users', user.uid);
+    await updateDoc(userRef, {
+      username: username,
+      bio: bio,
+    })
+  }
   const genreOptions = [
     'Fantasy',
     'Sci-fi',
@@ -84,7 +134,7 @@ const User = () => {
             <Text style={[styles.backText, { color: themeStyles.highlightColor }]}>{'< Back'}</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: themeStyles.textColor }]}>Profile</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => saveUserInfo()}>
             <Text style={[styles.saveButtonText, { color: themeStyles.textColor }]}>Save</Text>
           </TouchableOpacity>
         </View>
