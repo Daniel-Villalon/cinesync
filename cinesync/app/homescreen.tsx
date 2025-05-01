@@ -7,6 +7,8 @@ import { doc, getDoc } from 'firebase/firestore';
 import MovieSearch from './MovieSearch';
 import MovieList from './movieList';
 import { ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; 
+
 
 
 
@@ -70,7 +72,16 @@ export default function Homescreen() {
       <TouchableOpacity style={styles.logoutButton} onPress={() => router.push('/group')}>
         <Text style={styles.logoutText}>Go to Groups</Text>
       </TouchableOpacity>
+      <View style={styles.floatingIconsContainer}>
+        <TouchableOpacity style={styles.person} onPress={() => router.push('/user')}>
+          <Ionicons name="person" size={24} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.add} onPress={() => router.push({ pathname: '/MovieSearch', params: { groupId: groupId as string } })}>
+          <Ionicons name="add" size={40} color="black" />
+        </TouchableOpacity>
+      </View>
     </View>
+  
   );
 }
 
@@ -101,5 +112,33 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  floatingIconsContainer: {
+    position: 'absolute',
+    bottom: 30,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+  },
+  
+  person: {
+    backgroundColor: '#D9B24C',
+    borderRadius: 30,
+    width: 50,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  
+  add: {
+    backgroundColor: '#D9B24C',
+    borderRadius: 30,
+    width: 50,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

@@ -1,31 +1,20 @@
 // app/MovieSearch.tsx
-
 import React, { useState, useMemo, useEffect } from 'react';
-// import CheckBox from "expo-checkbox";
-import {
-  View,
-  Text,
-  TextInput,
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import { Text, View, TextInput, ActivityIndicator, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import debounce from 'lodash.debounce';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { searchMovies, MovieSummary } from '../services/MoviesService';
 import { DismissKeyboardView } from '../services/DismissKeyboardView';
-interface MovieSearchProps {
-  groupId: string;
-}
-const MovieSearch: React.FC<MovieSearchProps> = ({ groupId }) => {
+
+const MovieSearch = () => {
+  const { groupId } = useLocalSearchParams(); // Get groupId from the URL
   const insets = useSafeAreaInsets();
-  const [query, setQuery]     = useState('');
+  const [query, setQuery] = useState('');
   const [results, setResults] = useState<MovieSummary[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState<string | null>(null);
-  const router                = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const debouncedSearch = useMemo(
     () =>
@@ -54,9 +43,14 @@ const MovieSearch: React.FC<MovieSearchProps> = ({ groupId }) => {
     return () => debouncedSearch.cancel();
   }, [query]);
 
-  const openDetails = (imdbID: string, groupId: string) => {
+  const openDetails = (imdbID: string) => {
     router.push(`/MovieDetails/${imdbID}/${groupId}`);
   };
+
+  // Check if groupId is available
+  if (!groupId) {
+    return <Text style={{ color: 'red', padding: 20 }}>Group ID is missing or invalid.</Text>;
+  }
 
   return (
     <DismissKeyboardView style={[styles.safe, { paddingTop: 15 }]}>
@@ -73,16 +67,15 @@ const MovieSearch: React.FC<MovieSearchProps> = ({ groupId }) => {
       />
 
       {loading && <ActivityIndicator style={{ marginTop: 12 }} color="#F7EEDB" />}
-      {error   && <Text style={styles.errorText}>{error}</Text>}
+      {error && <Text style={styles.errorText}>{error}</Text>}
 
       <FlatList
         data={results}
         keyExtractor={item => item.imdbID}
         renderItem={({ item }) => (
-          
           <TouchableOpacity
             style={styles.item}
-            onPress={() => openDetails(item.imdbID, groupId)}
+            onPress={() => openDetails(item.imdbID)}
           >
             <Text style={styles.title}>{item.Title} ({item.Year})</Text>
           </TouchableOpacity>
@@ -97,9 +90,9 @@ const MovieSearch: React.FC<MovieSearchProps> = ({ groupId }) => {
 export default MovieSearch;
 
 const styles = StyleSheet.create({
-  safe:      { flex: 1, backgroundColor: '#242423'},
-  heading:   { fontSize: 24, color: '#F7EEDB', marginHorizontal: 16, marginBottom: 8, textAlign: 'center', fontWeight: 'bold'},
-  input:     {
+  safe: { flex: 1, backgroundColor: '#242423' },
+  heading: { fontSize: 24, color: '#F7EEDB', marginHorizontal: 16, marginBottom: 8, textAlign: 'center', fontWeight: 'bold' },
+  input: {
     borderWidth: 1,
     borderColor: '#F7D491',
     borderRadius: 8,
@@ -109,11 +102,11 @@ const styles = StyleSheet.create({
     color: '#F7EEDB',
   },
   errorText: { color: '#FF5555', marginTop: 12, textAlign: 'center' },
-  item:      {
-    paddingVertical:   12,
+  item: {
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor:'#444',
-    marginHorizontal:  16,
+    borderBottomColor: '#444',
+    marginHorizontal: 16,
   },
-  title:     { fontSize: 18, color: '#F7EEDB' },
+  title: { fontSize: 18, color: '#F7EEDB' },
 });
