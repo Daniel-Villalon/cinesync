@@ -10,14 +10,20 @@ import {
   Image,
   Modal,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import styles from '../styles/User.styles';
 import { onAuthStateChanged, getAuth } from 'firebase/auth';
-import { collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { FIRESTORE_DB } from '@/FirebaseConfig';
+import styles from '../styles/User.styles';
+
+const genreOptions = [
+  'Fantasy', 'Sci-fi', 'Comedy', 'Drama', 'Horror',
+  'Romance', 'Action', 'Mystery', 'Documentary',
+];
 
 const User = () => {
   const [username, setUsername] = useState('User');
@@ -29,19 +35,11 @@ const User = () => {
   const [authChecked, setAuthChecked] = useState(false);
 
   const auth = getAuth();
+  const router = useRouter();
+
   const user = auth.currentUser;
   const isDarkMode = theme === 'dark';
-  const router = useRouter();
-  
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (!currentUser) {
-        router.replace('/login');
-      }
-      setAuthChecked(true);
-    });
-    return unsubscribe;
-  }, []);
+
   const themeStyles = {
     backgroundColor: isDarkMode ? '#121212' : '#ffffff',
     textColor: isDarkMode ? '#ffffff' : '#000000',
@@ -49,41 +47,49 @@ const User = () => {
     inputBorderColor: isDarkMode ? '#444' : '#ccc',
     highlightColor: '#f0c94d',
   };
-  const fetchUserInfo = async () => {
-    if (!user) return;
-    try {
-      const userRef = doc(FIRESTORE_DB, 'users', user.uid);
-      const userSnap = await getDoc(userRef);
-      const userName = userSnap.data()?.username || [];
-      const userBio = userSnap.data()?.bio || [];
-      if (userName.length === 0) {
-        setUsername("unknown");
-        return;
-      }
-      if (userBio.length === 0) {
-        setBio("");
-        return;
-      }
 
-      setUsername(userName);
-      console.log(userName);
-    } catch (err) {
-      console.error('Error loading user info:', err);
-    } 
-  };
   useEffect(() => {
-    if (authChecked) {
-      fetchUserInfo();
-    }
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (!currentUser) {
+        router.replace('/login');
+      } else {
+        setAuthChecked(true);
+      }
+    });
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    if (!authChecked || !user) return;
+
+    const fetchUserInfo = async () => {
+      try {
+        const userRef = doc(FIRESTORE_DB, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+        const data = userSnap.data();
+        if (data) {
+          setUsername(data.username || 'User');
+          setBio(data.bio || '');
+          setAvatarUri(data.avatarUri || null);
+          setTheme(data.theme || 'dark');
+          setFavoriteGenres(data.genres || []);
+        }
+      } catch (err) {
+        console.error('Error loading user info:', err);
+      }
+    };
+
+    fetchUserInfo();
   }, [authChecked]);
+
   const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      alert("Permission to access media library is required!");
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission to access media library is required!');
       return;
     }
 
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
@@ -94,47 +100,42 @@ const User = () => {
       setAvatarUri(result.assets[0].uri);
     }
   };
-  
-  const toggleGenre = (genre: string) => {
-    if (favoriteGenres.includes(genre)) {
-      setFavoriteGenres(favoriteGenres.filter((g) => g !== genre));
-    } else {
-      setFavoriteGenres([...favoriteGenres, genre]);
-    }
+
+  const toggleGenre = async (genre: string) => {
+    if (!user) return;
+
+    const updatedGenres = favoriteGenres.includes(genre)
+      ? favoriteGenres.filter((g) => g !== genre)
+      : [...favoriteGenres, genre];
+
+    setFavoriteGenres(updatedGenres);
+
+    await updateDoc(doc(FIRESTORE_DB, 'users', user.uid), {
+      genres: updatedGenres,
+    });
   };
+
   const saveUserInfo = async () => {
-    if (!user) {
-      return;
-    }
-    const userRef = doc(FIRESTORE_DB, 'users', user.uid);
-    await updateDoc(userRef, {
-      username: username,
-      bio: bio,
-    })
-  }
-  const genreOptions = [
-    'Fantasy',
-    'Sci-fi',
-    'Comedy',
-    'Drama',
-    'Horror',
-    'Romance',
-    'Action',
-    'Mystery',
-    'Documentary',
-  ];
+    if (!user) return;
+
+    await updateDoc(doc(FIRESTORE_DB, 'users', user.uid), {
+      username,
+      bio,
+      avatarUri,
+      theme,
+    });
+  };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={[styles.container, { backgroundColor: themeStyles.backgroundColor }]}>
-
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
             <Text style={[styles.backText, { color: themeStyles.highlightColor }]}>{'< Back'}</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: themeStyles.textColor }]}>Profile</Text>
-          <TouchableOpacity onPress={() => saveUserInfo()}>
+          <TouchableOpacity onPress={saveUserInfo}>
             <Text style={[styles.saveButtonText, { color: themeStyles.textColor }]}>Save</Text>
           </TouchableOpacity>
         </View>
@@ -143,11 +144,7 @@ const User = () => {
         <TouchableOpacity style={styles.avatarContainer} onPress={pickImage}>
           <View style={[styles.avatar, { backgroundColor: themeStyles.highlightColor, overflow: 'hidden' }]}>
             {avatarUri ? (
-              <Image
-                source={{ uri: avatarUri }}
-                style={{ width: '100%', height: '100%' }}
-                resizeMode="cover"
-              />
+              <Image source={{ uri: avatarUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
             ) : (
               <Ionicons name="person" size={80} color={isDarkMode ? '#121212' : '#ffffff'} />
             )}
@@ -159,13 +156,7 @@ const User = () => {
 
         {/* Username */}
         <TextInput
-          style={[
-            styles.usernameInput,
-            {
-              color: themeStyles.textColor,
-              borderColor: themeStyles.textColor,
-            },
-          ]}
+          style={[styles.usernameInput, { color: themeStyles.textColor, borderColor: themeStyles.textColor }]}
           value={username}
           onChangeText={setUsername}
           placeholder="Username"
@@ -199,9 +190,9 @@ const User = () => {
         <View style={styles.infoSection}>
           <Text style={[styles.label, { color: themeStyles.textColor }]}>Favorite Genres:</Text>
           <TouchableOpacity onPress={() => setShowGenreSelector(true)}>
-          <Text style={styles.genres}>
-            {favoriteGenres.length > 0
-                ? favoriteGenres.filter((genre) => genre.trim() !== '').join(', ') // here
+            <Text style={styles.genres}>
+              {favoriteGenres.length > 0
+                ? favoriteGenres.filter((g) => g.trim()).join(', ')
                 : 'Select your favorites'}
             </Text>
           </TouchableOpacity>
@@ -210,22 +201,16 @@ const User = () => {
         {/* Theme Toggle */}
         <View style={[styles.infoSection, { marginTop: 20 }]}>
           <Text style={[styles.label, { color: themeStyles.textColor }]}>Theme: </Text>
-          <Pressable onPress={() => setTheme('dark')}>
-            <Ionicons
-              name="moon"
-              size={30}
-              color={theme === 'dark' ? themeStyles.highlightColor : themeStyles.textColor}
-              style={{ marginHorizontal: 8 }}
-            />
-          </Pressable>
-          <Pressable onPress={() => setTheme('light')}>
-            <Ionicons
-              name="sunny"
-              size={30}
-              color={theme === 'light' ? themeStyles.highlightColor : themeStyles.textColor}
-              style={{ marginHorizontal: 8 }}
-            />
-          </Pressable>
+          {['dark', 'light'].map((mode) => (
+            <Pressable key={mode} onPress={() => setTheme(mode as 'light' | 'dark')}>
+              <Ionicons
+                name={mode === 'dark' ? 'moon' : 'sunny'}
+                size={30}
+                color={theme === mode ? themeStyles.highlightColor : themeStyles.textColor}
+                style={{ marginHorizontal: 8 }}
+              />
+            </Pressable>
+          ))}
         </View>
 
         {/* Logout */}
@@ -233,35 +218,32 @@ const User = () => {
           <Text style={[styles.logoutText, { color: isDarkMode ? '#121212' : '#ffffff' }]}>Logout</Text>
         </Pressable>
 
-        {/* Genre Selector Modal */}
+        {/* Genre Modal */}
         <Modal visible={showGenreSelector} animationType="slide" transparent>
           <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.8)' }]}>
             <View style={[styles.modalContent, { backgroundColor: themeStyles.backgroundColor }]}>
               <Text style={[styles.modalTitle, { color: themeStyles.textColor }]}>Select Favorite Genres</Text>
               <ScrollView>
-                {genreOptions.map((genre) => (
-                  <TouchableOpacity
-                    key={genre}
-                    style={[
-                      styles.genreOption,
-                      {
-                        backgroundColor: favoriteGenres.includes(genre)
-                          ? themeStyles.highlightColor
-                          : themeStyles.inputBackground,
-                        borderColor: themeStyles.inputBorderColor,
-                      },
-                    ]}
-                    onPress={() => toggleGenre(genre)}
-                  >
-                    <Text
-                      style={{
-                        color: favoriteGenres.includes(genre) ? '#000' : themeStyles.textColor,
-                      }}
+                {genreOptions.map((genre) => {
+                  const selected = favoriteGenres.includes(genre);
+                  return (
+                    <TouchableOpacity
+                      key={genre}
+                      style={[
+                        styles.genreOption,
+                        {
+                          backgroundColor: selected
+                            ? themeStyles.highlightColor
+                            : themeStyles.inputBackground,
+                          borderColor: themeStyles.inputBorderColor,
+                        },
+                      ]}
+                      onPress={() => toggleGenre(genre)}
                     >
-                      {genre}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text style={{ color: selected ? '#000' : themeStyles.textColor }}>{genre}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </ScrollView>
               <TouchableOpacity
                 style={[styles.closeButton, { backgroundColor: themeStyles.highlightColor }]}
@@ -272,7 +254,6 @@ const User = () => {
             </View>
           </View>
         </Modal>
-
       </View>
     </TouchableWithoutFeedback>
   );
