@@ -60,7 +60,7 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
       {dropdownOpen && (
         <View style={styles.dropdown}>
           <ScrollView style={{ maxHeight: 300 }}>
-            {groups.map((group) => (
+            {groups.filter(Boolean).map((group) => (
               <View key={group.id} style={styles.groupRow}>
                 <TouchableOpacity onPress={() => handleInvite(group.id)}>
                   <MaterialCommunityIcons name="account" size={22} color="#000" style={{ marginRight: 8 }} />
