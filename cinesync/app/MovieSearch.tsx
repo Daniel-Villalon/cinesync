@@ -113,7 +113,7 @@ const MovieSearch = () => {
   }
 
   return (
-    <DismissKeyboardView style={[styles.safe, { paddingTop: 15 }]}>
+    <DismissKeyboardView style={[styles.safe, { paddingTop: 35 }]}>
       <Text style={styles.heading}>Add to list</Text>
       <TextInput
         style={styles.input}
