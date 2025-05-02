@@ -106,7 +106,7 @@ export default function Homescreen() {
         }}
       />
 
-      <MovieSearch groupId={currentGroupId!} />
+
       <MovieList groupId={currentGroupId!} />
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
