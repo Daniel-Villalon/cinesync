@@ -139,13 +139,14 @@ const User = () => {
       <View style={[styles.container, { backgroundColor: themeStyles.backgroundColor }]}>
         {/* Header */}
         <View style={styles.header}>
+          <Text style={[styles.headerTitle, { color: themeStyles.textColor }]}>Profile</Text>
           <TouchableOpacity onPress={() => router.back()}>
             <Text style={[styles.backText, { color: themeStyles.highlightColor }]}>{'< Back'}</Text>
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: themeStyles.textColor }]}>Profile</Text>
           <TouchableOpacity onPress={saveUserInfo}>
             <Text style={[styles.saveButtonText, { color: themeStyles.textColor }]}>Save</Text>
           </TouchableOpacity>
+          
         </View>
 
         {/* Avatar */}
