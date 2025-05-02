@@ -15,9 +15,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { onAuthStateChanged, getAuth } from 'firebase/auth';
+import { onAuthStateChanged, getAuth, signOut } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { FIRESTORE_DB } from '@/FirebaseConfig';
+import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import styles from '../styles/User.styles';
 
 const genreOptions = [
@@ -114,7 +114,15 @@ const User = () => {
       genres: updatedGenres,
     });
   };
-
+  
+  const handleLogout = async () => {
+    try {
+      await signOut(FIREBASE_AUTH);
+      router.replace('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
   const saveUserInfo = async () => {
     if (!user) return;
 
