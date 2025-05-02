@@ -21,7 +21,7 @@ type MovieEntry = {
 type MovieWithDetails = MovieEntry & {
   title: string;
   poster: string;
-  username: string; // ✅ Added username
+  username: string;
 };
 
 type Props = {
@@ -42,18 +42,15 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
         movieEntries.map(async (entry) => {
           try {
             const details = await getMovieDetails(entry.imdbID);
-
-            // ✅ Fetch the username for the addedBy user
             const userRef = doc(FIRESTORE_DB, 'users', entry.addedBy);
             const userSnap = await getDoc(userRef);
-
             const username = userSnap.exists() ? userSnap.data()?.username || 'Unknown' : 'Unknown';
 
             return {
               ...entry,
               title: details.Title || 'Untitled',
               poster: details.Poster || '',
-              username: username,
+              username,
             };
           } catch (err) {
             console.warn('Error fetching details for', entry.imdbID, err);
@@ -73,14 +70,12 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
       try {
         const groupRef = doc(FIRESTORE_DB, 'groups', groupId);
         const groupSnap = await getDoc(groupRef);
-
         if (!groupSnap.exists()) return;
 
         const listId = groupSnap.data()?.groupList;
         if (!listId) return;
 
         const movieListRef = doc(FIRESTORE_DB, 'movieLists', listId);
-
         unsubscribe = onSnapshot(movieListRef, (docSnap) => {
           if (docSnap.exists()) {
             const rawMovies = docSnap.data()?.movies || [];
@@ -96,7 +91,6 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
     };
 
     setupListener();
-
     return () => {
       if (unsubscribe) unsubscribe();
     };
@@ -116,23 +110,36 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
       <FlatList
         data={movies}
         keyExtractor={(item) => item.imdbID}
-        renderItem={({ item }) => (
-          <View style={styles.movieCard}>
-            <Image
-              source={{ uri: item.poster }}
-              style={styles.poster}
-              resizeMode="cover"
-            />
-            <View style={styles.infoContainer}>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.date}>
-                {item.addedAt?.toDate().toLocaleDateString() || 'Unknown date'}
-              </Text>
-              <Text style={styles.user}>Added by {item.username}</Text> {/* ✅ Show username */}
-              <Text style={styles.stars}>⭐ Rating Placeholder ⭐</Text>
+        renderItem={({ item }) => {
+          console.log('[MovieList renderItem]', {
+            title: item.title,
+            addedAt: item.addedAt,
+            username: item.username,
+          });
+          return (
+            <View style={styles.movieCard}>
+              <Image
+                source={{ uri: item.poster }}
+                style={styles.poster}
+                resizeMode="cover"
+              />
+              <View style={styles.infoContainer}>
+                <Text style={styles.title}>
+                  {typeof item.title === 'string' ? item.title : 'Untitled'}
+                </Text>
+                <Text style={styles.date}>
+                  {item.addedAt?.toDate?.() instanceof Date
+                    ? item.addedAt.toDate().toLocaleDateString()
+                    : 'Unknown date'}
+                </Text>
+                <Text style={styles.user}>
+                  {typeof item.username === 'string' ? `Added by ${item.username}` : 'Added by Unknown'}
+                </Text>
+                <Text style={styles.stars}>{'⭐ Rating Placeholder ⭐'}</Text>
+              </View>
             </View>
-          </View>
-        )}
+          );
+        }}
         style={{ maxHeight: 400 }}
         scrollEventThrottle={16}
       />
