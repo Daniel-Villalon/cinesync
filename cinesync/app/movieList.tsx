@@ -7,9 +7,11 @@ import {
   Image,
   StyleSheet,
   ActivityIndicator,
+  TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { FIRESTORE_DB } from '@/FirebaseConfig';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
 import { getMovieDetails } from '@/services/MoviesService';
 
 type MovieEntry = {
@@ -31,7 +33,7 @@ type Props = {
 const MovieList: React.FC<Props> = ({ groupId }) => {
   const [movies, setMovies] = useState<MovieWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const db = FIRESTORE_DB;
   useEffect(() => {
     if (!groupId) return;
 
@@ -101,7 +103,23 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
       if (unsubscribe) unsubscribe();
     };
   }, [groupId]);
-
+  const likeMovie = async (imdbId: string) => {
+    const groupRef = doc(db, 'groups', groupId);
+    const groupSnap = await getDoc(groupRef);
+ 
+    const listId = groupSnap.data()?.groupList;
+    const movieListRef = doc(db, 'movieLists', listId);
+    const listSnap = await getDoc(movieListRef);
+    if (!listSnap.exists()) {
+      console.error('list document not found');
+      return;
+    }
+    let currentMovies: any[] = [];
+    if (listSnap.exists()) {
+      currentMovies = listSnap.data()?.movies || [];
+    }
+    alert(currentMovies)
+  }
   if (loading) {
     return <ActivityIndicator style={{ marginTop: 20 }} color="#F7EEDB" />;
   }
@@ -130,7 +148,11 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
               </Text>
               <Text style={styles.user}>Added by {item.username || 'Unknown'}</Text>
               <Text style={styles.stars}>Rating Placeholder</Text>
+              <TouchableOpacity onPress={() => likeMovie(item.imdbID)}>
+                <Text> asdoiahdbiad</Text>
+              </TouchableOpacity>
             </View>
+            
           </View>
         )}
         style={{ maxHeight: 400 }}
