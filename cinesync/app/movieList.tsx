@@ -1,4 +1,3 @@
-// components/MovieList.tsx
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -7,9 +6,10 @@ import {
   Image,
   StyleSheet,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { FIRESTORE_DB } from '@/FirebaseConfig';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { getMovieDetails } from '@/services/MoviesService';
 
 type MovieEntry = {
@@ -21,7 +21,7 @@ type MovieEntry = {
 type MovieWithDetails = MovieEntry & {
   title: string;
   poster: string;
-  username: string; // ✅ Added username
+  username: string;
 };
 
 type Props = {
@@ -32,48 +32,47 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
   const [movies, setMovies] = useState<MovieWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchMovieDetails = async (movieEntries: MovieEntry[]) => {
+    const detailedMovies = await Promise.all(
+      movieEntries.map(async (entry) => {
+        try {
+          const details = await getMovieDetails(entry.imdbID);
+          const userRef = doc(FIRESTORE_DB, 'users', entry.addedBy);
+          const userSnap = await getDoc(userRef);
+          const username = userSnap.exists() ? userSnap.data()?.username || 'Unknown' : 'Unknown';
+
+          return {
+            ...entry,
+            title: details.Title || 'Untitled',
+            poster: details.Poster || '',
+            username,
+          };
+        } catch (err) {
+          console.warn('Error fetching details for', entry.imdbID, err);
+          return {
+            ...entry,
+            title: 'Unknown',
+            poster: '',
+            username: 'Unknown',
+          };
+        }
+      })
+    );
+    const sortedMovies = detailedMovies.sort(
+      (a, b) => a.addedAt?.toDate?.() - b.addedAt?.toDate?.()
+    );
+    setMovies(sortedMovies);
+  };
+
   useEffect(() => {
     if (!groupId) return;
 
     let unsubscribe: () => void;
 
-    const fetchMovieDetails = async (movieEntries: MovieEntry[]) => {
-      const detailedMovies = await Promise.all(
-        movieEntries.map(async (entry) => {
-          try {
-            const details = await getMovieDetails(entry.imdbID);
-
-            // ✅ Fetch the username for the addedBy user
-            const userRef = doc(FIRESTORE_DB, 'users', entry.addedBy);
-            const userSnap = await getDoc(userRef);
-
-            const username = userSnap.exists() ? userSnap.data()?.username || 'Unknown' : 'Unknown';
-
-            return {
-              ...entry,
-              title: details.Title || 'Untitled',
-              poster: details.Poster || '', // look here
-              username: username,
-            };
-          } catch (err) {
-            console.warn('Error fetching details for', entry.imdbID, err);
-            return {
-              ...entry,
-              title: 'Unknown',
-              poster: '', // here
-              username: 'Unknown',
-            };
-          }
-        })
-      );
-      setMovies(detailedMovies);
-    };
-
     const setupListener = async () => {
       try {
         const groupRef = doc(FIRESTORE_DB, 'groups', groupId);
         const groupSnap = await getDoc(groupRef);
-
         if (!groupSnap.exists()) return;
 
         const listId = groupSnap.data()?.groupList;
@@ -96,11 +95,32 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
     };
 
     setupListener();
-
     return () => {
       if (unsubscribe) unsubscribe();
     };
   }, [groupId]);
+
+  const removeMovie = async (imdbID: string) => {
+    try {
+      const groupRef = doc(FIRESTORE_DB, 'groups', groupId);
+      const groupSnap = await getDoc(groupRef);
+      if (!groupSnap.exists()) return;
+
+      const listId = groupSnap.data()?.groupList;
+      if (!listId) return;
+
+      const movieListRef = doc(FIRESTORE_DB, 'movieLists', listId);
+      const movieDoc = await getDoc(movieListRef);
+      if (!movieDoc.exists()) return;
+
+      const currentMovies: MovieEntry[] = movieDoc.data()?.movies || [];
+      const updatedMovies = currentMovies.filter((m) => m.imdbID !== imdbID);
+
+      await updateDoc(movieListRef, { movies: updatedMovies });
+    } catch (err) {
+      console.error('Failed to remove movie', err);
+    }
+  };
 
   if (loading) {
     return <ActivityIndicator style={{ marginTop: 20 }} color="#F7EEDB" />;
@@ -118,18 +138,17 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
         keyExtractor={(item) => item.imdbID}
         renderItem={({ item }) => (
           <View style={styles.movieCard}>
-            <Image
-              source={{ uri: item.poster }}
-              style={styles.poster}
-              resizeMode="cover"
-            />
+            <Image source={{ uri: item.poster }} style={styles.poster} resizeMode="cover" />
             <View style={styles.infoContainer}>
               <Text style={styles.title}>{item.title}</Text>
               <Text style={styles.date}>
                 {item.addedAt?.toDate().toLocaleDateString() || 'Unknown date'}
               </Text>
-              <Text style={styles.user}>Added by {item.username || 'Unknown'}</Text>
+              <Text style={styles.user}>Added by {item.username}</Text>
               <Text style={styles.stars}>Rating Placeholder</Text>
+              <TouchableOpacity onPress={() => removeMovie(item.imdbID)}>
+                <Text style={styles.remove}>Remove</Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -188,10 +207,14 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     marginTop: 8,
   },
+  remove: {
+    color: '#FF6B6B',
+    marginTop: 8,
+    fontWeight: 'bold',
+  },
   emptyText: {
     textAlign: 'center',
     marginTop: 20,
     color: '#aaa',
-    fontStyle: 'italic',
   },
 });
