@@ -1,5 +1,5 @@
 import { FIREBASE_AUTH } from '../FirebaseConfig';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword , sendPasswordResetEmail} from '@firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword , sendPasswordResetEmail} from 'firebase/auth';
 import React from 'react';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
