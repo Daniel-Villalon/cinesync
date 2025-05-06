@@ -157,12 +157,6 @@ export default function MovieDetailsScreen() {
         <Text style={styles.info}>Year: {movie.Year}</Text>
         <Text style={styles.info}>Genre: {movie.Genre}</Text>
 
-        <TouchableOpacity onPress={toggleWatchlistStatus}>
-          <Text style={{ color: '#F7EEDB', marginVertical: 10 }}>
-            {isInWatchlist ? '➖ Remove from Watchlist' : '➕ Add to Watchlist'}
-          </Text>
-        </TouchableOpacity>
-
         {movie.Ratings && movie.Ratings.length > 0 && (
           <View style={styles.ratingsContainer}>
             <Text style={styles.sectionHeading}>Ratings</Text>
