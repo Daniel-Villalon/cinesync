@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'expo-router';
+
 import {
   SafeAreaView,
   View,
@@ -39,6 +41,8 @@ export default function MovieDetailsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const db = FIRESTORE_DB;
+  const router = useRouter();
+
 
   async function toggleWatchlistStatus() {
     const user = getAuth().currentUser;
@@ -169,6 +173,10 @@ export default function MovieDetailsScreen() {
         )}
 
         <Text style={styles.plot}>{movie.Plot}</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Text style={styles.backButtonText}>← Back</Text>
+        </TouchableOpacity>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -233,4 +241,16 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingHorizontal: 16,
   },
+  backButton: {
+  backgroundColor: '#F6C343',
+  padding: 10,
+  borderRadius: 8,
+  alignSelf: 'flex-start',
+  marginBottom: 10,
+},
+backButtonText: {
+  color: '#000',
+  fontWeight: 'bold',
+},
+
 });

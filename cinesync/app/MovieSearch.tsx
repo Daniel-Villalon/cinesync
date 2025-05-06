@@ -1,4 +1,3 @@
-//MovieSearch.tsx
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Text,
@@ -7,20 +6,16 @@ import {
   ActivityIndicator,
   FlatList,
   StyleSheet,
-  TouchableOpacity
+  TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import debounce from 'lodash.debounce';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { searchMovies, MovieSummary } from '../services/MoviesService';
 import { DismissKeyboardView } from '../services/DismissKeyboardView';
-import {
-  doc,
-  getDoc,
-  setDoc
-} from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { FIRESTORE_DB } from '@/FirebaseConfig';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const MovieSearch = () => {
   const { groupId } = useLocalSearchParams();
@@ -29,9 +24,9 @@ const MovieSearch = () => {
   const [results, setResults] = useState<MovieSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [watchlistStatus, setWatchlistStatus] = useState<{ [key: string]: boolean }>({});
+  const [watchlist, setWatchlist] = useState<string[]>([]);
   const router = useRouter();
-  const db = FIRESTORE_DB;
+  const user = getAuth().currentUser;
 
   const debouncedSearch = useMemo(
     () =>
@@ -46,7 +41,6 @@ const MovieSearch = () => {
         try {
           const res = await searchMovies(text);
           setResults(res);
-          checkWatchlistStatuses(res);
         } catch (err: any) {
           setError(err.message || 'Error fetching movies');
         } finally {
@@ -61,73 +55,53 @@ const MovieSearch = () => {
     return () => debouncedSearch.cancel();
   }, [query]);
 
-  const checkWatchlistStatuses = async (movies: MovieSummary[]) => {
-    const user = getAuth().currentUser;
-    if (!user || !groupId) return;
-
-    try {
-      const groupRef = doc(db, 'groups', groupId as string);
+  useEffect(() => {
+    if (!groupId || !user) return;
+    const fetchWatchlist = async () => {
+      const groupRef = doc(FIRESTORE_DB, 'groups', groupId as string);
       const groupSnap = await getDoc(groupRef);
       if (!groupSnap.exists()) return;
 
       const listId = groupSnap.data()?.groupList;
       if (!listId) return;
 
-      const movieListRef = doc(db, 'movieLists', listId);
+      const movieListRef = doc(FIRESTORE_DB, 'movieLists', listId);
       const listSnap = await getDoc(movieListRef);
       if (!listSnap.exists()) return;
 
       const currentMovies: any[] = listSnap.data()?.movies || [];
-      const statusMap: { [key: string]: boolean } = {};
+      setWatchlist(currentMovies.map((m) => m.imdbID));
+    };
+    fetchWatchlist();
+  }, [groupId]);
 
-      movies.forEach((m) => {
-        statusMap[m.imdbID] = currentMovies.some((cm) => cm.imdbID === m.imdbID);
-      });
+  const toggleWatchlist = async (imdbID: string) => {
+    if (!groupId || !user) return;
 
-      setWatchlistStatus(statusMap);
-    } catch (err) {
-      console.error('Error checking watchlist:', err);
-    }
-  };
+    const groupRef = doc(FIRESTORE_DB, 'groups', groupId as string);
+    const groupSnap = await getDoc(groupRef);
+    if (!groupSnap.exists()) return;
 
-  const toggleWatchlistStatus = async (imdbID: string) => {
-    const user = getAuth().currentUser;
-    if (!user || !groupId) return;
+    const listId = groupSnap.data()?.groupList;
+    if (!listId) return;
 
-    try {
-      const groupRef = doc(db, 'groups', groupId as string);
-      const groupSnap = await getDoc(groupRef);
-      if (!groupSnap.exists()) return;
+    const movieListRef = doc(FIRESTORE_DB, 'movieLists', listId);
+    const listSnap = await getDoc(movieListRef);
 
-      const listId = groupSnap.data()?.groupList;
-      if (!listId) return;
+    const currentMovies: any[] = listSnap.exists() ? listSnap.data()?.movies || [] : [];
+    const alreadyInList = currentMovies.some((m) => m.imdbID === imdbID);
 
-      const movieListRef = doc(db, 'movieLists', listId);
-      const listSnap = await getDoc(movieListRef);
+    const updatedMovies = alreadyInList
+      ? currentMovies.filter((m) => m.imdbID !== imdbID)
+      : [...currentMovies, { imdbID, addedBy: user.uid, addedAt: new Date() }];
 
-      const currentMovies: any[] = listSnap.exists() ? listSnap.data()?.movies || [] : [];
-      const alreadyInList = currentMovies.some((m) => m.imdbID === imdbID);
+    await setDoc(movieListRef, {
+      groupId,
+      createdAt: listSnap.exists() ? listSnap.data()?.createdAt : new Date(),
+      movies: updatedMovies,
+    });
 
-      let updatedMovies;
-      if (alreadyInList) {
-        updatedMovies = currentMovies.filter((m) => m.imdbID !== imdbID);
-      } else {
-        updatedMovies = [...currentMovies, { imdbID, addedBy: user.uid }];
-      }
-
-      await setDoc(movieListRef, {
-        groupId,
-        createdAt: listSnap.exists() ? listSnap.data()?.createdAt : new Date(),
-        movies: updatedMovies,
-      });
-
-      setWatchlistStatus((prev) => ({
-        ...prev,
-        [imdbID]: !alreadyInList,
-      }));
-    } catch (err) {
-      console.error('Error toggling watchlist:', err);
-    }
+    setWatchlist(updatedMovies.map((m) => m.imdbID));
   };
 
   const openDetails = (imdbID: string) => {
@@ -159,18 +133,13 @@ const MovieSearch = () => {
         data={results}
         keyExtractor={(item) => item.imdbID}
         renderItem={({ item }) => (
-          <View style={styles.item}>
-            <TouchableOpacity onPress={() => openDetails(item.imdbID)} style={{ flex: 1 }}>
-              <Text style={styles.title}>
-                {item.Title} ({item.Year})
-              </Text>
+          <View style={styles.itemRow}>
+            <TouchableOpacity style={{ flex: 1 }} onPress={() => openDetails(item.imdbID)}>
+              <Text style={styles.title}>{item.Title} ({item.Year})</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => toggleWatchlistStatus(item.imdbID)}
-              style={styles.addButton}
-            >
-              <Text style={styles.addButtonText}>
-                {watchlistStatus[item.imdbID] ? '➖' : '➕'}
+            <TouchableOpacity onPress={() => toggleWatchlist(item.imdbID)}>
+              <Text style={styles.toggleButton}>
+                {watchlist.includes(item.imdbID) ? '➖' : '➕'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -203,22 +172,26 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     color: '#F7EEDB',
   },
-  errorText: { color: '#FF5555', marginTop: 12, textAlign: 'center' },
-  item: {
+  errorText: {
+    color: '#FF5555',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#444',
+    paddingVertical: 12,
     marginHorizontal: 16,
   },
-  title: { fontSize: 18, color: '#F7EEDB' },
-  addButton: {
-    marginLeft: 10,
-    padding: 4,
-  },
-  addButtonText: {
-    fontSize: 22,
+  title: {
+    fontSize: 18,
     color: '#F7EEDB',
+  },
+  toggleButton: {
+    fontSize: 20,
+    color: '#F7EEDB',
+    marginLeft: 12,
   },
 });
