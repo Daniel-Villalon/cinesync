@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
+
 import {
   View,
   Text,
@@ -28,9 +30,12 @@ type Props = {
   groupId: string;
 };
 
+
 const MovieList: React.FC<Props> = ({ groupId }) => {
   const [movies, setMovies] = useState<MovieWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
 
   const fetchMovieDetails = async (movieEntries: MovieEntry[]) => {
     const detailedMovies = await Promise.all(
@@ -138,7 +143,9 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
         keyExtractor={(item) => item.imdbID}
         renderItem={({ item }) => (
           <View style={styles.movieCard}>
-            <Image source={{ uri: item.poster }} style={styles.poster} resizeMode="cover" />
+            <TouchableOpacity onPress={() => router.push(`/MovieDetails/${item.imdbID}/${groupId}`)}>
+              <Image source={{ uri: item.poster }} style={styles.poster} resizeMode="cover" />
+            </TouchableOpacity>
             <View style={styles.infoContainer}>
               <Text style={styles.title}>{item.title}</Text>
               <Text style={styles.date}>
