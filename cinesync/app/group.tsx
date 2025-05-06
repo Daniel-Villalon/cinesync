@@ -53,10 +53,9 @@ export default function GroupsScreen() {
 
       const userGroups = groupDocs
         .filter(docSnap => docSnap.exists())
-        .map(docSnap => ({ id: docSnap.id, avatarUri: docSnap.profilePicture, ...docSnap.data() }));
+        .map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
 
       setGroups(userGroups);
-      alert(userGroups.at(0).avatarUri)
     } catch (err) {
       console.error('Error loading user groups:', err);
       Alert.alert('Failed to load groups');
@@ -126,9 +125,9 @@ export default function GroupsScreen() {
                 style={styles.groupWrapper}
                 onPress={() => !isEditing && router.push({ pathname: '/homescreen', params: { groupId: group.id } })}
               >
-                <View style={[styles.avatarCircleLarge, { backgroundColor: group.color || '#F6C343' }]}>
-                  {group.avatarUri ? (
-                    <Image source={{ uri: group.avatarUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover"  />
+                <View style={[styles.avatarCircleLarge, { backgroundColor: group.color || '#F6C343', overflow: 'hidden' }]}>
+                  {group.profilePicture ? (
+                    <Image source={{ uri: group.profilePicture }} style={{ width: '100%', height: '100%' }} resizeMode="cover"  />
                   ) : (
                   <MaterialCommunityIcons name="account" size={64} color="#000" />
 
