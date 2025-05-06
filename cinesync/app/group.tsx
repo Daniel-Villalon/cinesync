@@ -1,5 +1,5 @@
 import React, { useEffect, useState,useCallback } from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, Alert} from 'react-native';
+import { View, Text, TouchableOpacity, Image, SafeAreaView, ScrollView, Alert} from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { onAuthStateChanged, getAuth } from 'firebase/auth';
@@ -53,9 +53,10 @@ export default function GroupsScreen() {
 
       const userGroups = groupDocs
         .filter(docSnap => docSnap.exists())
-        .map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+        .map(docSnap => ({ id: docSnap.id, avatarUri: docSnap.profilePicture, ...docSnap.data() }));
 
       setGroups(userGroups);
+      alert(userGroups.at(0).avatarUri)
     } catch (err) {
       console.error('Error loading user groups:', err);
       Alert.alert('Failed to load groups');
@@ -126,7 +127,12 @@ export default function GroupsScreen() {
                 onPress={() => !isEditing && router.push({ pathname: '/homescreen', params: { groupId: group.id } })}
               >
                 <View style={[styles.avatarCircleLarge, { backgroundColor: group.color || '#F6C343' }]}>
+                  {group.avatarUri ? (
+                    <Image source={{ uri: group.avatarUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover"  />
+                  ) : (
                   <MaterialCommunityIcons name="account" size={64} color="#000" />
+
+                  )} 
                   {isEditing && (
                     <TouchableOpacity
                       style={styles.editIcon}

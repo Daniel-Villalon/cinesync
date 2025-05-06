@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -24,7 +24,6 @@ const AddGroupScreen = () => {
   const router = useRouter();
   const auth = getAuth();
   const user = auth.currentUser;
-
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -44,7 +43,7 @@ const AddGroupScreen = () => {
       return;
     }
     try {
-      await createGroup(groupName.trim(), user!.uid);
+      await createGroup(groupName.trim(), user!.uid, groupImage, fairnessFilter, sortBy);
       router.replace('/group'); // go back to group page
     } catch (error) {
       console.error(error);
