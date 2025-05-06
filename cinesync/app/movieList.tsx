@@ -152,7 +152,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
             </View>
           </View>
         )}
-        style={{ maxHeight: 400 }}
+        style={{ maxHeight: 700 }}
         scrollEventThrottle={16}
       />
     </View>
