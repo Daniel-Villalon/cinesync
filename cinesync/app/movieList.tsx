@@ -18,6 +18,7 @@ type MovieEntry = {
   imdbID: string;
   addedBy: string;
   addedAt: any;
+  rating?: number; // New field
 };
 
 type MovieWithDetails = MovieEntry & {
@@ -30,12 +31,10 @@ type Props = {
   groupId: string;
 };
 
-
 const MovieList: React.FC<Props> = ({ groupId }) => {
   const [movies, setMovies] = useState<MovieWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-
 
   const fetchMovieDetails = async (movieEntries: MovieEntry[]) => {
     const detailedMovies = await Promise.all(
@@ -51,6 +50,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
             title: details.Title || 'Untitled',
             poster: details.Poster || '',
             username,
+            rating: entry.rating ?? 0, // Pull rating if it exists
           };
         } catch (err) {
           console.warn('Error fetching details for', entry.imdbID, err);
@@ -59,6 +59,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
             title: 'Unknown',
             poster: '',
             username: 'Unknown',
+            rating: 0,
           };
         }
       })
@@ -127,6 +128,13 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
     }
   };
 
+  const renderStars = (rating: number) => {
+    const fullStar = '★';
+    const emptyStar = '☆';
+    const rounded = Math.round(rating);
+    return fullStar.repeat(rounded) + emptyStar.repeat(5 - rounded);
+  };
+
   if (loading) {
     return <ActivityIndicator style={{ marginTop: 20 }} color="#F7EEDB" />;
   }
@@ -152,7 +160,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
                 {item.addedAt?.toDate().toLocaleDateString() || 'Unknown date'}
               </Text>
               <Text style={styles.user}>Added by {item.username}</Text>
-              <Text style={styles.stars}>Rating Placeholder</Text>
+              <Text style={styles.stars}>{renderStars(item.rating || 0)}</Text>
               <TouchableOpacity onPress={() => removeMovie(item.imdbID)}>
                 <Text style={styles.remove}>Remove</Text>
               </TouchableOpacity>
