@@ -1,5 +1,5 @@
 import React, { useEffect, useState,useCallback } from 'react';
-import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, Alert} from 'react-native';
+import { View, Text, TouchableOpacity, Image, SafeAreaView, ScrollView, Alert} from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { onAuthStateChanged, getAuth } from 'firebase/auth';
@@ -125,8 +125,13 @@ export default function GroupsScreen() {
                 style={styles.groupWrapper}
                 onPress={() => !isEditing && router.push({ pathname: '/homescreen', params: { groupId: group.id } })}
               >
-                <View style={[styles.avatarCircleLarge, { backgroundColor: group.color || '#F6C343' }]}>
+                <View style={[styles.avatarCircleLarge, { backgroundColor: group.color || '#F6C343', overflow: 'hidden' }]}>
+                  {group.profilePicture ? (
+                    <Image source={{ uri: group.profilePicture }} style={{ width: '100%', height: '100%' }} resizeMode="cover"  />
+                  ) : (
                   <MaterialCommunityIcons name="account" size={64} color="#000" />
+
+                  )} 
                   {isEditing && (
                     <TouchableOpacity
                       style={styles.editIcon}
