@@ -26,7 +26,7 @@ type MovieWithDetails = MovieEntry & {
   title: string;
   poster: string;
   username: string;
-  userRating: number; // Added userRating field to store the logged-in user's rating
+  userRating: number; 
 };
 
 type Props = {
@@ -40,17 +40,13 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
   const currentUser = getAuth().currentUser;
 
   const fetchUserRatings = async (movieEntries: MovieEntry[]) => {
-    // Only fetch ratings if we have a logged-in user
     if (!currentUser) return movieEntries;
 
     try {
-      // Get all movie IDs we need to fetch ratings for
       const movieIds = movieEntries.map(entry => entry.imdbID);
       
-      // Create a map to store ratings by movie ID
       const ratingsMap: Record<string, number> = {};
       
-      // Fetch ratings for each movie
       await Promise.all(movieIds.map(async (movieId) => {
         const ratingRef = doc(FIRESTORE_DB, 'userRatings', `${currentUser.uid}_${movieId}`);
         const ratingSnap = await getDoc(ratingRef);
@@ -60,7 +56,6 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
         }
       }));
       
-      // Return the movie entries with ratings added
       return movieEntries.map(entry => ({
         ...entry,
         userRating: ratingsMap[entry.imdbID] || 0
@@ -72,7 +67,6 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
   };
 
   const fetchMovieDetails = async (movieEntries: MovieEntry[]) => {
-    // First fetch user ratings for these movies
     const entriesWithRatings = await fetchUserRatings(movieEntries);
     
     const detailedMovies = await Promise.all(
@@ -89,7 +83,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
             poster: details.Poster || '',
             username,
             rating: entry.rating ?? 0,
-            userRating: (entry as any).userRating || 0, // Include the user's personal rating
+            userRating: (entry as any).userRating || 0,
           };
         } catch (err) {
           console.warn('Error fetching details for', entry.imdbID, err);
@@ -128,7 +122,6 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
 
         const movieListRef = doc(FIRESTORE_DB, 'movieLists', listId);
 
-        // Listen for changes to the movie list
         movieListUnsubscribe = onSnapshot(movieListRef, (docSnap) => {
           if (docSnap.exists()) {
             currentMovieEntries = docSnap.data()?.movies || [];
@@ -139,20 +132,15 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
           setLoading(false);
         });
 
-        // Set up a listener for the user's ratings if user is logged in
         if (currentUser) {
-          // Create a collection reference for userRatings
           const ratingsCollectionRef = collection(FIRESTORE_DB, 'userRatings');
           
-          // Query for documents where the userId matches the current user
           const ratingsQuery = query(
             ratingsCollectionRef, 
             where('userId', '==', currentUser.uid)
           );
           
-          // Listen for changes to any of the user's ratings
           userRatingsUnsubscribe = onSnapshot(ratingsQuery, () => {
-            // When ratings change, refetch movie details with updated ratings
             if (currentMovieEntries.length > 0) {
               fetchMovieDetails(currentMovieEntries);
             }
@@ -225,19 +213,21 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
                 {item.addedAt?.toDate().toLocaleDateString() || 'Unknown date'}
               </Text>
               <Text style={styles.user}>Added by {item.username}</Text>
-              {item.userRating > 0 && (
-                <View>
-                  <Text style={styles.ratingLabel}>Your Rating:</Text>
+              <View>
+                <Text style={styles.ratingLabel}>Your Rating:</Text>
+                {item.userRating > 0 ? (
                   <Text style={styles.stars}>{renderStars(item.userRating)}</Text>
-                </View>
-              )}
+                ) : (
+                  <Text style={styles.stars}>Rate this movie</Text>
+                )}
+              </View>
               <TouchableOpacity onPress={() => removeMovie(item.imdbID)}>
                 <Text style={styles.remove}>Remove</Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
-        style={{ maxHeight: 700 }}
+        style={{ maxHeight: 725 }}
         scrollEventThrottle={16}
       />
     </View>
