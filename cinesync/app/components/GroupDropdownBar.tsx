@@ -35,8 +35,8 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
 //     setDropdownOpen(false);
 //   };
 
-  const goToUserProfile = () => {
-    router.push('/user');
+  const goToGroupProfile = () => {
+    router.push('/addgroup');
   };
 
   return (
@@ -51,7 +51,7 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
           <Text style={styles.groupName}>{currentGroup?.name ?? ''}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={goToUserProfile} style={styles.iconRight}>
+        <TouchableOpacity onPress={goToGroupProfile} style={styles.iconRight}>
           <Ionicons name="settings-sharp" size={24} color="#000" />
         </TouchableOpacity>
       </View>

@@ -21,9 +21,6 @@ import {
   doc,
   getDoc,
   setDoc,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
 } from 'firebase/firestore';
 import { FIRESTORE_DB } from '@/FirebaseConfig';
 import { getAuth } from 'firebase/auth';
@@ -40,14 +37,14 @@ export default function MovieDetailsScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const [userRating, setUserRating] = useState<number>(0);
   const db = FIRESTORE_DB;
   const router = useRouter();
-
 
   async function toggleWatchlistStatus() {
     const user = getAuth().currentUser;
     if (!user || !imdbID) return;
-  
+
     try {
       const groupRef = doc(db, 'groups', groupId);
       const groupSnap = await getDoc(groupRef);
@@ -55,67 +52,98 @@ export default function MovieDetailsScreen() {
         console.error('group document not found');
         return;
       }
-  
+
       const listId = groupSnap.data()?.groupList;
       if (!listId) {
         console.error('No list ID found for this group');
         return;
       }
-  
+
       const movieListRef = doc(db, 'movieLists', listId);
       const listSnap = await getDoc(movieListRef);
-  
+
       const newMovieEntry = { imdbID, addedBy: user.uid };
-  
+
       let currentMovies: any[] = [];
       if (listSnap.exists()) {
         currentMovies = listSnap.data()?.movies || [];
       }
-  
+
       const alreadyInList = currentMovies.some((m) => m.imdbID === imdbID);
-  
+
       let updatedMovies;
       if (alreadyInList) {
         updatedMovies = currentMovies.filter((m) => m.imdbID !== imdbID);
       } else {
         updatedMovies = [...currentMovies, newMovieEntry];
       }
-  
+
       await setDoc(movieListRef, {
         groupId,
         createdAt: listSnap.exists() ? listSnap.data()?.createdAt : new Date(),
         movies: updatedMovies,
       });
-  
+
       setIsInWatchlist(!alreadyInList);
     } catch (err) {
       console.error('Error updating watchlist:', err);
     }
   }
-  
-  
+
   async function checkIfInWatchlist() {
     const user = getAuth().currentUser;
     if (!user || !imdbID) return;
-  
+
     try {
       const groupRef = doc(db, 'groups', groupId);
       const groupSnap = await getDoc(groupRef);
-  
+
       if (!groupSnap.exists()) return;
-  
+
       const listId = groupSnap.data()?.groupList;
       if (!listId) return;
-  
+
       const movieListRef = doc(db, 'movieLists', listId);
       const listSnap = await getDoc(movieListRef);
-  
+
       if (!listSnap.exists()) return;
-  
+
       const currentMovies: any[] = listSnap.data()?.movies || [];
       setIsInWatchlist(currentMovies.some((m) => m.imdbID === imdbID));
     } catch (err) {
       console.error('Error checking watchlist:', err);
+    }
+  }
+
+  async function loadUserRating() {
+    const user = getAuth().currentUser;
+    if (!user || !imdbID) return;
+
+    try {
+      const ratingRef = doc(db, 'userRatings', `${user.uid}_${imdbID}`);
+      const ratingSnap = await getDoc(ratingRef);
+      if (ratingSnap.exists()) {
+        setUserRating(ratingSnap.data()?.rating || 0);
+      }
+    } catch (err) {
+      console.error('Failed to load rating:', err);
+    }
+  }
+
+  async function saveUserRating(rating: number) {
+    const user = getAuth().currentUser;
+    if (!user || !imdbID) return;
+
+    try {
+      const ratingRef = doc(db, 'userRatings', `${user.uid}_${imdbID}`);
+      await setDoc(ratingRef, {
+        imdbID,
+        userId: user.uid,
+        rating,
+        updatedAt: new Date(),
+      });
+    } catch (err) {
+      console.error('Failed to save rating:', err);
     }
   }
 
@@ -127,6 +155,7 @@ export default function MovieDetailsScreen() {
       .finally(() => setLoading(false));
 
     checkIfInWatchlist();
+    loadUserRating();
   }, [imdbID]);
 
   if (loading) {
@@ -149,6 +178,22 @@ export default function MovieDetailsScreen() {
     );
   }
 
+  const StarRating = ({ rating, onRate }: { rating: number; onRate: (r: number) => void }) => (
+    <View style={styles.starContainer}>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <TouchableOpacity
+          key={star}
+          onPress={() => {
+            onRate(star);
+            saveUserRating(star);
+          }}
+        >
+          <Text style={styles.star}>{star <= rating ? '⭐' : '☆'}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -161,11 +206,8 @@ export default function MovieDetailsScreen() {
         <Text style={styles.info}>Year: {movie.Year}</Text>
         <Text style={styles.info}>Genre: {movie.Genre}</Text>
 
-        <TouchableOpacity onPress={toggleWatchlistStatus}>
-          <Text style={{ color: '#F7EEDB', marginVertical: 10 }}>
-            {isInWatchlist ? '➖ Remove from Watchlist' : '➕ Add to Watchlist'}
-          </Text>
-        </TouchableOpacity>
+        <Text style={styles.sectionHeading}>Your Rating</Text>
+        <StarRating rating={userRating} onRate={setUserRating} />
 
         {movie.Ratings && movie.Ratings.length > 0 && (
           <View style={styles.ratingsContainer}>
@@ -182,7 +224,6 @@ export default function MovieDetailsScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -248,15 +289,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   backButton: {
-  backgroundColor: '#F6C343',
-  padding: 10,
-  borderRadius: 8,
-  alignSelf: 'flex-start',
-  marginBottom: 10,
-},
-backButtonText: {
-  color: '#000',
-  fontWeight: 'bold',
-},
-
+    backgroundColor: '#F6C343',
+    padding: 10,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    marginBottom: 10,
+  },
+  backButtonText: {
+    color: '#000',
+    fontWeight: 'bold',
+  },
+  starContainer: {
+    flexDirection: 'row',
+    marginVertical: 8,
+  },
+  star: {
+    fontSize: 28,
+    marginHorizontal: 4,
+  },
 });

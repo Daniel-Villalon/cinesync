@@ -109,13 +109,6 @@ export default function Homescreen() {
 
       <MovieList groupId={currentGroupId!} />
 
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Log Out</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.logoutButton} onPress={() => router.push('/group')}>
-        <Text style={styles.logoutText}>Go to Groups</Text>
-      </TouchableOpacity>
 
       <View style={styles.floatingIconsContainer}>
         <TouchableOpacity style={styles.person} onPress={() => router.push('/user')}>
