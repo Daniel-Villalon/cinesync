@@ -3,7 +3,7 @@ import { createGroupDoc, addGroupMember } from '../data/groups';
 import { FIRESTORE_DB } from '@/FirebaseConfig';
 import { doc,setDoc, updateDoc, arrayUnion, collection, addDoc } from 'firebase/firestore';
 
-export const createGroup = async (name: string, userId: string): Promise<string> => {
+export const createGroup = async (name: string, userId: string, profilePicture: null | string, fairnessFilter: boolean, sortBy: string): Promise<string> => {
   // 1. Create the group document
   const groupRef = await createGroupDoc(name, userId);
 
@@ -22,6 +22,9 @@ export const createGroup = async (name: string, userId: string): Promise<string>
 
   await setDoc(groupRef, {
     groupList: newListId,
+    profilePicture: profilePicture,
+    fairnessFilter: fairnessFilter,
+    sortBy: sortBy,
   }, { merge: true });
   await updateDoc(userRef, {
     groups: arrayUnion(groupRef.id),
