@@ -25,6 +25,7 @@ type MovieEntry = {
 type MovieWithDetails = MovieEntry & {
   title: string;
   poster: string;
+  genre: string; // Added genre field
   username: string;
   userRating: number; 
 };
@@ -81,6 +82,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
             ...entry,
             title: details.Title || 'Untitled',
             poster: details.Poster || '',
+            genre: details.Genre || 'Unknown genre', // Extract genre from API response
             username,
             rating: entry.rating ?? 0,
             userRating: (entry as any).userRating || 0,
@@ -91,6 +93,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
             ...entry,
             title: 'Unknown',
             poster: '',
+            genre: 'Unknown genre', 
             username: 'Unknown',
             rating: 0,
             userRating: (entry as any).userRating || 0,
@@ -209,9 +212,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
             </TouchableOpacity>
             <View style={styles.infoContainer}>
               <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.date}>
-                {item.addedAt?.toDate().toLocaleDateString() || 'Unknown date'}
-              </Text>
+              <Text style={styles.genre}>{item.genre}</Text>
               <Text style={styles.user}>Added by {item.username}</Text>
               <View>
                 <Text style={styles.ratingLabel}>Group Rating:</Text>
@@ -269,7 +270,7 @@ const styles = StyleSheet.create({
     color: '#F7EEDB',
     fontWeight: '600',
   },
-  date: {
+  genre: {
     fontSize: 14,
     color: '#F7EEDB',
   },
