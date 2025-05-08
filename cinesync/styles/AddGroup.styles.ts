@@ -161,4 +161,14 @@ export default StyleSheet.create({
     color: '#000000',
     fontWeight: 'bold',
   },
+  filterControlGroup: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  infoIconContainer: {
+    marginLeft: 8,
+    padding: 2,
+  },
 });
