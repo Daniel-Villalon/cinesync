@@ -144,7 +144,7 @@ const AddGroupScreen = () => {
             )}
           </View>
           <TouchableOpacity onPress={() => setShowInfoModal(true)}>
-            <Ionicons name="information-circle" size={20} color="#FFD700" style={{ marginLeft: 5 }} />
+            <Ionicons name="information-circle" size={20} color="#F5CB5C" style={{ marginLeft: 5 }} />
           </TouchableOpacity>
         </View>
       </View>

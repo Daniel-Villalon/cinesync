@@ -142,7 +142,7 @@ export default StyleSheet.create({
   infoModalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFD700', 
+    color: '#F5CB5C', 
     marginBottom: 15,
   },
   infoModalText: {
@@ -152,7 +152,7 @@ export default StyleSheet.create({
     marginBottom: 20,
   },
   closeButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: '#F5CB5C',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
