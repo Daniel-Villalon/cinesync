@@ -194,7 +194,7 @@ const User = () => {
 
         {/* Favorite Genres */}
         <View style={styles.infoSection}>
-          <Text style={[styles.label, { color: themeStyles.textColor }]}>Favorite Genres:</Text>
+          <Text style={[styles.label, { color: themeStyles.textColor }]}>Favorite Genres: </Text>
           <TouchableOpacity onPress={() => setShowGenreSelector(true)}>
             <Text style={styles.genres}>
               {favoriteGenres.length > 0

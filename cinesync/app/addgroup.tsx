@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  Modal,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
@@ -20,10 +21,12 @@ const AddGroupScreen = () => {
   const [sortBy, setSortBy] = useState('Rotten Tomatoes Rating');
   const [fairnessFilter, setFairnessFilter] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState<null | 'sort' | 'fairness'>(null);
+  const [showInfoModal, setShowInfoModal] = useState(false);
 
   const router = useRouter();
   const auth = getAuth();
   const user = auth.currentUser;
+  
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -140,8 +143,7 @@ const AddGroupScreen = () => {
               </View>
             )}
           </View>
-          {/* Info Icon */}
-          <TouchableOpacity onPress={() => Alert.alert("Explanation of fairness filter behavior")}>
+          <TouchableOpacity onPress={() => setShowInfoModal(true)}>
             <Ionicons name="information-circle" size={20} color="#FFD700" style={{ marginLeft: 5 }} />
           </TouchableOpacity>
         </View>
@@ -151,6 +153,24 @@ const AddGroupScreen = () => {
       <TouchableOpacity style={styles.deleteButton} onPress={handleCreateGroup}>
         <Text style={styles.deleteText}>Create Group</Text>
       </TouchableOpacity>
+
+      {/* Info Modal */}
+      <Modal visible={showInfoModal} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.infoModalContent}>
+            <Text style={styles.infoModalTitle}>Fairness Filter</Text>
+            <Text style={styles.infoModalText}>
+              The user whose movie was most recently watched will have all their movies removed from view in the watchlist until a different user's movie is watched.
+            </Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowInfoModal(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
