@@ -102,6 +102,9 @@ const MovieSearch = () => {
     });
 
     setWatchlist(updatedMovies.map((m) => m.imdbID));
+    
+    // Navigate back to MovieList page after updating the watchlist
+    router.back();
   };
 
   const openDetails = (imdbID: string) => {

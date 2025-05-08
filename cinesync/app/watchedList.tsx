@@ -198,7 +198,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Watchlist</Text>
+      <Text style={styles.heading}>Watched</Text>
       <FlatList
         data={movies}
         keyExtractor={(item) => item.imdbID}
