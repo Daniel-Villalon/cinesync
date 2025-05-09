@@ -158,11 +158,11 @@ export default function SignInScreen() {
           <Text style={styles.registerLink}>Sign Up</Text>
         </TouchableOpacity>
       </View>
-      <Link href="/user" asChild>
+      {/* <Link href="/user" asChild>
          <TouchableOpacity style={styles.signInButton}>
            <Text style={[styles.signInButton, { color: '#2B2C5A' }]}>User</Text>
          </TouchableOpacity>
-       </Link>
+       </Link> */}
     </DismissKeyboardView>
   );
 }

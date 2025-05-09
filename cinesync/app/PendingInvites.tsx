@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Button, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import { collection, getDocs, query, where, updateDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, query, where, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { addUserToGroup } from '@/services/GroupService';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -44,7 +44,7 @@ export default function PendingInvites() {
   const acceptInvite = async (invite: any) => {
     try {
       await addUserToGroup(invite.groupId, user.uid);
-      await updateDoc(doc(FIRESTORE_DB, 'invites', invite.id), { status: 'accepted' });
+      await deleteDoc(doc(FIRESTORE_DB, 'invites', invite.id));
       Alert.alert('Success', 'You have joined the group!');
       setInvites(invites.filter(i => i.id !== invite.id));
     } catch (err) {
