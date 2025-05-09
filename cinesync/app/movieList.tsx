@@ -311,15 +311,18 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
 
   const toggleSeen = async (imdbID: string) => {
     if (!currentUser) return;
-    
+  
     try {
       const voteId = `${currentUser.uid}_${imdbID}_${groupId}`;
       const voteRef = doc(FIRESTORE_DB, 'movieVotes', voteId);
       const voteSnap = await getDoc(voteRef);
-      
+  
+      let newSeen = true;
+  
       if (voteSnap.exists()) {
         const currentSeen = voteSnap.data()?.seen || false;
-        await updateDoc(voteRef, { seen: !currentSeen });
+        newSeen = !currentSeen;
+        await updateDoc(voteRef, { seen: newSeen });
       } else {
         await setDoc(voteRef, {
           userId: currentUser.uid,
@@ -330,11 +333,19 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
           timestamp: new Date()
         });
       }
+  
+      // Refresh the list manually — this ensures immediate UI update
+      const updatedMovies = allMovies.map(movie =>
+        movie.imdbID === imdbID ? { ...movie, seen: newSeen } : movie
+      );
+      setAllMovies(updatedMovies);
+      filterMoviesByActiveTab(updatedMovies);
+  
     } catch (err) {
       console.error('Failed to toggle seen status', err);
       Alert.alert('Error', 'Failed to update seen status');
     }
-  };
+  };  
 
   const updateRating = async (imdbID: string, rating: number) => {
     if (!currentUser) return;
