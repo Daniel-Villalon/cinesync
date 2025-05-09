@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  Modal,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -23,6 +24,7 @@ const EditGroupScreen = () => {
   const [fairnessFilter, setFairnessFilter] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState<null | 'sort' | 'fairness'>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
 
   const router = useRouter();
   const auth = getAuth();
@@ -176,13 +178,22 @@ const EditGroupScreen = () => {
         {/* Fairness Filter */}
         <View style={styles.settingRow}>
           <Text style={styles.settingLabel}>Fairness filter:</Text>
-          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+          <View style={styles.filterControlGroup}>
             <TouchableOpacity
               onPress={() => setDropdownOpen(dropdownOpen === 'fairness' ? null : 'fairness')}
               style={[styles.dropdown, { width: 50 }]}
             >
               <Text style={styles.dropdownText}>{fairnessFilter ? 'On' : 'Off'}</Text>
             </TouchableOpacity>
+            
+            {/* Info Icon - Now in a container that keeps it next to the dropdown */}
+            <TouchableOpacity 
+              onPress={() => setShowInfoModal(true)}
+              style={styles.infoIconContainer}
+            >
+              <Ionicons name="information-circle" size={20} color="#F5CB5C"/>
+            </TouchableOpacity>
+            
             {dropdownOpen === 'fairness' && (
               <View style={[styles.dropdownMenu, { width: 50, position: 'absolute', top: '100%', left: 0, zIndex: 10 }]}>
                 {['On', 'Off']
@@ -202,9 +213,6 @@ const EditGroupScreen = () => {
               </View>
             )}
           </View>
-          <TouchableOpacity onPress={() => Alert.alert("Explanation of fairness filter behavior")}>
-            <Ionicons name="information-circle" size={20} color="#FFD700" style={{ marginLeft: 5 }} />
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -212,7 +220,24 @@ const EditGroupScreen = () => {
       <TouchableOpacity style={styles.deleteButton} onPress={handleUpdateGroup}>
         <Text style={styles.deleteText}>Update Group</Text>
       </TouchableOpacity>
+      <Modal visible={showInfoModal} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.infoModalContent}>
+            <Text style={styles.infoModalTitle}>Fairness Filter</Text>
+            <Text style={styles.infoModalText}>
+              Hello! The fairness filter ensures that movie selections are distributed evenly among group members' preferences.
+            </Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowInfoModal(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
+    
   );
 };
 
