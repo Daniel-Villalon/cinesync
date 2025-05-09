@@ -15,13 +15,11 @@ import { doc, getDoc, onSnapshot, updateDoc, collection, query, where, getDocs, 
 import { getMovieDetails } from '@/services/MoviesService';
 import { getAuth } from 'firebase/auth';
 
-// Import your unselected icons
+// Import your icons
 const thumbsUpIcon = require('@/assets/images/icons/like.png');
 const thumbsDownIcon = require('@/assets/images/icons/dislike.png');
-// Import your selected (yellow) icons
 const thumbsUpSelectedIcon = require('@/assets/images/icons/likeSelected.png');
 const thumbsDownSelectedIcon = require('@/assets/images/icons/dislikeSelected.png');
-// Import seen/not seen icons
 const seenIcon = require('@/assets/images/icons/seen.png');
 const notSeenIcon = require('@/assets/images/icons/notSeen.png');
 
@@ -40,28 +38,33 @@ type MovieWithDetails = MovieEntry & {
   thumbsUp: number;
   thumbsDown: number;
   userVote: 'up' | 'down' | null;
-  seen: boolean; // Added seen property
+  seen: boolean;
+  userRating: number;
 };
 
 type Props = {
   groupId: string;
+  initialType?: 'watchlist' | 'watched';
 };
 
-const MovieList: React.FC<Props> = ({ groupId }) => {
+const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
   const [movies, setMovies] = useState<MovieWithDetails[]>([]);
+  const [allMovies, setAllMovies] = useState<MovieWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'watchlist' | 'watched'>(initialType);
   const router = useRouter();
   const currentUser = getAuth().currentUser;
 
-  const fetchUserVotes = async (movieEntries: MovieEntry[]) => {
+  const fetchUserPreferences = async (movieEntries: MovieEntry[]) => {
     if (!currentUser) return movieEntries;
     try {
       const movieIds = movieEntries.map(entry => entry.imdbID);
       const votesMap: Record<string, 'up' | 'down' | null> = {};
       const seenMap: Record<string, boolean> = {};
+      const ratingsMap: Record<string, number> = {};
       
       await Promise.all(movieIds.map(async (movieId) => {
-        // Include groupId in the vote reference to make votes group-specific
+        // Get votes for this group
         const voteRef = doc(FIRESTORE_DB, 'movieVotes', `${currentUser.uid}_${movieId}_${groupId}`);
         const voteSnap = await getDoc(voteRef);
         if (voteSnap.exists()) {
@@ -70,24 +73,33 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
         } else {
           seenMap[movieId] = false;
         }
+        
+        // Get ratings
+        const ratingRef = doc(FIRESTORE_DB, 'userRatings', `${currentUser.uid}_${movieId}`);
+        const ratingSnap = await getDoc(ratingRef);
+        
+        if (ratingSnap.exists()) {
+          ratingsMap[movieId] = ratingSnap.data()?.rating || 0;
+        }
       }));
       
       return movieEntries.map(entry => ({
         ...entry,
         userVote: votesMap[entry.imdbID] || null,
-        seen: seenMap[entry.imdbID] || false
+        seen: seenMap[entry.imdbID] || false,
+        userRating: ratingsMap[entry.imdbID] || 0
       }));
     } catch (err) {
-      console.error('Error fetching user votes:', err);
+      console.error('Error fetching user preferences:', err);
       return movieEntries;
     }
   };
 
   const fetchMovieDetails = async (movieEntries: MovieEntry[]) => {
-    const entriesWithVotes = await fetchUserVotes(movieEntries);
+    const entriesWithPreferences = await fetchUserPreferences(movieEntries);
     
     const detailedMovies = await Promise.all(
-      entriesWithVotes.map(async (entry) => {
+      entriesWithPreferences.map(async (entry) => {
         try {
           const details = await getMovieDetails(entry.imdbID);
           const userRef = doc(FIRESTORE_DB, 'users', entry.addedBy);
@@ -123,6 +135,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
             thumbsDown: thumbsDownSnap.size,
             userVote: (entry as any).userVote || null,
             seen: (entry as any).seen || false,
+            userRating: (entry as any).userRating || 0,
           };
         } catch (err) {
           console.warn('Error fetching details for', entry.imdbID, err);
@@ -136,6 +149,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
             thumbsDown: 0,
             userVote: (entry as any).userVote || null,
             seen: (entry as any).seen || false,
+            userRating: (entry as any).userRating || 0,
           };
         }
       })
@@ -145,14 +159,33 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
       (a, b) => a.addedAt?.toDate?.() - b.addedAt?.toDate?.()
     );
     
-    setMovies(sortedMovies);
+    setAllMovies(sortedMovies);
+    
+    // Filter based on active tab
+    filterMoviesByActiveTab(sortedMovies);
   };
+  
+  const filterMoviesByActiveTab = (moviesList = allMovies) => {
+    const filteredMovies = moviesList.filter(movie => {
+      if (activeTab === 'watchlist') {
+        return !movie.seen;
+      } else {
+        return movie.seen;
+      }
+    });
+    
+    setMovies(filteredMovies);
+  };
+
+  useEffect(() => {
+    filterMoviesByActiveTab();
+  }, [activeTab]);
 
   useEffect(() => {
     if (!groupId) return;
     
     let movieListUnsubscribe: () => void;
-    let userVotesUnsubscribe: () => void;
+    let userPreferencesUnsubscribe: () => void;
     let currentMovieEntries: MovieEntry[] = [];
     
     const setupListeners = async () => {
@@ -172,19 +205,36 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
             fetchMovieDetails(currentMovieEntries);
           } else {
             setMovies([]);
+            setAllMovies([]);
           }
           setLoading(false);
         });
         
         if (currentUser) {
+          // Listen for votes changes
           const votesCollectionRef = collection(FIRESTORE_DB, 'movieVotes');
           const votesQuery = query(
             votesCollectionRef,
             where('userId', '==', currentUser.uid),
-            where('groupId', '==', groupId) // Only listen for votes in this group
+            where('groupId', '==', groupId)
           );
           
-          userVotesUnsubscribe = onSnapshot(votesQuery, () => {
+          // Listen for ratings changes
+          const ratingsCollectionRef = collection(FIRESTORE_DB, 'userRatings');
+          const ratingsQuery = query(
+            ratingsCollectionRef, 
+            where('userId', '==', currentUser.uid)
+          );
+          
+          // Use a single listener that responds to changes in either collection
+          userPreferencesUnsubscribe = onSnapshot(votesQuery, () => {
+            if (currentMovieEntries.length > 0) {
+              fetchMovieDetails(currentMovieEntries);
+            }
+          });
+          
+          // Also set up a listener for ratings
+          onSnapshot(ratingsQuery, () => {
             if (currentMovieEntries.length > 0) {
               fetchMovieDetails(currentMovieEntries);
             }
@@ -199,7 +249,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
     
     return () => {
       if (movieListUnsubscribe) movieListUnsubscribe();
-      if (userVotesUnsubscribe) userVotesUnsubscribe();
+      if (userPreferencesUnsubscribe) userPreferencesUnsubscribe();
     };
   }, [groupId, currentUser?.uid]);
 
@@ -232,7 +282,6 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
     if (!currentUser) return;
     
     try {
-      // Make the vote ID include the groupId to make votes group-specific
       const voteId = `${currentUser.uid}_${imdbID}_${groupId}`;
       const voteRef = doc(FIRESTORE_DB, 'movieVotes', voteId);
       const voteSnap = await getDoc(voteRef);
@@ -248,9 +297,9 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
         await setDoc(voteRef, {
           userId: currentUser.uid,
           movieId: imdbID,
-          groupId: groupId, // Store the groupId in the vote document
+          groupId: groupId,
           vote,
-          seen: false, // Initialize seen status
+          seen: false,
           timestamp: new Date()
         });
       }
@@ -277,7 +326,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
           movieId: imdbID,
           groupId: groupId,
           vote: null,
-          seen: true, // Initial value is true when toggling from nonexistent
+          seen: true,
           timestamp: new Date()
         });
       }
@@ -287,88 +336,212 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
     }
   };
 
+  const updateRating = async (imdbID: string, rating: number) => {
+    if (!currentUser) return;
+    
+    try {
+      const ratingId = `${currentUser.uid}_${imdbID}`;
+      const ratingRef = doc(FIRESTORE_DB, 'userRatings', ratingId);
+      
+      await setDoc(ratingRef, {
+        userId: currentUser.uid,
+        movieId: imdbID,
+        rating,
+        timestamp: new Date()
+      });
+      
+      // Also mark as seen when rating
+      const voteId = `${currentUser.uid}_${imdbID}_${groupId}`;
+      const voteRef = doc(FIRESTORE_DB, 'movieVotes', voteId);
+      const voteSnap = await getDoc(voteRef);
+      
+      if (voteSnap.exists()) {
+        await updateDoc(voteRef, { seen: true });
+      } else {
+        await setDoc(voteRef, {
+          userId: currentUser.uid,
+          movieId: imdbID,
+          groupId: groupId,
+          vote: null,
+          seen: true,
+          timestamp: new Date()
+        });
+      }
+    } catch (err) {
+      console.error('Failed to update rating', err);
+      Alert.alert('Error', 'Failed to save rating');
+    }
+  };
+
+  const renderStars = (rating: number) => {
+    const fullStar = '★';
+    const emptyStar = '☆';
+    const rounded = Math.round(rating);
+    return fullStar.repeat(rounded) + emptyStar.repeat(5 - rounded);
+  };
+
+  const renderRatingSelector = (imdbID: string, currentRating: number) => {
+    return (
+      <View style={styles.ratingSelector}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <TouchableOpacity 
+            key={star} 
+            onPress={() => updateRating(imdbID, star)}
+            style={styles.starButton}
+          >
+            <Text style={[
+              styles.starText,
+              star <= currentRating && styles.selectedStar
+            ]}>
+              ★
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
+
+  const renderTabSelector = () => {
+    return (
+      <View style={styles.tabContainer}>
+        <TouchableOpacity 
+          style={[
+            styles.tabButton, 
+            activeTab === 'watchlist' && styles.activeTabButton
+          ]}
+          onPress={() => setActiveTab('watchlist')}
+        >
+          <Text style={[
+            styles.tabText,
+            activeTab === 'watchlist' && styles.activeTabText
+          ]}>Watchlist</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[
+            styles.tabButton, 
+            activeTab === 'watched' && styles.activeTabButton
+          ]}
+          onPress={() => setActiveTab('watched')}
+        >
+          <Text style={[
+            styles.tabText,
+            activeTab === 'watched' && styles.activeTabText
+          ]}>Watched</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   if (loading) {
     return <ActivityIndicator style={{ marginTop: 20 }} color="#F7EEDB" />;
   }
 
-  if (movies.length === 0) {
-    return <Text style={styles.emptyText}>No movies added yet.</Text>;
-  }
-
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Watchlist</Text>
-      <FlatList
-        data={movies}
-        keyExtractor={(item) => item.imdbID}
-        renderItem={({ item }) => (
-          <View style={styles.movieCard}>
-            <TouchableOpacity onPress={() => router.push(`/MovieDetails/${item.imdbID}/${groupId}`)}>
-              <Image source={{ uri: item.poster }} style={styles.poster} resizeMode="cover" />
-            </TouchableOpacity>
-            <View style={styles.infoContainer}>
-              <View style={styles.titleContainer}>
-                <Text style={styles.title}>{item.title}</Text>
-                {currentUser?.uid === item.addedBy && (
-                  <TouchableOpacity 
-                    style={styles.removeButton} 
-                    onPress={() => removeMovie(item.imdbID)}
-                  >
-                    <Text style={styles.removeIcon}>−</Text>
-                  </TouchableOpacity>
+      {renderTabSelector()}
+      
+      {movies.length === 0 ? (
+        <Text style={styles.emptyText}>
+          {activeTab === 'watchlist' ? 'No movies added yet.' : 'No watched movies yet.'}
+        </Text>
+      ) : (
+        <FlatList
+          data={movies}
+          keyExtractor={(item) => item.imdbID}
+          renderItem={({ item }) => (
+            <View style={styles.movieCard}>
+              <TouchableOpacity onPress={() => router.push(`/MovieDetails/${item.imdbID}/${groupId}`)}>
+                <Image source={{ uri: item.poster }} style={styles.poster} resizeMode="cover" />
+              </TouchableOpacity>
+              <View style={styles.infoContainer}>
+                <View style={styles.titleContainer}>
+                  <Text style={styles.title}>{item.title}</Text>
+                  {currentUser?.uid === item.addedBy && (
+                    <TouchableOpacity 
+                      style={styles.removeButton} 
+                      onPress={() => removeMovie(item.imdbID)}
+                    >
+                      <Text style={styles.removeIcon}>−</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                <Text style={styles.genre}>{item.genre}</Text>
+                <Text style={styles.user}>Added by {item.username}</Text>
+                
+                {activeTab === 'watchlist' ? (
+                  // Watchlist view with votes
+                  <View style={styles.votesContainer}>
+                    <View style={styles.leftVoteButtons}>
+                      <TouchableOpacity
+                        style={styles.voteButton}
+                        onPress={() => castVote(item.imdbID, 'up')}
+                      >
+                        <Image
+                          source={item.userVote === 'up' ? thumbsUpSelectedIcon : thumbsUpIcon}
+                          style={styles.voteIcon}
+                        />
+                        <Text style={[
+                          styles.voteCount,
+                          item.userVote === 'up' && styles.activeVoteCount
+                        ]}>{item.thumbsUp}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.voteButton}
+                        onPress={() => castVote(item.imdbID, 'down')}
+                      >
+                        <Image
+                          source={item.userVote === 'down' ? thumbsDownSelectedIcon : thumbsDownIcon}
+                          style={styles.voteIcon}
+                        />
+                        <Text style={[
+                          styles.voteCount,
+                          item.userVote === 'down' && styles.activeVoteCount
+                        ]}>{item.thumbsDown}</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.seenButton}
+                      onPress={() => toggleSeen(item.imdbID)}
+                    >
+                      <Image
+                        source={item.seen ? seenIcon : notSeenIcon}
+                        style={styles.voteIcon}
+                      />
+                      <Text style={[
+                        styles.voteCount,
+                        item.seen && styles.activeVoteCount
+                      ]}>{item.seen ? 'Seen' : 'Not Seen'}</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  // Watched view with ratings
+                  <View style={styles.ratingContainer}>
+                    <View style={styles.ratingSelectorContainer}>
+                      <Text style={styles.ratingLabel}>Your Rating:</Text>
+                      {renderRatingSelector(item.imdbID, item.userRating)}
+                    </View>
+                    <TouchableOpacity
+                      style={styles.seenButton}
+                      onPress={() => toggleSeen(item.imdbID)}
+                    >
+                      <Image
+                        source={item.seen ? seenIcon : notSeenIcon}
+                        style={styles.voteIcon}
+                      />
+                      <Text style={[
+                        styles.voteCount,
+                        item.seen && styles.activeVoteCount
+                      ]}>{item.seen ? 'Seen' : 'Not Seen'}</Text>
+                    </TouchableOpacity>
+                  </View>
                 )}
               </View>
-              <Text style={styles.genre}>{item.genre}</Text>
-              <Text style={styles.user}>Added by {item.username}</Text>
-              <View style={styles.votesContainer}>
-                <View style={styles.leftVoteButtons}>
-                  <TouchableOpacity
-                    style={styles.voteButton}
-                    onPress={() => castVote(item.imdbID, 'up')}
-                  >
-                    <Image
-                      source={item.userVote === 'up' ? thumbsUpSelectedIcon : thumbsUpIcon}
-                      style={styles.voteIcon}
-                    />
-                    <Text style={[
-                      styles.voteCount,
-                      item.userVote === 'up' && styles.activeVoteCount
-                    ]}>{item.thumbsUp}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.voteButton}
-                    onPress={() => castVote(item.imdbID, 'down')}
-                  >
-                    <Image
-                      source={item.userVote === 'down' ? thumbsDownSelectedIcon : thumbsDownIcon}
-                      style={styles.voteIcon}
-                    />
-                    <Text style={[
-                      styles.voteCount,
-                      item.userVote === 'down' && styles.activeVoteCount
-                    ]}>{item.thumbsDown}</Text>
-                  </TouchableOpacity>
-                </View>
-                <TouchableOpacity
-                  style={styles.seenButton}
-                  onPress={() => toggleSeen(item.imdbID)}
-                >
-                  <Image
-                    source={item.seen ? seenIcon : notSeenIcon}
-                    style={styles.voteIcon}
-                  />
-                  <Text style={[
-                    styles.voteCount,
-                    item.seen && styles.activeVoteCount
-                  ]}>{item.seen ? 'Seen' : 'Not Seen'}</Text>
-                </TouchableOpacity>
-              </View>
             </View>
-          </View>
-        )}
-        style={{ maxHeight: 725 }}
-        scrollEventThrottle={16}
-      />
+          )}
+          style={{ maxHeight: 725 }}
+          scrollEventThrottle={16}
+        />
+      )}
     </View>
   );
 };
@@ -379,6 +552,31 @@ const styles = StyleSheet.create({
   container: {
     marginTop: 20,
     paddingHorizontal: 16,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    borderRadius: 8,
+    backgroundColor: '#1C1C1E',
+    overflow: 'hidden',
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeTabButton: {
+    backgroundColor: '#2C2C2E',
+  },
+  tabText: {
+    fontSize: 16,
+    color: '#999',
+    fontWeight: '500',
+  },
+  activeTabText: {
+    color: '#F7EEDB',
+    fontWeight: '600',
   },
   heading: {
     fontSize: 22,
@@ -438,7 +636,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 8,
     alignItems: 'center',
-    justifyContent: 'space-between', // This spreads items to opposite ends
+    justifyContent: 'space-between',
   },
   leftVoteButtons: {
     flexDirection: 'row',
@@ -469,6 +667,37 @@ const styles = StyleSheet.create({
   activeVoteCount: {
     color: '#FFD700',
     fontWeight: 'bold',
+  },
+  ratingContainer: {
+    marginTop: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  ratingSelectorContainer: {
+    flex: 1,
+  },
+  ratingLabel: {
+    fontSize: 14,
+    color: '#F7EEDB',
+  },
+  ratingSelector: {
+    flexDirection: 'row',
+    marginTop: 4,
+  },
+  starButton: {
+    marginRight: 8,
+  },
+  starText: {
+    fontSize: 24,
+    color: '#AAAAAA',
+  },
+  selectedStar: {
+    color: '#FFD700',
+  },
+  unseenText: {
+    color: '#64B5F6',
+    marginTop: 8,
   },
   emptyText: {
     textAlign: 'center',
