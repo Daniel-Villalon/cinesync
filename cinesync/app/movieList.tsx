@@ -21,6 +21,9 @@ const thumbsDownIcon = require('@/assets/images/icons/dislike.png');
 // Import your selected (yellow) icons
 const thumbsUpSelectedIcon = require('@/assets/images/icons/likeSelected.png');
 const thumbsDownSelectedIcon = require('@/assets/images/icons/dislikeSelected.png');
+// Import seen/not seen icons
+const seenIcon = require('@/assets/images/icons/seen.png');
+const notSeenIcon = require('@/assets/images/icons/notSeen.png');
 
 type MovieEntry = {
   imdbID: string;
@@ -37,6 +40,7 @@ type MovieWithDetails = MovieEntry & {
   thumbsUp: number;
   thumbsDown: number;
   userVote: 'up' | 'down' | null;
+  seen: boolean; // Added seen property
 };
 
 type Props = {
@@ -54,6 +58,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
     try {
       const movieIds = movieEntries.map(entry => entry.imdbID);
       const votesMap: Record<string, 'up' | 'down' | null> = {};
+      const seenMap: Record<string, boolean> = {};
       
       await Promise.all(movieIds.map(async (movieId) => {
         // Include groupId in the vote reference to make votes group-specific
@@ -61,12 +66,16 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
         const voteSnap = await getDoc(voteRef);
         if (voteSnap.exists()) {
           votesMap[movieId] = voteSnap.data()?.vote || null;
+          seenMap[movieId] = voteSnap.data()?.seen || false;
+        } else {
+          seenMap[movieId] = false;
         }
       }));
       
       return movieEntries.map(entry => ({
         ...entry,
-        userVote: votesMap[entry.imdbID] || null
+        userVote: votesMap[entry.imdbID] || null,
+        seen: seenMap[entry.imdbID] || false
       }));
     } catch (err) {
       console.error('Error fetching user votes:', err);
@@ -113,6 +122,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
             thumbsUp: thumbsUpSnap.size,
             thumbsDown: thumbsDownSnap.size,
             userVote: (entry as any).userVote || null,
+            seen: (entry as any).seen || false,
           };
         } catch (err) {
           console.warn('Error fetching details for', entry.imdbID, err);
@@ -125,6 +135,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
             thumbsUp: 0,
             thumbsDown: 0,
             userVote: (entry as any).userVote || null,
+            seen: (entry as any).seen || false,
           };
         }
       })
@@ -239,12 +250,40 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
           movieId: imdbID,
           groupId: groupId, // Store the groupId in the vote document
           vote,
+          seen: false, // Initialize seen status
           timestamp: new Date()
         });
       }
     } catch (err) {
       console.error('Failed to cast vote', err);
       Alert.alert('Error', 'Failed to save your vote');
+    }
+  };
+
+  const toggleSeen = async (imdbID: string) => {
+    if (!currentUser) return;
+    
+    try {
+      const voteId = `${currentUser.uid}_${imdbID}_${groupId}`;
+      const voteRef = doc(FIRESTORE_DB, 'movieVotes', voteId);
+      const voteSnap = await getDoc(voteRef);
+      
+      if (voteSnap.exists()) {
+        const currentSeen = voteSnap.data()?.seen || false;
+        await updateDoc(voteRef, { seen: !currentSeen });
+      } else {
+        await setDoc(voteRef, {
+          userId: currentUser.uid,
+          movieId: imdbID,
+          groupId: groupId,
+          vote: null,
+          seen: true, // Initial value is true when toggling from nonexistent
+          timestamp: new Date()
+        });
+      }
+    } catch (err) {
+      console.error('Failed to toggle seen status', err);
+      Alert.alert('Error', 'Failed to update seen status');
     }
   };
 
@@ -282,31 +321,46 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
               <Text style={styles.genre}>{item.genre}</Text>
               <Text style={styles.user}>Added by {item.username}</Text>
               <View style={styles.votesContainer}>
+                <View style={styles.leftVoteButtons}>
+                  <TouchableOpacity
+                    style={styles.voteButton}
+                    onPress={() => castVote(item.imdbID, 'up')}
+                  >
+                    <Image
+                      source={item.userVote === 'up' ? thumbsUpSelectedIcon : thumbsUpIcon}
+                      style={styles.voteIcon}
+                    />
+                    <Text style={[
+                      styles.voteCount,
+                      item.userVote === 'up' && styles.activeVoteCount
+                    ]}>{item.thumbsUp}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.voteButton}
+                    onPress={() => castVote(item.imdbID, 'down')}
+                  >
+                    <Image
+                      source={item.userVote === 'down' ? thumbsDownSelectedIcon : thumbsDownIcon}
+                      style={styles.voteIcon}
+                    />
+                    <Text style={[
+                      styles.voteCount,
+                      item.userVote === 'down' && styles.activeVoteCount
+                    ]}>{item.thumbsDown}</Text>
+                  </TouchableOpacity>
+                </View>
                 <TouchableOpacity
-                  style={styles.voteButton}
-                  onPress={() => castVote(item.imdbID, 'up')}
+                  style={styles.seenButton}
+                  onPress={() => toggleSeen(item.imdbID)}
                 >
                   <Image
-                    source={item.userVote === 'up' ? thumbsUpSelectedIcon : thumbsUpIcon}
+                    source={item.seen ? seenIcon : notSeenIcon}
                     style={styles.voteIcon}
                   />
                   <Text style={[
                     styles.voteCount,
-                    item.userVote === 'up' && styles.activeVoteCount
-                  ]}>{item.thumbsUp}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.voteButton}
-                  onPress={() => castVote(item.imdbID, 'down')}
-                >
-                  <Image
-                    source={item.userVote === 'down' ? thumbsDownSelectedIcon : thumbsDownIcon}
-                    style={styles.voteIcon}
-                  />
-                  <Text style={[
-                    styles.voteCount,
-                    item.userVote === 'down' && styles.activeVoteCount
-                  ]}>{item.thumbsDown}</Text>
+                    item.seen && styles.activeVoteCount
+                  ]}>{item.seen ? 'Seen' : 'Not Seen'}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -384,11 +438,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 8,
     alignItems: 'center',
+    justifyContent: 'space-between', // This spreads items to opposite ends
+  },
+  leftVoteButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   voteButton: {
     flexDirection: 'row',
     alignItems: 'center',
     marginRight: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+  },
+  seenButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 6,
     paddingHorizontal: 8,
   },
