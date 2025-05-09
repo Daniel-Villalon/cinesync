@@ -88,7 +88,7 @@ const EditGroupScreen = () => {
     try {
       const groupRef = doc(FIRESTORE_DB, 'groups', groupId as string);
       await updateDoc(groupRef, {
-        groupName: name,
+        name: name,
         groupImage: profilePicture,
         fairnessFilter: fairness,
         sortBy: sort,
@@ -107,8 +107,7 @@ const EditGroupScreen = () => {
     }
     try {
       await updateGroup(groupName.trim(), user!.uid, groupImage, fairnessFilter, sortBy);
-      router.replace('/group');
-    } catch (error) {
+      router.push({ pathname: '/homescreen', params: { groupId: groupId } })    } catch (error) {
       console.error(error);
       Alert.alert('Failed to update group');
     }
