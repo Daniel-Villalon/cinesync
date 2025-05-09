@@ -89,7 +89,7 @@ const EditGroupScreen = () => {
       const groupRef = doc(FIRESTORE_DB, 'groups', groupId as string);
       await updateDoc(groupRef, {
         name: name,
-        groupImage: profilePicture,
+        profilePicture: profilePicture,
         fairnessFilter: fairness,
         sortBy: sort,
         lastUpdatedBy: userId,
