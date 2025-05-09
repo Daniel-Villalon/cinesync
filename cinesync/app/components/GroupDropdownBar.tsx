@@ -26,7 +26,7 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
   };
 
   const handleEditGroup = (groupId: string) => {
-    router.push(`/addgroup`);
+    router.push(`/editgroup?groupId=${groupId}`);
     setDropdownOpen(false);
   };
 
@@ -35,9 +35,9 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
 //     setDropdownOpen(false);
 //   };
 
-  const goToUserProfile = () => {
-    router.push('/user');
-  };
+  // const goToUserProfile = () => {
+  //   router.push('/user');
+  // };
 
   return (
     <View style={{ zIndex: 10 }}>
@@ -51,7 +51,7 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
           <Text style={styles.groupName}>{currentGroup?.name ?? ''}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={goToUserProfile} style={styles.iconRight}>
+        <TouchableOpacity onPress={() => handleEditGroup(currentGroup?.id)} style={styles.iconRight}>
           <Ionicons name="settings-sharp" size={24} color="#000" />
         </TouchableOpacity>
       </View>
