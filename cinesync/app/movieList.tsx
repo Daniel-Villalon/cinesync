@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
-
 import {
   View,
   Text,
@@ -16,11 +15,10 @@ import { doc, getDoc, onSnapshot, updateDoc, collection, query, where, getDocs, 
 import { getMovieDetails } from '@/services/MoviesService';
 import { getAuth } from 'firebase/auth';
 
-// Import your unselected icons
+// Unselected icons
 const thumbsUpIcon = require('@/assets/images/icons/like.png');
 const thumbsDownIcon = require('@/assets/images/icons/dislike.png');
-
-// Import your selected (yellow) icons
+// Selected icons
 const thumbsUpSelectedIcon = require('@/assets/images/icons/likeSelected.png');
 const thumbsDownSelectedIcon = require('@/assets/images/icons/dislikeSelected.png');
 
@@ -53,16 +51,13 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
 
   const fetchUserVotes = async (movieEntries: MovieEntry[]) => {
     if (!currentUser) return movieEntries;
-
     try {
       const movieIds = movieEntries.map(entry => entry.imdbID);
-      
       const votesMap: Record<string, 'up' | 'down' | null> = {};
       
       await Promise.all(movieIds.map(async (movieId) => {
-        const voteRef = doc(FIRESTORE_DB, 'movieVotes', `${currentUser.uid}_${movieId}`);
+        const voteRef = doc(FIRESTORE_DB, 'movieVotes', `${currentUser.uid}_${movieId}_${groupId}`);
         const voteSnap = await getDoc(voteRef);
-        
         if (voteSnap.exists()) {
           votesMap[movieId] = voteSnap.data()?.vote || null;
         }
@@ -89,11 +84,12 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
           const userSnap = await getDoc(userRef);
           const username = userSnap.exists() ? userSnap.data()?.username || 'Unknown' : 'Unknown';
           
-          // Fetch vote counts
+          // Fetch group-specific vote counts
           const thumbsUpRef = collection(FIRESTORE_DB, 'movieVotes');
           const thumbsUpQuery = query(
             thumbsUpRef,
             where('movieId', '==', entry.imdbID),
+            where('groupId', '==', groupId),
             where('vote', '==', 'up')
           );
           const thumbsUpSnap = await getDocs(thumbsUpQuery);
@@ -102,10 +98,11 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
           const thumbsDownQuery = query(
             thumbsDownRef,
             where('movieId', '==', entry.imdbID),
+            where('groupId', '==', groupId),
             where('vote', '==', 'down')
           );
           const thumbsDownSnap = await getDocs(thumbsDownQuery);
-
+          
           return {
             ...entry,
             title: details.Title || 'Untitled',
@@ -131,30 +128,32 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
         }
       })
     );
+    
     const sortedMovies = detailedMovies.sort(
       (a, b) => a.addedAt?.toDate?.() - b.addedAt?.toDate?.()
     );
+    
     setMovies(sortedMovies);
   };
 
   useEffect(() => {
     if (!groupId) return;
-
+    
     let movieListUnsubscribe: () => void;
     let userVotesUnsubscribe: () => void;
     let currentMovieEntries: MovieEntry[] = [];
-
+    
     const setupListeners = async () => {
       try {
         const groupRef = doc(FIRESTORE_DB, 'groups', groupId);
         const groupSnap = await getDoc(groupRef);
+        
         if (!groupSnap.exists()) return;
-
+        
         const listId = groupSnap.data()?.groupList;
         if (!listId) return;
-
+        
         const movieListRef = doc(FIRESTORE_DB, 'movieLists', listId);
-
         movieListUnsubscribe = onSnapshot(movieListRef, (docSnap) => {
           if (docSnap.exists()) {
             currentMovieEntries = docSnap.data()?.movies || [];
@@ -164,13 +163,13 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
           }
           setLoading(false);
         });
-
+        
         if (currentUser) {
           const votesCollectionRef = collection(FIRESTORE_DB, 'movieVotes');
-          
           const votesQuery = query(
-            votesCollectionRef, 
-            where('userId', '==', currentUser.uid)
+            votesCollectionRef,
+            where('userId', '==', currentUser.uid),
+            where('groupId', '==', groupId) // Only listen for votes in this group
           );
           
           userVotesUnsubscribe = onSnapshot(votesQuery, () => {
@@ -183,7 +182,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
         console.error('Error setting up listeners:', error);
       }
     };
-
+    
     setupListeners();
     
     return () => {
@@ -196,18 +195,20 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
     try {
       const groupRef = doc(FIRESTORE_DB, 'groups', groupId);
       const groupSnap = await getDoc(groupRef);
+      
       if (!groupSnap.exists()) return;
-
+      
       const listId = groupSnap.data()?.groupList;
       if (!listId) return;
-
+      
       const movieListRef = doc(FIRESTORE_DB, 'movieLists', listId);
       const movieDoc = await getDoc(movieListRef);
+      
       if (!movieDoc.exists()) return;
-
+      
       const currentMovies: MovieEntry[] = movieDoc.data()?.movies || [];
       const updatedMovies = currentMovies.filter((m) => m.imdbID !== imdbID);
-
+      
       await updateDoc(movieListRef, { movies: updatedMovies });
     } catch (err) {
       console.error('Failed to remove movie', err);
@@ -219,9 +220,8 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
     if (!currentUser) return;
     
     try {
-      const voteId = `${currentUser.uid}_${imdbID}`;
+      const voteId = `${currentUser.uid}_${imdbID}_${groupId}`;
       const voteRef = doc(FIRESTORE_DB, 'movieVotes', voteId);
-      
       const voteSnap = await getDoc(voteRef);
       
       if (voteSnap.exists()) {
@@ -235,6 +235,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
         await setDoc(voteRef, {
           userId: currentUser.uid,
           movieId: imdbID,
+          groupId: groupId, 
           vote,
           timestamp: new Date()
         });
@@ -269,27 +270,26 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
               <Text style={styles.genre}>{item.genre}</Text>
               <Text style={styles.user}>Added by {item.username}</Text>
               <View style={styles.votesContainer}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.voteButton}
                   onPress={() => castVote(item.imdbID, 'up')}
                 >
-                  <Image 
-                    source={item.userVote === 'up' ? thumbsUpSelectedIcon : thumbsUpIcon} 
-                    style={styles.voteIcon} 
+                  <Image
+                    source={item.userVote === 'up' ? thumbsUpSelectedIcon : thumbsUpIcon}
+                    style={styles.voteIcon}
                   />
                   <Text style={[
                     styles.voteCount,
                     item.userVote === 'up' && styles.activeVoteCount
                   ]}>{item.thumbsUp}</Text>
                 </TouchableOpacity>
-                
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.voteButton}
                   onPress={() => castVote(item.imdbID, 'down')}
                 >
-                  <Image 
-                    source={item.userVote === 'down' ? thumbsDownSelectedIcon : thumbsDownIcon} 
-                    style={styles.voteIcon} 
+                  <Image
+                    source={item.userVote === 'down' ? thumbsDownSelectedIcon : thumbsDownIcon}
+                    style={styles.voteIcon}
                   />
                   <Text style={[
                     styles.voteCount,
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   activeVoteCount: {
-    color: '#FFD700', 
+    color: '#FFD700',
     fontWeight: 'bold',
   },
   remove: {
