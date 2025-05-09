@@ -125,4 +125,50 @@ export default StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  infoModalContent: {
+    backgroundColor: '#1E1E1E', 
+    borderRadius: 10,
+    padding: 20,
+    width: '80%',
+    maxWidth: 300,
+    alignItems: 'center',
+  },
+  infoModalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#F5CB5C', 
+    marginBottom: 15,
+  },
+  infoModalText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  closeButton: {
+    backgroundColor: '#F5CB5C',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  closeButtonText: {
+    color: '#000000',
+    fontWeight: 'bold',
+  },
+  filterControlGroup: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  infoIconContainer: {
+    marginLeft: 8,
+    padding: 2,
+  },
 });
