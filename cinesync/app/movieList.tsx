@@ -15,6 +15,14 @@ import { doc, getDoc, onSnapshot, updateDoc, collection, query, where, getDocs }
 import { getMovieDetails } from '@/services/MoviesService';
 import { getAuth } from 'firebase/auth';
 
+// Import your unselected icons
+const thumbsUpIcon = require('@/assets/images/icons/like.png');
+const thumbsDownIcon = require('@/assets/images/icons/dislike.png');
+
+// Import your selected (yellow) icons
+const thumbsUpSelectedIcon = require('@/assets/images/icons/likeSelected.png');
+const thumbsDownSelectedIcon = require('@/assets/images/icons/dislikeSelected.png');
+
 type MovieEntry = {
   imdbID: string;
   addedBy: string;
@@ -25,9 +33,11 @@ type MovieEntry = {
 type MovieWithDetails = MovieEntry & {
   title: string;
   poster: string;
-  genre: string; // Added genre field
+  genre: string;
   username: string;
-  userRating: number; 
+  thumbsUp: number;
+  thumbsDown: number;
+  userVote: 'up' | 'down' | null;
 };
 
 type Props = {
@@ -40,52 +50,70 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
   const router = useRouter();
   const currentUser = getAuth().currentUser;
 
-  const fetchUserRatings = async (movieEntries: MovieEntry[]) => {
+  const fetchUserVotes = async (movieEntries: MovieEntry[]) => {
     if (!currentUser) return movieEntries;
 
     try {
       const movieIds = movieEntries.map(entry => entry.imdbID);
       
-      const ratingsMap: Record<string, number> = {};
+      const votesMap: Record<string, 'up' | 'down' | null> = {};
       
       await Promise.all(movieIds.map(async (movieId) => {
-        const ratingRef = doc(FIRESTORE_DB, 'userRatings', `${currentUser.uid}_${movieId}`);
-        const ratingSnap = await getDoc(ratingRef);
+        const voteRef = doc(FIRESTORE_DB, 'userVotes', `${currentUser.uid}_${movieId}`);
+        const voteSnap = await getDoc(voteRef);
         
-        if (ratingSnap.exists()) {
-          ratingsMap[movieId] = ratingSnap.data()?.rating || 0;
+        if (voteSnap.exists()) {
+          votesMap[movieId] = voteSnap.data()?.vote || null;
         }
       }));
       
       return movieEntries.map(entry => ({
         ...entry,
-        userRating: ratingsMap[entry.imdbID] || 0
+        userVote: votesMap[entry.imdbID] || null
       }));
     } catch (err) {
-      console.error('Error fetching user ratings:', err);
+      console.error('Error fetching user votes:', err);
       return movieEntries;
     }
   };
 
   const fetchMovieDetails = async (movieEntries: MovieEntry[]) => {
-    const entriesWithRatings = await fetchUserRatings(movieEntries);
+    const entriesWithVotes = await fetchUserVotes(movieEntries);
     
     const detailedMovies = await Promise.all(
-      entriesWithRatings.map(async (entry) => {
+      entriesWithVotes.map(async (entry) => {
         try {
           const details = await getMovieDetails(entry.imdbID);
           const userRef = doc(FIRESTORE_DB, 'users', entry.addedBy);
           const userSnap = await getDoc(userRef);
           const username = userSnap.exists() ? userSnap.data()?.username || 'Unknown' : 'Unknown';
+          
+          // Fetch vote counts
+          const thumbsUpRef = collection(FIRESTORE_DB, 'movieVotes');
+          const thumbsUpQuery = query(
+            thumbsUpRef,
+            where('movieId', '==', entry.imdbID),
+            where('vote', '==', 'up')
+          );
+          const thumbsUpSnap = await getDocs(thumbsUpQuery);
+          
+          const thumbsDownRef = collection(FIRESTORE_DB, 'movieVotes');
+          const thumbsDownQuery = query(
+            thumbsDownRef,
+            where('movieId', '==', entry.imdbID),
+            where('vote', '==', 'down')
+          );
+          const thumbsDownSnap = await getDocs(thumbsDownQuery);
 
           return {
             ...entry,
             title: details.Title || 'Untitled',
             poster: details.Poster || '',
-            genre: details.Genre || 'Unknown genre', // Extract genre from API response
+            genre: details.Genre || 'Unknown genre',
             username,
-            rating: entry.rating ?? 0,
-            userRating: (entry as any).userRating || 0,
+            thumbsUp: thumbsUpSnap.size,
+            thumbsDown: thumbsDownSnap.size,
+            userVote: (entry as any).userVote || null,
           };
         } catch (err) {
           console.warn('Error fetching details for', entry.imdbID, err);
@@ -93,10 +121,11 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
             ...entry,
             title: 'Unknown',
             poster: '',
-            genre: 'Unknown genre', 
+            genre: 'Unknown genre',
             username: 'Unknown',
-            rating: 0,
-            userRating: (entry as any).userRating || 0,
+            thumbsUp: 0,
+            thumbsDown: 0,
+            userVote: (entry as any).userVote || null,
           };
         }
       })
@@ -111,7 +140,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
     if (!groupId) return;
 
     let movieListUnsubscribe: () => void;
-    let userRatingsUnsubscribe: () => void;
+    let userVotesUnsubscribe: () => void;
     let currentMovieEntries: MovieEntry[] = [];
 
     const setupListeners = async () => {
@@ -136,14 +165,14 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
         });
 
         if (currentUser) {
-          const ratingsCollectionRef = collection(FIRESTORE_DB, 'userRatings');
+          const votesCollectionRef = collection(FIRESTORE_DB, 'movieVotes');
           
-          const ratingsQuery = query(
-            ratingsCollectionRef, 
+          const votesQuery = query(
+            votesCollectionRef, 
             where('userId', '==', currentUser.uid)
           );
           
-          userRatingsUnsubscribe = onSnapshot(ratingsQuery, () => {
+          userVotesUnsubscribe = onSnapshot(votesQuery, () => {
             if (currentMovieEntries.length > 0) {
               fetchMovieDetails(currentMovieEntries);
             }
@@ -158,7 +187,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
     
     return () => {
       if (movieListUnsubscribe) movieListUnsubscribe();
-      if (userRatingsUnsubscribe) userRatingsUnsubscribe();
+      if (userVotesUnsubscribe) userVotesUnsubscribe();
     };
   }, [groupId, currentUser?.uid]);
 
@@ -184,11 +213,38 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
     }
   };
 
-  const renderStars = (rating: number) => {
-    const fullStar = '★';
-    const emptyStar = '☆';
-    const rounded = Math.round(rating);
-    return fullStar.repeat(rounded) + emptyStar.repeat(5 - rounded);
+  const castVote = async (imdbID: string, vote: 'up' | 'down') => {
+    if (!currentUser) return;
+    
+    try {
+      const voteId = `${currentUser.uid}_${imdbID}`;
+      const voteRef = doc(FIRESTORE_DB, 'movieVotes', voteId);
+      
+      // Check if user already voted
+      const voteSnap = await getDoc(voteRef);
+      
+      if (voteSnap.exists()) {
+        const currentVote = voteSnap.data()?.vote;
+        
+        // If voting the same again, remove the vote
+        if (currentVote === vote) {
+          await updateDoc(voteRef, { vote: null });
+        } else {
+          // Change vote
+          await updateDoc(voteRef, { vote });
+        }
+      } else {
+        // New vote
+        await updateDoc(voteRef, {
+          userId: currentUser.uid,
+          movieId: imdbID,
+          vote,
+          timestamp: new Date()
+        });
+      }
+    } catch (err) {
+      console.error('Failed to cast vote', err);
+    }
   };
 
   if (loading) {
@@ -214,13 +270,34 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
               <Text style={styles.title}>{item.title}</Text>
               <Text style={styles.genre}>{item.genre}</Text>
               <Text style={styles.user}>Added by {item.username}</Text>
-              <View>
-                <Text style={styles.ratingLabel}>Group Rating:</Text>
-                {item.userRating > 0 ? (
-                  <Text style={styles.stars}>{renderStars(item.userRating)}</Text>
-                ) : (
-                  <Text style={styles.stars}>Rate this movie</Text>
-                )}
+              <View style={styles.votesContainer}>
+                <TouchableOpacity 
+                  style={styles.voteButton}
+                  onPress={() => castVote(item.imdbID, 'up')}
+                >
+                  <Image 
+                    source={item.userVote === 'up' ? thumbsUpSelectedIcon : thumbsUpIcon} 
+                    style={styles.voteIcon} 
+                  />
+                  <Text style={[
+                    styles.voteCount,
+                    item.userVote === 'up' && styles.activeVoteCount
+                  ]}>{item.thumbsUp}</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.voteButton}
+                  onPress={() => castVote(item.imdbID, 'down')}
+                >
+                  <Image 
+                    source={item.userVote === 'down' ? thumbsDownSelectedIcon : thumbsDownIcon} 
+                    style={styles.voteIcon} 
+                  />
+                  <Text style={[
+                    styles.voteCount,
+                    item.userVote === 'down' && styles.activeVoteCount
+                  ]}>{item.thumbsDown}</Text>
+                </TouchableOpacity>
               </View>
               <TouchableOpacity onPress={() => removeMovie(item.imdbID)}>
                 <Text style={styles.remove}>Remove</Text>
@@ -273,24 +350,40 @@ const styles = StyleSheet.create({
   genre: {
     fontSize: 14,
     color: '#F7EEDB',
+    fontStyle: 'italic',
   },
   user: {
     fontSize: 14,
     color: '#F7EEDB',
   },
-  ratingLabel: {
-    fontSize: 14,
-    color: '#F7EEDB',
+  votesContainer: {
+    flexDirection: 'row',
     marginTop: 8,
+    alignItems: 'center',
   },
-  stars: {
-    fontSize: 16,
-    color: '#FFD700',
-    marginTop: 2,
+  voteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+  },
+  voteIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 6,
+  },
+  voteCount: {
+    color: '#F7EEDB',
+    fontSize: 14,
+  },
+  activeVoteCount: {
+    color: '#FFD700', // Yellow color to match the selected icon
+    fontWeight: 'bold',
   },
   remove: {
     color: '#FF6B6B',
-    marginTop: 8,
+    marginTop: 12,
     fontWeight: 'bold',
   },
   emptyText: {
