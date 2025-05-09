@@ -15,10 +15,10 @@ import { doc, getDoc, onSnapshot, updateDoc, collection, query, where, getDocs, 
 import { getMovieDetails } from '@/services/MoviesService';
 import { getAuth } from 'firebase/auth';
 
-// Unselected icons
+// Import your unselected icons
 const thumbsUpIcon = require('@/assets/images/icons/like.png');
 const thumbsDownIcon = require('@/assets/images/icons/dislike.png');
-// Selected icons
+// Import your selected (yellow) icons
 const thumbsUpSelectedIcon = require('@/assets/images/icons/likeSelected.png');
 const thumbsDownSelectedIcon = require('@/assets/images/icons/dislikeSelected.png');
 
@@ -56,6 +56,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
       const votesMap: Record<string, 'up' | 'down' | null> = {};
       
       await Promise.all(movieIds.map(async (movieId) => {
+        // Include groupId in the vote reference to make votes group-specific
         const voteRef = doc(FIRESTORE_DB, 'movieVotes', `${currentUser.uid}_${movieId}_${groupId}`);
         const voteSnap = await getDoc(voteRef);
         if (voteSnap.exists()) {
@@ -220,6 +221,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
     if (!currentUser) return;
     
     try {
+      // Make the vote ID include the groupId to make votes group-specific
       const voteId = `${currentUser.uid}_${imdbID}_${groupId}`;
       const voteRef = doc(FIRESTORE_DB, 'movieVotes', voteId);
       const voteSnap = await getDoc(voteRef);
@@ -235,7 +237,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
         await setDoc(voteRef, {
           userId: currentUser.uid,
           movieId: imdbID,
-          groupId: groupId, 
+          groupId: groupId, // Store the groupId in the vote document
           vote,
           timestamp: new Date()
         });
@@ -266,7 +268,17 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
               <Image source={{ uri: item.poster }} style={styles.poster} resizeMode="cover" />
             </TouchableOpacity>
             <View style={styles.infoContainer}>
-              <Text style={styles.title}>{item.title}</Text>
+              <View style={styles.titleContainer}>
+                <Text style={styles.title}>{item.title}</Text>
+                {currentUser?.uid === item.addedBy && (
+                  <TouchableOpacity 
+                    style={styles.removeButton} 
+                    onPress={() => removeMovie(item.imdbID)}
+                  >
+                    <Text style={styles.removeIcon}>−</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
               <Text style={styles.genre}>{item.genre}</Text>
               <Text style={styles.user}>Added by {item.username}</Text>
               <View style={styles.votesContainer}>
@@ -297,11 +309,6 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
                   ]}>{item.thumbsDown}</Text>
                 </TouchableOpacity>
               </View>
-              {currentUser?.uid === item.addedBy && (
-                <TouchableOpacity onPress={() => removeMovie(item.imdbID)}>
-                  <Text style={styles.remove}>Remove</Text>
-                </TouchableOpacity>
-              )}
             </View>
           </View>
         )}
@@ -342,18 +349,36 @@ const styles = StyleSheet.create({
     padding: 10,
     justifyContent: 'space-between',
   },
+  titleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   title: {
     fontSize: 18,
     color: '#F7EEDB',
     fontWeight: '600',
+    flex: 1,
+  },
+  removeButton: {
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  removeIcon: {
+    color: '#FF6B6B',
+    fontSize: 30,
+    fontWeight: 'bold',
   },
   genre: {
     fontSize: 14,
     color: '#F7EEDB',
+    marginTop: 4,
   },
   user: {
     fontSize: 14,
     color: '#F7EEDB',
+    marginTop: 2,
   },
   votesContainer: {
     flexDirection: 'row',
@@ -378,11 +403,6 @@ const styles = StyleSheet.create({
   },
   activeVoteCount: {
     color: '#FFD700',
-    fontWeight: 'bold',
-  },
-  remove: {
-    color: '#FF6B6B',
-    marginTop: 12,
     fontWeight: 'bold',
   },
   emptyText: {
