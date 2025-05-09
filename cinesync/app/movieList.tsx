@@ -9,9 +9,10 @@ import {
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { FIRESTORE_DB } from '@/FirebaseConfig';
-import { doc, getDoc, onSnapshot, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, updateDoc, collection, query, where, getDocs, setDoc } from 'firebase/firestore';
 import { getMovieDetails } from '@/services/MoviesService';
 import { getAuth } from 'firebase/auth';
 
@@ -59,7 +60,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
       const votesMap: Record<string, 'up' | 'down' | null> = {};
       
       await Promise.all(movieIds.map(async (movieId) => {
-        const voteRef = doc(FIRESTORE_DB, 'userVotes', `${currentUser.uid}_${movieId}`);
+        const voteRef = doc(FIRESTORE_DB, 'movieVotes', `${currentUser.uid}_${movieId}`);
         const voteSnap = await getDoc(voteRef);
         
         if (voteSnap.exists()) {
@@ -210,6 +211,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
       await updateDoc(movieListRef, { movies: updatedMovies });
     } catch (err) {
       console.error('Failed to remove movie', err);
+      Alert.alert('Error', 'Failed to remove movie');
     }
   };
 
@@ -220,22 +222,17 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
       const voteId = `${currentUser.uid}_${imdbID}`;
       const voteRef = doc(FIRESTORE_DB, 'movieVotes', voteId);
       
-      // Check if user already voted
       const voteSnap = await getDoc(voteRef);
       
       if (voteSnap.exists()) {
         const currentVote = voteSnap.data()?.vote;
-        
-        // If voting the same again, remove the vote
         if (currentVote === vote) {
           await updateDoc(voteRef, { vote: null });
         } else {
-          // Change vote
           await updateDoc(voteRef, { vote });
         }
       } else {
-        // New vote
-        await updateDoc(voteRef, {
+        await setDoc(voteRef, {
           userId: currentUser.uid,
           movieId: imdbID,
           vote,
@@ -244,6 +241,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
       }
     } catch (err) {
       console.error('Failed to cast vote', err);
+      Alert.alert('Error', 'Failed to save your vote');
     }
   };
 
@@ -299,9 +297,11 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
                   ]}>{item.thumbsDown}</Text>
                 </TouchableOpacity>
               </View>
-              <TouchableOpacity onPress={() => removeMovie(item.imdbID)}>
-                <Text style={styles.remove}>Remove</Text>
-              </TouchableOpacity>
+              {currentUser?.uid === item.addedBy && (
+                <TouchableOpacity onPress={() => removeMovie(item.imdbID)}>
+                  <Text style={styles.remove}>Remove</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         )}
@@ -350,7 +350,6 @@ const styles = StyleSheet.create({
   genre: {
     fontSize: 14,
     color: '#F7EEDB',
-    fontStyle: 'italic',
   },
   user: {
     fontSize: 14,
@@ -378,7 +377,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   activeVoteCount: {
-    color: '#FFD700', // Yellow color to match the selected icon
+    color: '#FFD700', 
     fontWeight: 'bold',
   },
   remove: {
