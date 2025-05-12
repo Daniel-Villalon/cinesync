@@ -625,7 +625,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
                   // Watched view with ratings
                   <View style={styles.ratingContainer}>
                     <View style={styles.ratingSelectorContainer}>
-                      <Text style={styles.ratingLabel}>Your Rating:</Text>
+                      <Text style={styles.ratingLabel}>Group Rating:</Text>
                       {renderRatingSelector(item.imdbID, item.userRating)}
                     </View>
                     <TouchableOpacity
