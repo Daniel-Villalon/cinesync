@@ -271,6 +271,63 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
     if (!currentUser) return;
     
     try {
+      // Find the movie in our state
+      const movieIndex = allMovies.findIndex(m => m.imdbID === imdbID);
+      if (movieIndex === -1) return;
+      
+      const movie = allMovies[movieIndex];
+      
+      // Calculate the new vote state
+      let newVote: 'up' | 'down' | null = vote;
+      let thumbsUpDelta = 0;
+      let thumbsDownDelta = 0;
+      
+      if (movie.userVote === vote) {
+        // User is toggling the vote off
+        newVote = null;
+        if (vote === 'up') thumbsUpDelta = -1;
+        if (vote === 'down') thumbsDownDelta = -1;
+      } else {
+        // User is changing vote or voting for the first time
+        if (movie.userVote === 'up') {
+          thumbsUpDelta = -1; // Remove previous upvote
+        } else if (movie.userVote === 'down') {
+          thumbsDownDelta = -1; // Remove previous downvote
+        }
+        
+        if (vote === 'up') thumbsUpDelta += 1;
+        if (vote === 'down') thumbsDownDelta += 1;
+      }
+      
+      // Update the state immediately (optimistic update)
+      const updatedMovie = {
+        ...movie,
+        userVote: newVote,
+        thumbsUp: movie.thumbsUp + (vote === 'up' ? (newVote === null ? -1 : 1) : 0),
+        thumbsDown: movie.thumbsDown + (vote === 'down' ? (newVote === null ? -1 : 1) : 0)
+      };
+      
+      // If the user changed from one vote to the other, adjust both counts
+      if (movie.userVote === 'up' && vote === 'down') {
+        updatedMovie.thumbsUp -= 1;
+      } else if (movie.userVote === 'down' && vote === 'up') {
+        updatedMovie.thumbsDown -= 1;
+      }
+      
+      // Update our local state immediately
+      const newAllMovies = [...allMovies];
+      newAllMovies[movieIndex] = updatedMovie;
+      setAllMovies(newAllMovies);
+      
+      // Update the filtered movies list too
+      const filteredMovieIndex = movies.findIndex(m => m.imdbID === imdbID);
+      if (filteredMovieIndex !== -1) {
+        const newMovies = [...movies];
+        newMovies[filteredMovieIndex] = updatedMovie;
+        setMovies(newMovies);
+      }
+      
+      // Now perform the actual database update in the background
       const voteId = `${currentUser.uid}_${imdbID}_${groupId}`;
       const voteRef = doc(FIRESTORE_DB, 'movieVotes', voteId);
       const voteSnap = await getDoc(voteRef);
@@ -295,6 +352,10 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
     } catch (err) {
       console.error('Failed to cast vote', err);
       Alert.alert('Error', 'Failed to save your vote');
+      
+      // Rollback our optimistic update if there was an error
+      // You could refetch data here, but that's expensive
+      // Just notify the user instead
     }
   };
 
@@ -302,15 +363,39 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
     if (!currentUser) return;
   
     try {
+      // Find the movie in our state
+      const movieIndex = allMovies.findIndex(m => m.imdbID === imdbID);
+      if (movieIndex === -1) return;
+      
+      const movie = allMovies[movieIndex];
+      const newSeen = !movie.seen;
+      
+      // Update our local state immediately (optimistic update)
+      const updatedMovie = {
+        ...movie,
+        seen: newSeen
+      };
+      
+      const newAllMovies = [...allMovies];
+      newAllMovies[movieIndex] = updatedMovie;
+      setAllMovies(newAllMovies);
+      
+      // Filter movies according to active tab
+      const filteredMovies = newAllMovies.filter(movie => {
+        if (activeTab === 'watchlist') {
+          return !movie.seen;
+        } else {
+          return movie.seen;
+        }
+      });
+      setMovies(filteredMovies);
+      
+      // Now perform the actual database update in the background
       const voteId = `${currentUser.uid}_${imdbID}_${groupId}`;
       const voteRef = doc(FIRESTORE_DB, 'movieVotes', voteId);
       const voteSnap = await getDoc(voteRef);
   
-      let newSeen = true;
-  
       if (voteSnap.exists()) {
-        const currentSeen = voteSnap.data()?.seen || false;
-        newSeen = !currentSeen;
         await updateDoc(voteRef, { seen: newSeen });
       } else {
         await setDoc(voteRef, {
@@ -318,27 +403,15 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
           movieId: imdbID,
           groupId: groupId,
           vote: null,
-          seen: true,
+          seen: newSeen,
           timestamp: new Date()
         });
       }
-      const currentTab = activeTab;
-      
-      const updatedAllMovies = allMovies.map(movie =>
-        movie.imdbID === imdbID ? { ...movie, seen: newSeen } : movie
-      );
-      setAllMovies(updatedAllMovies);
-      const filteredMovies = updatedAllMovies.filter(movie => {
-        if (currentTab === 'watchlist') {
-          return !movie.seen;
-        } else {
-          return movie.seen;
-        }
-      });
-      setMovies(filteredMovies);
     } catch (err) {
       console.error('Failed to toggle seen status', err);
       Alert.alert('Error', 'Failed to update seen status');
+      
+      // You could implement a rollback here if needed
     }
   };
 
@@ -346,6 +419,32 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
     if (!currentUser) return;
     
     try {
+      // Find the movie in our state
+      const movieIndex = allMovies.findIndex(m => m.imdbID === imdbID);
+      if (movieIndex === -1) return;
+      
+      const movie = allMovies[movieIndex];
+      
+      // Update our local state immediately (optimistic update)
+      const updatedMovie = {
+        ...movie,
+        userRating: rating,
+        seen: true // Also mark as seen when rating
+      };
+      
+      const newAllMovies = [...allMovies];
+      newAllMovies[movieIndex] = updatedMovie;
+      setAllMovies(newAllMovies);
+      
+      // Update the filtered movies list too
+      const filteredMovieIndex = movies.findIndex(m => m.imdbID === imdbID);
+      if (filteredMovieIndex !== -1) {
+        const newMovies = [...movies];
+        newMovies[filteredMovieIndex] = updatedMovie;
+        setMovies(newMovies);
+      }
+      
+      // Now perform the actual database updates in the background
       const ratingId = `${currentUser.uid}_${imdbID}`;
       const ratingRef = doc(FIRESTORE_DB, 'userRatings', ratingId);
       
@@ -355,6 +454,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
         rating,
         timestamp: new Date()
       });
+      
       const voteId = `${currentUser.uid}_${imdbID}_${groupId}`;
       const voteRef = doc(FIRESTORE_DB, 'movieVotes', voteId);
       const voteSnap = await getDoc(voteRef);
