@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Button, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, Button, StyleSheet, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { collection, getDocs, query, where, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { addUserToGroup } from '@/services/GroupService';
@@ -60,7 +60,16 @@ export default function PendingInvites() {
       </View>
     );
   }
-
+  const declineInvite = async (invite: any) => {
+    try {
+      await deleteDoc(doc(FIRESTORE_DB, 'invites', invite.id));
+      Alert.alert('Success', 'You have decline the invite');
+      setInvites(invites.filter(i => i.id !== invite.id));
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Error', 'Could not decline group')
+    }
+  }
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Pending Invites</Text>
@@ -73,6 +82,9 @@ export default function PendingInvites() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <View style={styles.inviteItem}>
+              <TouchableOpacity style={styles.declineContainer} onPress={() => declineInvite(item)}> 
+                <Text style={styles.declineText}>X</Text>
+              </TouchableOpacity>
               <Text style={styles.text}>Group ID: {item.groupId}</Text>
               <Button title="Accept Invite" onPress={() => acceptInvite(item)} />
             </View>
@@ -92,5 +104,18 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 8,
   },
-  text: { color: '#F7EEDB', marginBottom: 4 },
+  declineContainer: {
+    elevation: 2,
+    position: 'absolute',
+    right: 10,
+    cursor: 'pointer',
+    zIndex: 1,
+  },
+  declineText: {
+    color: '#F7EEDB',
+  },
+  text: { 
+    color: '#F7EEDB',
+    marginBottom: 4, 
+  },
 });
