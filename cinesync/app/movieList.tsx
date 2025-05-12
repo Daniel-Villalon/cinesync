@@ -85,42 +85,48 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
 
   const fetchMovieDetails = async (movieEntries: MovieEntry[]) => {
     const entriesWithVotes = await fetchUserVotes(movieEntries);
-    
+    const groupSnap = await getDoc(doc(FIRESTORE_DB, 'groups', groupId));
+    const sortBy = groupSnap.exists() ? groupSnap.data()?.sortBy : null;
+  
+    // Get all votes in this group
+    const votesQuery = query(
+      collection(FIRESTORE_DB, 'movieVotes'),
+      where('groupId', '==', groupId)
+    );
+    const voteSnapshots = await getDocs(votesQuery);
+  
+    const voteCounts: Record<string, { up: number; down: number }> = {};
+    const usernames: Record<string, string> = {}; // Cache usernames
+  
+    voteSnapshots.forEach((snap) => {
+      const { movieId, vote } = snap.data();
+      if (!voteCounts[movieId]) voteCounts[movieId] = { up: 0, down: 0 };
+      if (vote === 'up') voteCounts[movieId].up += 1;
+      else if (vote === 'down') voteCounts[movieId].down += 1;
+    });
+  
     const detailedMovies = await Promise.all(
       entriesWithVotes.map(async (entry) => {
         try {
           const details = await getMovieDetails(entry.imdbID);
-          const userRef = doc(FIRESTORE_DB, 'users', entry.addedBy);
-          const userSnap = await getDoc(userRef);
-          const username = userSnap.exists() ? userSnap.data()?.username || 'Unknown' : 'Unknown';
-          
-          // Fetch group-specific vote counts
-          const thumbsUpRef = collection(FIRESTORE_DB, 'movieVotes');
-          const thumbsUpQuery = query(
-            thumbsUpRef,
-            where('movieId', '==', entry.imdbID),
-            where('groupId', '==', groupId),
-            where('vote', '==', 'up')
-          );
-          const thumbsUpSnap = await getDocs(thumbsUpQuery);
-          
-          const thumbsDownRef = collection(FIRESTORE_DB, 'movieVotes');
-          const thumbsDownQuery = query(
-            thumbsDownRef,
-            where('movieId', '==', entry.imdbID),
-            where('groupId', '==', groupId),
-            where('vote', '==', 'down')
-          );
-          const thumbsDownSnap = await getDocs(thumbsDownQuery);
-          
+          const voteStat = voteCounts[entry.imdbID] || { up: 0, down: 0 };
+  
+          // Get username, caching results
+          let username = usernames[entry.addedBy];
+          if (!username) {
+            const userSnap = await getDoc(doc(FIRESTORE_DB, 'users', entry.addedBy));
+            username = userSnap.exists() ? userSnap.data()?.username || 'Unknown' : 'Unknown';
+            usernames[entry.addedBy] = username;
+          }
+  
           return {
             ...entry,
             title: details.Title || 'Untitled',
             poster: details.Poster || '',
             genre: details.Genre || 'Unknown genre',
             username,
-            thumbsUp: thumbsUpSnap.size,
-            thumbsDown: thumbsDownSnap.size,
+            thumbsUp: voteStat.up,
+            thumbsDown: voteStat.down,
             userVote: (entry as any).userVote || null,
             seen: (entry as any).seen || false,
           };
@@ -140,14 +146,19 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
         }
       })
     );
-    
-    const sortedMovies = detailedMovies.sort(
-      (a, b) => a.addedAt?.toDate?.() - b.addedAt?.toDate?.()
-    );
-    
+  
+    const sortedMovies = sortBy === 'Liked'
+      ? detailedMovies.sort((a, b) =>
+          (b.thumbsUp - b.thumbsDown) - (a.thumbsUp - a.thumbsDown)
+        )
+      : detailedMovies.sort(
+          (a, b) => a.addedAt?.toDate?.() - b.addedAt?.toDate?.()
+        );
+  
     setMovies(sortedMovies);
   };
-
+  
+  
   useEffect(() => {
     if (!groupId) return;
     
