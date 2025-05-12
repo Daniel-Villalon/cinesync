@@ -611,10 +611,6 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
                         source={item.seen ? seenIcon : notSeenIcon}
                         style={styles.voteIcon}
                       />
-                      <Text style={[
-                        styles.voteCount,
-                        item.seen && styles.activeVoteCount
-                      ]}>{item.seen ? 'Seen' : 'Not Seen'}</Text>
                     </TouchableOpacity>
                   </View>
                 ) : (
@@ -632,10 +628,6 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
                         source={item.seen ? seenIcon : notSeenIcon}
                         style={styles.voteIcon}
                       />
-                      <Text style={[
-                        styles.voteCount,
-                        item.seen && styles.activeVoteCount
-                      ]}>{item.seen ? 'Seen' : 'Not Seen'}</Text>
                     </TouchableOpacity>
                   </View>
                 )}
