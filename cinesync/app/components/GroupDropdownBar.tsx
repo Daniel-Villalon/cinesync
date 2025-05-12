@@ -43,8 +43,19 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
     <View style={{ zIndex: 10 }}>
       {/* Top bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => handleInvite(currentGroup.id)} style={styles.iconLeft}>
-          <MaterialCommunityIcons name="account" size={24} color="#000" />
+        <TouchableOpacity
+          onPress={() =>
+            dropdownOpen
+              ? handleInvite(currentGroup.id)
+              : router.replace('/group')
+          }
+          style={styles.iconLeft}
+        >
+          {dropdownOpen ? (
+            <MaterialCommunityIcons name="account" size={24} color="#000" />
+          ) : (
+            <Ionicons name="home" size={24} color="#000" />
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity onPress={toggleDropdown}>
