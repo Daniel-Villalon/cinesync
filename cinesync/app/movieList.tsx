@@ -152,26 +152,34 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
       })
     );
     
-    const sortedMovies = detailedMovies.sort(
-      (a, b) => a.addedAt?.toDate?.() - b.addedAt?.toDate?.()
-    );
+    const sortedMovies = detailedMovies.sort((a, b) => {
+      const netLikesA = a.thumbsUp - a.thumbsDown;
+      const netLikesB = b.thumbsUp - b.thumbsDown;
+    
+      // Sort descending by net likes
+      return netLikesB - netLikesA;
+    });    
     
     setAllMovies(sortedMovies);
     filterMoviesByActiveTab(sortedMovies);
   };
   
   const filterMoviesByActiveTab = (moviesList = allMovies) => {
-    const filteredMovies = moviesList.filter(movie => {
-      if (activeTab === 'watchlist') {
-        return !movie.seen;
-      } else {
-        return movie.seen;
-      }
-    });
-    
-    setMovies(filteredMovies);
-  };
+    let filtered = moviesList.filter(movie => {
+    return activeTab === 'watchlist' ? !movie.seen : movie.seen;
+  });
 
+  if (activeTab === 'watchlist') {
+    // sort by net likes (likes - dislikes)
+    filtered = filtered.sort((a, b) => {
+      const aScore = (a.thumbsUp || 0) - (a.thumbsDown || 0);
+      const bScore = (b.thumbsUp || 0) - (b.thumbsDown || 0);
+      return bScore - aScore;
+    });
+  }
+
+  setMovies(filtered);
+};
   useEffect(() => {
     filterMoviesByActiveTab();
   }, [activeTab, allMovies]); 
