@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
@@ -112,13 +112,13 @@ export default function Homescreen() {
 
       <View style={styles.floatingIconsContainer}>
         <TouchableOpacity style={styles.person} onPress={() => router.push('/user')}>
-          <Ionicons name="person" size={24} color="black" />
+          <MaterialCommunityIcons name="account" size={32} color="black" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.add}
           onPress={() => router.push({ pathname: '/MovieSearch', params: { groupId: currentGroupId! } })}
         >
-          <Ionicons name="add" size={40} color="black" />
+          <MaterialCommunityIcons name="plus" size={40} color="black" />
         </TouchableOpacity>
       </View>
     </SafeAreaView>

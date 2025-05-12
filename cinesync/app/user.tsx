@@ -12,7 +12,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { onAuthStateChanged, getAuth, signOut } from 'firebase/auth';
@@ -157,6 +157,9 @@ const User = () => {
             ) : (
               <Ionicons name="person" size={80} color={isDarkMode ? '#121212' : '#ffffff'} />
             )}
+          </View>
+          <View style={styles.editIcon}>
+            <MaterialCommunityIcons name="pencil" size={32} color="#000" />
           </View>
         </TouchableOpacity>
 

@@ -49,11 +49,13 @@ const styles = StyleSheet.create({
     },
     editIcon: {
         position: 'absolute',
-        bottom: 10,
-        right: 10,
-        backgroundColor: '#f0c94d',
+        right: 110,
+        backgroundColor: '#F5CB5C',
         borderRadius: 20,
-        padding: 5,
+        padding: 2,
+        elevation: 2,
+        borderWidth: 3,
+        borderColor: '#111', 
     },
     usernameInput: {
         color: '#ffffff',

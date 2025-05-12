@@ -9,7 +9,7 @@ import {
   Modal,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
@@ -128,7 +128,7 @@ const EditGroupScreen = () => {
             </View>
           )}
           <View style={styles.editIcon}>
-            <Ionicons name="pencil" size={32} color="#000" />
+            <MaterialCommunityIcons name="pencil" size={32} color="#000" />
           </View>
         </TouchableOpacity>
 
@@ -191,7 +191,7 @@ const EditGroupScreen = () => {
               onPress={() => setShowInfoModal(true)}
               style={styles.infoIconContainer}
             >
-              <Ionicons name="information-circle" size={20} color="#F5CB5C"/>
+              <MaterialCommunityIcons name="information-outline" size={20} color="#F5CB5C" />
             </TouchableOpacity>
             
             {dropdownOpen === 'fairness' && (

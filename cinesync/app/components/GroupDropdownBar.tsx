@@ -43,6 +43,7 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
     <View style={{ zIndex: 10 }}>
       {/* Top bar */}
       <View style={styles.topBar}>
+<<<<<<< HEAD
         <TouchableOpacity
           onPress={() =>
             dropdownOpen
@@ -56,6 +57,10 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
           ) : (
             <Ionicons name="home" size={24} color="#000" />
           )}
+=======
+        <TouchableOpacity onPress={() => handleInvite(currentGroup.id)} style={styles.iconLeft}>
+          <MaterialCommunityIcons name="account-multiple-plus" size={24} color="#000" />
+>>>>>>> 53af2ad (Updated package vers in json and updated some icons)
         </TouchableOpacity>
 
         <TouchableOpacity onPress={toggleDropdown}>
@@ -63,7 +68,7 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => handleEditGroup(currentGroup?.id)} style={styles.iconRight}>
-          <Ionicons name="settings-sharp" size={24} color="#000" />
+          <MaterialCommunityIcons name="cog" size={24} color="#000" />
         </TouchableOpacity>
       </View>
 
@@ -74,7 +79,7 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
             {groups.filter(Boolean).map((group) => (
               <View key={group.id} style={styles.groupRow}>
                 <TouchableOpacity onPress={() => handleInvite(group.id)}>
-                  <MaterialCommunityIcons name="account" size={22} color="#000" style={{ marginRight: 8 }} />
+                  <MaterialCommunityIcons name="account-multiple-plus" size={22} color="#000" style={{ marginRight: 16 }} />
                 </TouchableOpacity>
 
                 <TouchableOpacity onPress={() => { onGroupSelect(group.id); toggleDropdown(); }} style={{ flex: 1 }}>
@@ -82,7 +87,7 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
                 </TouchableOpacity>
 
                 <TouchableOpacity onPress={() => handleEditGroup(group.id)}>
-                  <Ionicons name="settings-sharp" size={20} color="#000" style={{ marginLeft: 8 }} />
+                  <MaterialCommunityIcons name="cog" size={20} color="#000" style={{ marginLeft: 8 }} />
                 </TouchableOpacity>
               </View>
             ))}
