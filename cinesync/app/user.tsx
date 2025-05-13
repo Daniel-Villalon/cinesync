@@ -151,15 +151,17 @@ const User = () => {
 
         {/* Avatar */}
         <TouchableOpacity style={styles.avatarContainer} onPress={pickImage}>
-          <View style={[styles.avatar, { backgroundColor: themeStyles.highlightColor, overflow: 'hidden' }]}>
-            {avatarUri ? (
-              <Image source={{ uri: avatarUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-            ) : (
-              <Ionicons name="person" size={80} color={isDarkMode ? '#121212' : '#ffffff'} />
-            )}
-          </View>
-          <View style={styles.editIcon}>
-            <MaterialCommunityIcons name="pencil" size={32} color="#000" />
+          <View style={[styles.avatarContainer]}>
+            <View style={[styles.avatar, { backgroundColor: themeStyles.highlightColor, overflow: 'hidden' }]}>
+              {avatarUri ? (
+                <Image source={{ uri: avatarUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+              ) : (
+                <MaterialCommunityIcons name="account" size={80} color={isDarkMode ? '#121212' : '#ffffff'} />
+              )}
+            </View>
+            <View style={styles.editIcon}>
+              <MaterialCommunityIcons name="pencil" size={32} color="#000" />
+            </View>
           </View>
         </TouchableOpacity>
 

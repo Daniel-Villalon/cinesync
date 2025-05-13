@@ -124,7 +124,7 @@ const EditGroupScreen = () => {
             <Image source={{ uri: groupImage }} style={styles.groupImage} />
           ) : (
             <View style={styles.defaultImage}>
-              <Ionicons name="person" size={64} color="#C9A84F" />
+              <MaterialCommunityIcons name="account" size={64} color="#C9A84F" />
             </View>
           )}
           <View style={styles.editIcon}>

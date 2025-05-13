@@ -52,7 +52,10 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
           style={styles.iconLeft}
         >
           {dropdownOpen ? (
-            <MaterialCommunityIcons name="account" size={24} color="#000" />
+            // <MaterialCommunityIcons name="account-multiple-plus" size={24} color="#000" />
+            // Do we need to change the icon? You can invite to current group in drop down too
+            // We should either remove the current group from drop down and change icon, or keep current group in dropdown and not chnage icon imo
+            <Ionicons name="home" size={24} color="#000" />
           ) : (
             <Ionicons name="home" size={24} color="#000" />
           )}

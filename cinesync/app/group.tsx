@@ -150,7 +150,7 @@ export default function GroupsScreen() {
           {!isEditing && (
             <TouchableOpacity style={styles.groupWrapper} onPress={() => router.push('/addgroup')}>
               <View style={styles.avatarCircleLarge}>
-                <Ionicons name="add" size={48} color="#ccc" />
+                <MaterialCommunityIcons name="plus" size={48} color="#ccc" />
               </View>
               <Text style={styles.addGroupText}>Add Group</Text>
             </TouchableOpacity>
