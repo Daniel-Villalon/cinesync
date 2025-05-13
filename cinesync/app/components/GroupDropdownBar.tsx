@@ -43,7 +43,6 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
     <View style={{ zIndex: 10 }}>
       {/* Top bar */}
       <View style={styles.topBar}>
-<<<<<<< HEAD
         <TouchableOpacity
           onPress={() =>
             dropdownOpen
@@ -57,10 +56,6 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
           ) : (
             <Ionicons name="home" size={24} color="#000" />
           )}
-=======
-        <TouchableOpacity onPress={() => handleInvite(currentGroup.id)} style={styles.iconLeft}>
-          <MaterialCommunityIcons name="account-multiple-plus" size={24} color="#000" />
->>>>>>> 53af2ad (Updated package vers in json and updated some icons)
         </TouchableOpacity>
 
         <TouchableOpacity onPress={toggleDropdown}>
