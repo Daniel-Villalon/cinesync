@@ -140,8 +140,9 @@ const User = () => {
         {/* Header */}
         <View style={styles.header}>
           <Text style={[styles.headerTitle, { color: themeStyles.textColor }]}>Profile</Text>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text style={[styles.backText, { color: themeStyles.highlightColor }]}>{'< Back'}</Text>
+          <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center' }} >
+            <MaterialCommunityIcons name="chevron-left" size={24} color={themeStyles.highlightColor} />
+            <Text style={[styles.backText, { color: themeStyles.highlightColor }]}>{'Back'}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={saveUserInfo}>
             <Text style={[styles.saveButtonText, { color: themeStyles.textColor }]}>Save</Text>
