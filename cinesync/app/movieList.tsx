@@ -94,42 +94,52 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
   };
 
   const fetchMovieDetails = async (movieEntries: MovieEntry[]) => {
+    // 1) Merge in user-specific votes/seen/ratings
     const entriesWithPreferences = await fetchUserPreferences(movieEntries);
-    
-    const detailedMovies = await Promise.all(
+  
+    // 2) Pull the group's sortBy setting
+    const groupSnap = await getDoc(doc(FIRESTORE_DB, 'groups', groupId));
+    const sortByField: string | null = groupSnap.exists()
+      ? (groupSnap.data()?.sortBy as string) || null
+      : null;
+  
+    // 3) Enrich each entry with OMDb details, username, and vote counts
+    const detailedMovies: MovieWithDetails[] = await Promise.all(
       entriesWithPreferences.map(async (entry) => {
         try {
           const details = await getMovieDetails(entry.imdbID);
-          const userRef = doc(FIRESTORE_DB, 'users', entry.addedBy);
-          const userSnap = await getDoc(userRef);
-          const username = userSnap.exists() ? userSnap.data()?.username || 'Unknown' : 'Unknown';
-          
-          const thumbsUpRef = collection(FIRESTORE_DB, 'movieVotes');
-          const thumbsUpQuery = query(
-            thumbsUpRef,
-            where('movieId', '==', entry.imdbID),
-            where('groupId', '==', groupId),
-            where('vote', '==', 'up')
+          const userSnap = await getDoc(doc(FIRESTORE_DB, 'users', entry.addedBy));
+          const username = userSnap.exists()
+            ? (userSnap.data()?.username as string) || 'Unknown'
+            : 'Unknown';
+  
+          // count up‑votes
+          const upSnap = await getDocs(
+            query(
+              collection(FIRESTORE_DB, 'movieVotes'),
+              where('movieId', '==', entry.imdbID),
+              where('groupId', '==', groupId),
+              where('vote', '==', 'up')
+            )
           );
-          const thumbsUpSnap = await getDocs(thumbsUpQuery);
-          
-          const thumbsDownRef = collection(FIRESTORE_DB, 'movieVotes');
-          const thumbsDownQuery = query(
-            thumbsDownRef,
-            where('movieId', '==', entry.imdbID),
-            where('groupId', '==', groupId),
-            where('vote', '==', 'down')
+          // count down‑votes
+          const downSnap = await getDocs(
+            query(
+              collection(FIRESTORE_DB, 'movieVotes'),
+              where('movieId', '==', entry.imdbID),
+              where('groupId', '==', groupId),
+              where('vote', '==', 'down')
+            )
           );
-          const thumbsDownSnap = await getDocs(thumbsDownQuery);
-          
+  
           return {
             ...entry,
             title: details.Title || 'Untitled',
             poster: details.Poster || '',
             genre: details.Genre || 'Unknown genre',
             username,
-            thumbsUp: thumbsUpSnap.size,
-            thumbsDown: thumbsDownSnap.size,
+            thumbsUp: upSnap.size,
+            thumbsDown: downSnap.size,
             userVote: (entry as any).userVote || null,
             seen: (entry as any).seen || false,
             userRating: (entry as any).userRating || 0,
@@ -151,18 +161,35 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
         }
       })
     );
-    
-    const sortedMovies = detailedMovies.sort((a, b) => {
-      const netLikesA = a.thumbsUp - a.thumbsDown;
-      const netLikesB = b.thumbsUp - b.thumbsDown;
-    
-      // Sort descending by net likes
-      return netLikesB - netLikesA;
-    });    
-    
+  
+    // 4) Sort according to sortByField
+    let sortedMovies: MovieWithDetails[];
+    if (sortByField === 'Liked') {
+      sortedMovies = detailedMovies.sort((a, b) => {
+        const netA = a.thumbsUp - a.thumbsDown;
+        const netB = b.thumbsUp - b.thumbsDown;
+        return netB - netA;
+      });
+    } else if (sortByField === 'Oldest') {
+      sortedMovies = detailedMovies.sort(
+        (a, b) => a.addedAt.toDate() - b.addedAt.toDate()
+      );
+    } else if (sortByField === 'Newest') {
+      sortedMovies = detailedMovies.sort(
+        (a, b) => b.addedAt.toDate() - a.addedAt.toDate()
+      );
+    } else {
+      // fallback: alphabetical by title
+      sortedMovies = detailedMovies.sort((a, b) =>
+        a.title.localeCompare(b.title)
+      );
+    }
+  
+    // 5) Update state and re-run the tab filter
     setAllMovies(sortedMovies);
     filterMoviesByActiveTab(sortedMovies);
   };
+  
   
   const filterMoviesByActiveTab = (moviesList = allMovies) => {
     let filtered = moviesList.filter(movie => {
