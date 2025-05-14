@@ -12,7 +12,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { onAuthStateChanged, getAuth, signOut } from 'firebase/auth';
@@ -140,8 +140,9 @@ const User = () => {
         {/* Header */}
         <View style={styles.header}>
           <Text style={[styles.headerTitle, { color: themeStyles.textColor }]}>Profile</Text>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text style={[styles.backText, { color: themeStyles.highlightColor }]}>{'< Back'}</Text>
+          <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center' }} >
+            <MaterialCommunityIcons name="chevron-left" size={24} color={themeStyles.highlightColor} />
+            <Text style={[styles.backText, { color: themeStyles.highlightColor }]}>{'Back'}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={saveUserInfo}>
             <Text style={[styles.saveButtonText, { color: themeStyles.textColor }]}>Save</Text>
@@ -151,12 +152,17 @@ const User = () => {
 
         {/* Avatar */}
         <TouchableOpacity style={styles.avatarContainer} onPress={pickImage}>
-          <View style={[styles.avatar, { backgroundColor: themeStyles.highlightColor, overflow: 'hidden' }]}>
-            {avatarUri ? (
-              <Image source={{ uri: avatarUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-            ) : (
-              <Ionicons name="person" size={80} color={isDarkMode ? '#121212' : '#ffffff'} />
-            )}
+          <View style={[styles.avatarContainer]}>
+            <View style={[styles.avatar, { backgroundColor: themeStyles.highlightColor, overflow: 'hidden' }]}>
+              {avatarUri ? (
+                <Image source={{ uri: avatarUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+              ) : (
+                <MaterialCommunityIcons name="account" size={80} color={isDarkMode ? '#121212' : '#ffffff'} />
+              )}
+            </View>
+            <View style={styles.editIcon}>
+              <MaterialCommunityIcons name="pencil" size={32} color="#000" />
+            </View>
           </View>
         </TouchableOpacity>
 

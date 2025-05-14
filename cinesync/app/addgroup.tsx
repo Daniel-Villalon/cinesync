@@ -8,7 +8,7 @@ import {
   Alert,
   Modal,
 } from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { createGroup } from '../services/GroupService';
 import { getAuth } from 'firebase/auth';
@@ -63,11 +63,11 @@ const AddGroupScreen = () => {
             <Image source={{ uri: groupImage }} style={styles.groupImage} />
           ) : (
             <View style={styles.defaultImage}>
-              <Ionicons name="person" size={64} color="#C9A84F" />
+              <MaterialCommunityIcons name="account" size={64} color="#C9A84F" />
             </View>
           )}
           <View style={styles.editIcon}>
-            <Ionicons name="pencil" size={32} color="#000" />
+            <MaterialCommunityIcons name="pencil" size={32} color="#000" />
           </View>
         </TouchableOpacity>
 
@@ -130,7 +130,7 @@ const AddGroupScreen = () => {
               onPress={() => setShowInfoModal(true)}
               style={styles.infoIconContainer}
             >
-              <Ionicons name="information-circle" size={20} color="#F5CB5C"/>
+              <MaterialCommunityIcons name="information" size={20} color="#F5CB5C" />
             </TouchableOpacity>
             
             {dropdownOpen === 'fairness' && (

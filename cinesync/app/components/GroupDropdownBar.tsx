@@ -52,7 +52,10 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
           style={styles.iconLeft}
         >
           {dropdownOpen ? (
-            <MaterialCommunityIcons name="account" size={24} color="#000" />
+            // <MaterialCommunityIcons name="account-multiple-plus" size={24} color="#000" />
+            // Do we need to change the icon? You can invite to current group in drop down too
+            // We should either remove the current group from drop down and change icon, or keep current group in dropdown and not chnage icon imo
+            <Ionicons name="home" size={24} color="#000" />
           ) : (
             <Ionicons name="home" size={24} color="#000" />
           )}
@@ -63,7 +66,7 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => handleEditGroup(currentGroup?.id)} style={styles.iconRight}>
-          <Ionicons name="settings-sharp" size={24} color="#000" />
+          <MaterialCommunityIcons name="cog" size={24} color="#000" />
         </TouchableOpacity>
       </View>
 
@@ -74,7 +77,7 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
             {groups.filter(Boolean).map((group) => (
               <View key={group.id} style={styles.groupRow}>
                 <TouchableOpacity onPress={() => handleInvite(group.id)}>
-                  <MaterialCommunityIcons name="account" size={22} color="#000" style={{ marginRight: 8 }} />
+                  <MaterialCommunityIcons name="account-multiple-plus" size={22} color="#000" style={{ marginRight: 16 }} />
                 </TouchableOpacity>
 
                 <TouchableOpacity onPress={() => { onGroupSelect(group.id); toggleDropdown(); }} style={{ flex: 1 }}>
@@ -82,7 +85,7 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
                 </TouchableOpacity>
 
                 <TouchableOpacity onPress={() => handleEditGroup(group.id)}>
-                  <Ionicons name="settings-sharp" size={20} color="#000" style={{ marginLeft: 8 }} />
+                  <MaterialCommunityIcons name="cog" size={20} color="#000" style={{ marginLeft: 8 }} />
                 </TouchableOpacity>
               </View>
             ))}

@@ -97,7 +97,7 @@ export default function GroupsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerSide} onPress={() => router.replace('/login')}>
-          <Ionicons name="chevron-back" size={24} color="#F6C343" />
+          <MaterialCommunityIcons name="chevron-left" size={24} color="#F6C343" />
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
@@ -150,7 +150,7 @@ export default function GroupsScreen() {
           {!isEditing && (
             <TouchableOpacity style={styles.groupWrapper} onPress={() => router.push('/addgroup')}>
               <View style={styles.avatarCircleLarge}>
-                <Ionicons name="add" size={48} color="#ccc" />
+                <MaterialCommunityIcons name="plus" size={48} color="#ccc" />
               </View>
               <Text style={styles.addGroupText}>Add Group</Text>
             </TouchableOpacity>
