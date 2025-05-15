@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
   Text,
@@ -109,14 +110,23 @@ const EditGroupScreen = () => {
     }
     try {
       await updateGroup(groupName.trim(), user!.uid, groupImage, fairnessFilter, sortBy);
-      router.push({ pathname: '/homescreen', params: { groupId: groupId } })    } catch (error) {
+      router.push({ pathname: '/homescreen', params: { groupId: groupId } });
+    } catch (error) {
       console.error(error);
       Alert.alert('Failed to update group');
     }
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      {/* Back Button */}
+      <View style={{ width: '100%', alignItems: 'flex-start', paddingHorizontal: 16}}>
+        <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Ionicons name="chevron-back" size={24} color="#FFD700" />
+          <Text style={{ color: '#FFD700', fontSize: 16, fontWeight: '600', marginLeft: 4 }}>Back</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={{ flex: 1, width: '100%', alignItems: 'center' }}>
         {/* Group Image */}
         <TouchableOpacity onPress={pickImage} style={styles.imageWrapper}>
@@ -185,15 +195,14 @@ const EditGroupScreen = () => {
             >
               <Text style={styles.dropdownText}>{fairnessFilter ? 'On' : 'Off'}</Text>
             </TouchableOpacity>
-            
-            {/* Info Icon - Now in a container that keeps it next to the dropdown */}
-            <TouchableOpacity 
+
+            <TouchableOpacity
               onPress={() => setShowInfoModal(true)}
               style={styles.infoIconContainer}
             >
               <MaterialCommunityIcons name="information-outline" size={20} color="#F5CB5C" />
             </TouchableOpacity>
-            
+
             {dropdownOpen === 'fairness' && (
               <View style={[styles.dropdownMenu, { width: 50, position: 'absolute', top: '100%', left: 0, zIndex: 10 }]}>
                 {['On', 'Off']
@@ -220,6 +229,7 @@ const EditGroupScreen = () => {
       <TouchableOpacity style={styles.deleteButton} onPress={handleUpdateGroup}>
         <Text style={styles.deleteText}>Update Group</Text>
       </TouchableOpacity>
+
       <Modal visible={showInfoModal} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.infoModalContent}>
@@ -236,8 +246,7 @@ const EditGroupScreen = () => {
           </View>
         </View>
       </Modal>
-    </View>
-    
+    </SafeAreaView>
   );
 };
 

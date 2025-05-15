@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 import {
   SafeAreaView,
@@ -196,6 +197,12 @@ export default function MovieDetailsScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12 }}>
+        <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Ionicons name="chevron-back" size={24} color="#FFD700" />
+          <Text style={{ color: '#FFD700', fontSize: 16, fontWeight: '600' }}>Back</Text>
+        </TouchableOpacity>
+      </View>
       <ScrollView contentContainerStyle={styles.content}>
         <Image
           source={{ uri: getPosterUrl(movie.imdbID) }}

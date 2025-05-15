@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Text,
   View,
@@ -115,7 +117,15 @@ const MovieSearch = () => {
   }
 
   return (
-    <DismissKeyboardView style={[styles.safe, { paddingTop: 35 }]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#242423' }}>
+    <DismissKeyboardView style={[styles.safe, { paddingTop: 12 }]}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
+        <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Ionicons name="chevron-back" size={24} color="#FFD700" />
+          <Text style={{ color: '#FFD700', fontSize: 16, fontWeight: '600' }}>Back</Text>
+        </TouchableOpacity>
+      </View>
+
       <Text style={styles.heading}>Add to list</Text>
       <TextInput
         style={styles.input}
@@ -150,6 +160,7 @@ const MovieSearch = () => {
         keyboardShouldPersistTaps="handled"
       />
     </DismissKeyboardView>
+    </SafeAreaView>
   );
 };
 

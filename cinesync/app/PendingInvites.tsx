@@ -4,11 +4,17 @@ import { collection, getDocs, query, where, updateDoc, doc, deleteDoc } from 'fi
 import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { addUserToGroup } from '@/services/GroupService';
 import { onAuthStateChanged } from 'firebase/auth';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 export default function PendingInvites() {
   const [invites, setInvites] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
 
   // ✅ Wait for auth to fully initialize
   useEffect(() => {
@@ -71,29 +77,36 @@ export default function PendingInvites() {
     }
   }
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+        <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Ionicons name="chevron-back" size={24} color="#FFD700" />
+          <Text style={{ color: '#FFD700', fontSize: 16, fontWeight: '600' }}>Back</Text>
+        </TouchableOpacity>
+      </View>
+
       <Text style={styles.title}>Pending Invites</Text>
 
-      {invites.length === 0 ? (
-        <Text style={{ color: '#aaa', marginTop: 16 }}>You have no pending invites.</Text>
-      ) : (
-        <FlatList
-          data={invites}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.inviteItem}>
-              <TouchableOpacity style={styles.declineContainer} onPress={() => declineInvite(item)}> 
-                <Text style={styles.declineText}>X</Text>
-              </TouchableOpacity>
-              <Text style={styles.text}>Group ID: {item.groupId}</Text>
-              <Button title="Accept Invite" onPress={() => acceptInvite(item)} />
-            </View>
-          )}
-        />
-      )}
-    </View>
-  );
-}
+        {invites.length === 0 ? (
+          <Text style={{ color: '#aaa', marginTop: 16 }}>You have no pending invites.</Text>
+        ) : (
+          <FlatList
+            data={invites}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <View style={styles.inviteItem}>
+                <TouchableOpacity style={styles.declineContainer} onPress={() => declineInvite(item)}> 
+                  <Text style={styles.declineText}>X</Text>
+                </TouchableOpacity>
+                <Text style={styles.text}>Group ID: {item.groupId}</Text>
+                <Button title="Accept Invite" onPress={() => acceptInvite(item)} />
+              </View>
+            )}
+          />
+        )}
+      </SafeAreaView>
+    );
+  }
 
 const styles = StyleSheet.create({
   container: { padding: 20, backgroundColor: '#242423', flex: 1 },
