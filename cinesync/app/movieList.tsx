@@ -15,11 +15,13 @@ import { doc, getDoc, onSnapshot, updateDoc, collection, query, where, getDocs, 
 import { getMovieDetails } from '@/services/MoviesService';
 import { getAuth } from 'firebase/auth';
 
-// Icons
+// Import your unselected icons
 const thumbsUpIcon = require('@/assets/images/icons/like.png');
 const thumbsDownIcon = require('@/assets/images/icons/dislike.png');
+// Import your selected (yellow) icons
 const thumbsUpSelectedIcon = require('@/assets/images/icons/likeSelected.png');
 const thumbsDownSelectedIcon = require('@/assets/images/icons/dislikeSelected.png');
+// Import seen/not seen icons
 const seenIcon = require('@/assets/images/icons/seen.png');
 const notSeenIcon = require('@/assets/images/icons/notSeen.png');
 
@@ -40,7 +42,9 @@ type MovieWithDetails = MovieEntry & {
   thumbsDown: number;
   userVote: 'up' | 'down' | null;
   seen: boolean;
+  rottenTomatoesRating?: number; // Add Rotten Tomatoes rating
   userRating: number;
+
 };
 
 type Props = {
@@ -48,33 +52,29 @@ type Props = {
   initialType?: 'watchlist' | 'watched';
 };
 
-const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
+const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist'}) => {
   const [movies, setMovies] = useState<MovieWithDetails[]>([]);
-  const [allMovies, setAllMovies] = useState<MovieWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
+  const [allMovies, setAllMovies] = useState<MovieWithDetails[]>([]);
   const [activeTab, setActiveTab] = useState<'watchlist' | 'watched'>(initialType);
+
   const router = useRouter();
   const currentUser = getAuth().currentUser;
 
-  const fetchUserPreferences = async (movieEntries: MovieEntry[]) => {
+  const fetchUserVotes = async (movieEntries: MovieEntry[]) => {
     if (!currentUser) return movieEntries;
     try {
       const movieIds = movieEntries.map(entry => entry.imdbID);
       const votesMap: Record<string, 'up' | 'down' | null> = {};
+      const seenMap: Record<string, boolean> = {};
       const ratingsMap: Record<string, number> = {};
       
       await Promise.all(movieIds.map(async (movieId) => {
+        // Include groupId in the vote reference to make votes group-specific
         const voteRef = doc(FIRESTORE_DB, 'movieVotes', `${currentUser.uid}_${movieId}_${groupId}`);
         const voteSnap = await getDoc(voteRef);
         if (voteSnap.exists()) {
           votesMap[movieId] = voteSnap.data()?.vote || null;
-        }
-        
-        const ratingRef = doc(FIRESTORE_DB, 'userRatings', `${currentUser.uid}_${movieId}`);
-        const ratingSnap = await getDoc(ratingRef);
-        
-        if (ratingSnap.exists()) {
-          ratingsMap[movieId] = ratingSnap.data()?.rating || 0;
         }
       }));
       
@@ -85,49 +85,61 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
         userRating: ratingsMap[entry.imdbID] || 0
       }));
     } catch (err) {
-      console.error('Error fetching user preferences:', err);
+      console.error('Error fetching user votes:', err);
       return movieEntries;
     }
   };
 
   const fetchMovieDetails = async (movieEntries: MovieEntry[]) => {
-    const entriesWithPreferences = await fetchUserPreferences(movieEntries);
-    
+    const entriesWithVotes = await fetchUserVotes(movieEntries);
+    const groupSnap = await getDoc(doc(FIRESTORE_DB, 'groups', groupId));
+    const sortBy = groupSnap.exists() ? groupSnap.data()?.sortBy : null;
+  
+    // Get all votes in this group
+    const votesQuery = query(
+      collection(FIRESTORE_DB, 'movieVotes'),
+      where('groupId', '==', groupId)
+    );
+    const voteSnapshots = await getDocs(votesQuery);
+  
+    const voteCounts: Record<string, { up: number; down: number }> = {};
+    const usernames: Record<string, string> = {}; // Cache usernames
+  
+    voteSnapshots.forEach((snap) => {
+      const { movieId, vote } = snap.data();
+      if (!voteCounts[movieId]) voteCounts[movieId] = { up: 0, down: 0 };
+      if (vote === 'up') voteCounts[movieId].up += 1;
+      else if (vote === 'down') voteCounts[movieId].down += 1;
+    });
+  
     const detailedMovies = await Promise.all(
-      entriesWithPreferences.map(async (entry) => {
+      entriesWithVotes.map(async (entry) => {
         try {
           const details = await getMovieDetails(entry.imdbID);
-          const userRef = doc(FIRESTORE_DB, 'users', entry.addedBy);
-          const userSnap = await getDoc(userRef);
-          const username = userSnap.exists() ? userSnap.data()?.username || 'Unknown' : 'Unknown';
-          
-          const thumbsUpRef = collection(FIRESTORE_DB, 'movieVotes');
-          const thumbsUpQuery = query(
-            thumbsUpRef,
-            where('movieId', '==', entry.imdbID),
-            where('groupId', '==', groupId),
-            where('vote', '==', 'up')
-          );
-          const thumbsUpSnap = await getDocs(thumbsUpQuery);
-          
-          const thumbsDownRef = collection(FIRESTORE_DB, 'movieVotes');
-          const thumbsDownQuery = query(
-            thumbsDownRef,
-            where('movieId', '==', entry.imdbID),
-            where('groupId', '==', groupId),
-            where('vote', '==', 'down')
-          );
-          const thumbsDownSnap = await getDocs(thumbsDownQuery);
-          
+          const voteStat = voteCounts[entry.imdbID] || { up: 0, down: 0 };
+  
+          // Get username, caching results
+          let username = usernames[entry.addedBy];
+          if (!username) {
+            const userSnap = await getDoc(doc(FIRESTORE_DB, 'users', entry.addedBy));
+            username = userSnap.exists() ? userSnap.data()?.username || 'Unknown' : 'Unknown';
+            usernames[entry.addedBy] = username;
+          }
+
+          // Extract Rotten Tomatoes rating
+          const rottenTomatoesRating = details.Ratings?.find(r => r.Source === 'Rotten Tomatoes')?.Value;
+          const numericRating = rottenTomatoesRating ? parseInt(rottenTomatoesRating) : 0;
+  
           return {
             ...entry,
             title: details.Title || 'Untitled',
             poster: details.Poster || '',
             genre: details.Genre || 'Unknown genre',
             username,
-            thumbsUp: thumbsUpSnap.size,
-            thumbsDown: thumbsDownSnap.size,
+            thumbsUp: voteStat.up,
+            thumbsDown: voteStat.down,
             userVote: (entry as any).userVote || null,
+            rottenTomatoesRating: numericRating,
             seen: entry.seen || false, // Use the movie entry's seen status
             userRating: (entry as any).userRating || 0,
           };
@@ -142,23 +154,27 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
             thumbsUp: 0,
             thumbsDown: 0,
             userVote: (entry as any).userVote || null,
+            rottenTomatoesRating: 0,
             seen: entry.seen || false, // Use the movie entry's seen status
             userRating: (entry as any).userRating || 0,
           };
         }
       })
     );
-    
-    const sortedMovies = detailedMovies.sort((a, b) => {
-      const netLikesA = a.thumbsUp - a.thumbsDown;
-      const netLikesB = b.thumbsUp - b.thumbsDown;
-    
-      // Sort descending by net likes
-      return netLikesB - netLikesA;
-    });    
-    
-    setAllMovies(sortedMovies);
-    filterMoviesByActiveTab(sortedMovies);
+  
+    const sortedMovies = 
+      sortBy === 'Liked'
+      ? detailedMovies.sort((a, b) =>
+          (b.thumbsUp - b.thumbsDown) - (a.thumbsUp - a.thumbsDown)
+        )
+      : sortBy === 'Rotten Tomatoes Rating'
+      ? detailedMovies.sort((a, b) => (b.rottenTomatoesRating || 0) - (a.rottenTomatoesRating || 0))
+      
+      : detailedMovies.sort(
+          (a, b) => a.addedAt?.toDate?.() - b.addedAt?.toDate?.()
+        );
+  
+    setMovies(sortedMovies);
   };
   
   const filterMoviesByActiveTab = (moviesList = allMovies) => {
@@ -186,7 +202,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
     if (!groupId) return;
     
     let movieListUnsubscribe: () => void;
-    let userPreferencesUnsubscribe: () => void;
+    let userVotesUnsubscribe: () => void;
     let currentMovieEntries: MovieEntry[] = [];
     
     const setupListeners = async () => {
@@ -206,7 +222,6 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
             fetchMovieDetails(currentMovieEntries);
           } else {
             setMovies([]);
-            setAllMovies([]);
           }
           setLoading(false);
         });
@@ -216,20 +231,10 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
           const votesQuery = query(
             votesCollectionRef,
             where('userId', '==', currentUser.uid),
-            where('groupId', '==', groupId)
+            where('groupId', '==', groupId) // Only listen for votes in this group
           );
-          const ratingsCollectionRef = collection(FIRESTORE_DB, 'userRatings');
-          const ratingsQuery = query(
-            ratingsCollectionRef, 
-            where('userId', '==', currentUser.uid)
-          );
-          userPreferencesUnsubscribe = onSnapshot(votesQuery, () => {
-            if (currentMovieEntries.length > 0) {
-              fetchMovieDetails(currentMovieEntries);
-            }
-          });
           
-          onSnapshot(ratingsQuery, () => {
+          userVotesUnsubscribe = onSnapshot(votesQuery, () => {
             if (currentMovieEntries.length > 0) {
               fetchMovieDetails(currentMovieEntries);
             }
@@ -244,7 +249,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
     
     return () => {
       if (movieListUnsubscribe) movieListUnsubscribe();
-      if (userPreferencesUnsubscribe) userPreferencesUnsubscribe();
+      if (userVotesUnsubscribe) userVotesUnsubscribe();
     };
   }, [groupId, currentUser?.uid]);
 
@@ -277,63 +282,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
     if (!currentUser) return;
     
     try {
-      // Find the movie in our state
-      const movieIndex = allMovies.findIndex(m => m.imdbID === imdbID);
-      if (movieIndex === -1) return;
-      
-      const movie = allMovies[movieIndex];
-      
-      // Calculate the new vote state
-      let newVote: 'up' | 'down' | null = vote;
-      let thumbsUpDelta = 0;
-      let thumbsDownDelta = 0;
-      
-      if (movie.userVote === vote) {
-        // User is toggling the vote off
-        newVote = null;
-        if (vote === 'up') thumbsUpDelta = -1;
-        if (vote === 'down') thumbsDownDelta = -1;
-      } else {
-        // User is changing vote or voting for the first time
-        if (movie.userVote === 'up') {
-          thumbsUpDelta = -1; // Remove previous upvote
-        } else if (movie.userVote === 'down') {
-          thumbsDownDelta = -1; // Remove previous downvote
-        }
-        
-        if (vote === 'up') thumbsUpDelta += 1;
-        if (vote === 'down') thumbsDownDelta += 1;
-      }
-      
-      // Update the state immediately (optimistic update)
-      const updatedMovie = {
-        ...movie,
-        userVote: newVote,
-        thumbsUp: movie.thumbsUp + (vote === 'up' ? (newVote === null ? -1 : 1) : 0),
-        thumbsDown: movie.thumbsDown + (vote === 'down' ? (newVote === null ? -1 : 1) : 0)
-      };
-      
-      // If the user changed from one vote to the other, adjust both counts
-      if (movie.userVote === 'up' && vote === 'down') {
-        updatedMovie.thumbsUp -= 1;
-      } else if (movie.userVote === 'down' && vote === 'up') {
-        updatedMovie.thumbsDown -= 1;
-      }
-      
-      // Update our local state immediately
-      const newAllMovies = [...allMovies];
-      newAllMovies[movieIndex] = updatedMovie;
-      setAllMovies(newAllMovies);
-      
-      // Update the filtered movies list too
-      const filteredMovieIndex = movies.findIndex(m => m.imdbID === imdbID);
-      if (filteredMovieIndex !== -1) {
-        const newMovies = [...movies];
-        newMovies[filteredMovieIndex] = updatedMovie;
-        setMovies(newMovies);
-      }
-      
-      // Now perform the actual database update in the background
+      // Make the vote ID include the groupId to make votes group-specific
       const voteId = `${currentUser.uid}_${imdbID}_${groupId}`;
       const voteRef = doc(FIRESTORE_DB, 'movieVotes', voteId);
       const voteSnap = await getDoc(voteRef);
@@ -349,7 +298,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
         await setDoc(voteRef, {
           userId: currentUser.uid,
           movieId: imdbID,
-          groupId: groupId,
+          groupId: groupId, // Store the groupId in the vote document
           vote,
           timestamp: new Date()
           // Removed the seen field since we're now storing it on the movie itself
@@ -363,7 +312,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
 
   const toggleSeen = async (imdbID: string) => {
     if (!currentUser) return;
-  
+    
     try {
       // Find the movie in our state
       const movieIndex = allMovies.findIndex(m => m.imdbID === imdbID);
@@ -492,7 +441,6 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
       Alert.alert('Error', 'Failed to save rating');
     }
   };
-
   const renderStars = (rating: number) => {
     const fullStar = '★';
     const emptyStar = '☆';
@@ -551,9 +499,12 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
       </View>
     );
   };
-
   if (loading) {
     return <ActivityIndicator style={{ marginTop: 20 }} color="#F7EEDB" />;
+  }
+
+  if (movies.length === 0) {
+    return <Text style={styles.emptyText}>No movies added yet.</Text>;
   }
 
   return (
@@ -746,7 +697,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 8,
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'space-between', // This spreads items to opposite ends
   },
   leftVoteButtons: {
     flexDirection: 'row',
@@ -778,6 +729,17 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     fontWeight: 'bold',
   },
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 20,
+    color: '#aaa',
+  },
+  ratingText: {
+    fontSize: 14,
+    color: '#F7EEDB',
+    marginTop: 2,
+    marginBottom: 4,
+  },
   ratingContainer: {
     marginTop: 8,
     flexDirection: 'row',
@@ -808,10 +770,5 @@ const styles = StyleSheet.create({
   unseenText: {
     color: '#64B5F6',
     marginTop: 8,
-  },
-  emptyText: {
-    textAlign: 'center',
-    marginTop: 20,
-    color: '#aaa',
   },
 });
