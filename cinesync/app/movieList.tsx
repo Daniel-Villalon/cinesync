@@ -568,14 +568,12 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
               <View style={styles.infoContainer}>
                 <View style={styles.titleContainer}>
                   <Text style={styles.title}>{item.title}</Text>
-                  {currentUser?.uid === item.addedBy && (
                     <TouchableOpacity 
                       style={styles.removeButton} 
                       onPress={() => removeMovie(item.imdbID)}
                     >
                       <Text style={styles.removeIcon}>−</Text>
                     </TouchableOpacity>
-                  )}
                 </View>
                 <Text style={styles.genre}>{item.genre}</Text>
                 <Text style={styles.user}>Added by {item.username}</Text>
