@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 export default StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#242423',
   },
 
   header: {
@@ -17,7 +17,7 @@ export default StyleSheet.create({
   },
 
   headerSide: {
-    width: 60,
+    width: 80,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -70,13 +70,15 @@ export default StyleSheet.create({
   },
 
   editIcon: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 2,
-    elevation: 2,
+      position: 'absolute',
+      top: -4,
+      right: -4,
+      backgroundColor: '#F5CB5C',
+      borderRadius: 20,
+      padding: 2,
+      elevation: 4,
+      borderWidth: 3,
+      borderColor: '#111', 
   },
 
   groupLabel: {

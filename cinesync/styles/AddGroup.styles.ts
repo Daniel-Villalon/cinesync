@@ -5,8 +5,8 @@ import { StyleSheet } from 'react-native';
 export default StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111',
-    paddingTop: 60,
+    backgroundColor: '#242423',
+    paddingTop: 20,
     paddingHorizontal: 20,
     alignItems: 'center',
   },
@@ -173,4 +173,23 @@ export default StyleSheet.create({
     marginLeft: 8,
     padding: 2,
   },
+  header: {
+        width: '100%',
+        paddingTop: 30,
+        paddingHorizontal: 20,
+        paddingBottom: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'relative', 
+    },
+    backText: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: '#F5CB5C',
+    },     
+    saveButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+    },
 });

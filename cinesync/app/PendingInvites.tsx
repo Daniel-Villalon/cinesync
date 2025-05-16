@@ -85,10 +85,10 @@ export default function PendingInvites() {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.title}>Pending Invites</Text>
+      <Text style={[styles.title, { textAlign: 'center' }]}>Pending Invites</Text>
 
         {invites.length === 0 ? (
-          <Text style={{ color: '#aaa', marginTop: 16 }}>You have no pending invites.</Text>
+          <Text style={{ color: '#aaa', marginTop: 16, textAlign: 'center' }}>You have no pending invites.</Text>
         ) : (
           <FlatList
             data={invites}

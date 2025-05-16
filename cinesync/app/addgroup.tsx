@@ -56,6 +56,17 @@ const AddGroupScreen = () => {
 
   return (
     <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center' }} >
+          <MaterialCommunityIcons name="chevron-left" size={24} color="#FFD700" />
+          <Text style={[styles.backText, { color: "#FFD700" }]}>{'Back'}</Text>
+        </TouchableOpacity>
+        {/* <TouchableOpacity onPress={saveUserInfo}>
+          <Text style={[styles.saveButtonText, { color: themeStyles.textColor }]}>Save</Text>
+        </TouchableOpacity> */}
+        
+      </View>
       <View style={{ flex: 1, width: '100%', alignItems: 'center' }}>
         {/* Group Image */}
         <TouchableOpacity onPress={pickImage} style={styles.imageWrapper}>

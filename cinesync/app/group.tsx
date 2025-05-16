@@ -97,7 +97,8 @@ export default function GroupsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.headerSide} onPress={() => router.replace('/login')}>
-          <MaterialCommunityIcons name="chevron-left" size={24} color="#F6C343" />
+          {/* <MaterialCommunityIcons name="chevron-left" size={24} color="#F6C343" /> */}
+          <Text style={{ fontSize: 16, color:"#F6C343" }}>Logout</Text>
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>

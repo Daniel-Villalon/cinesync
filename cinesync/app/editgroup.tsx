@@ -119,12 +119,16 @@ const EditGroupScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Back Button */}
-      <View style={{ width: '100%', alignItems: 'flex-start', paddingHorizontal: 16}}>
-        <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Ionicons name="chevron-back" size={24} color="#FFD700" />
-          <Text style={{ color: '#FFD700', fontSize: 16, fontWeight: '600', marginLeft: 4 }}>Back</Text>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center' }} >
+          <MaterialCommunityIcons name="chevron-left" size={24} color="#FFD700" />
+          <Text style={[styles.backText, { color: "#FFD700" }]}>{'Back'}</Text>
         </TouchableOpacity>
+        {/* <TouchableOpacity onPress={saveUserInfo}>
+          <Text style={[styles.saveButtonText, { color: themeStyles.textColor }]}>Save</Text>
+        </TouchableOpacity> */}
+        
       </View>
 
       <View style={{ flex: 1, width: '100%', alignItems: 'center' }}>
