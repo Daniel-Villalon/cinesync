@@ -40,7 +40,8 @@ type MovieWithDetails = MovieEntry & {
   thumbsUp: number;
   thumbsDown: number;
   userVote: 'up' | 'down' | null;
-  seen: boolean; // Added seen property
+  seen: boolean;
+  rottenTomatoesRating?: number; // Add Rotten Tomatoes rating
 };
 
 type Props = {
@@ -118,6 +119,10 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
             username = userSnap.exists() ? userSnap.data()?.username || 'Unknown' : 'Unknown';
             usernames[entry.addedBy] = username;
           }
+
+          // Extract Rotten Tomatoes rating
+          const rottenTomatoesRating = details.Ratings?.find(r => r.Source === 'Rotten Tomatoes')?.Value;
+          const numericRating = rottenTomatoesRating ? parseInt(rottenTomatoesRating) : 0;
   
           return {
             ...entry,
@@ -129,6 +134,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
             thumbsDown: voteStat.down,
             userVote: (entry as any).userVote || null,
             seen: (entry as any).seen || false,
+            rottenTomatoesRating: numericRating,
           };
         } catch (err) {
           console.warn('Error fetching details for', entry.imdbID, err);
@@ -142,6 +148,7 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
             thumbsDown: 0,
             userVote: (entry as any).userVote || null,
             seen: (entry as any).seen || false,
+            rottenTomatoesRating: 0,
           };
         }
       })
@@ -151,6 +158,8 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
       ? detailedMovies.sort((a, b) =>
           (b.thumbsUp - b.thumbsDown) - (a.thumbsUp - a.thumbsDown)
         )
+      : sortBy === 'Rotten Tomatoes Rating'
+      ? detailedMovies.sort((a, b) => (b.rottenTomatoesRating || 0) - (a.rottenTomatoesRating || 0))
       : detailedMovies.sort(
           (a, b) => a.addedAt?.toDate?.() - b.addedAt?.toDate?.()
         );
@@ -331,6 +340,11 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
               </View>
               <Text style={styles.genre}>{item.genre}</Text>
               <Text style={styles.user}>Added by {item.username}</Text>
+              {item.rottenTomatoesRating !== undefined && item.rottenTomatoesRating > 0 && (
+                <Text style={styles.ratingText}>
+                  🍅 {item.rottenTomatoesRating}%
+                </Text>
+              )}
               <View style={styles.votesContainer}>
                 <View style={styles.leftVoteButtons}>
                   <TouchableOpacity
@@ -485,5 +499,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
     color: '#aaa',
+  },
+  ratingText: {
+    fontSize: 14,
+    color: '#F7EEDB',
+    marginTop: 2,
+    marginBottom: 4,
   },
 });
