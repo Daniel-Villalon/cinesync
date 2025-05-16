@@ -27,6 +27,7 @@ type MovieEntry = {
   imdbID: string;
   addedBy: string;
   addedAt: any;
+  seen?: boolean; // Add seen status to the movie entry itself
   rating?: number;
 };
 
@@ -60,7 +61,6 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
     try {
       const movieIds = movieEntries.map(entry => entry.imdbID);
       const votesMap: Record<string, 'up' | 'down' | null> = {};
-      const seenMap: Record<string, boolean> = {};
       const ratingsMap: Record<string, number> = {};
       
       await Promise.all(movieIds.map(async (movieId) => {
@@ -68,9 +68,6 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
         const voteSnap = await getDoc(voteRef);
         if (voteSnap.exists()) {
           votesMap[movieId] = voteSnap.data()?.vote || null;
-          seenMap[movieId] = voteSnap.data()?.seen || false;
-        } else {
-          seenMap[movieId] = false;
         }
         
         const ratingRef = doc(FIRESTORE_DB, 'userRatings', `${currentUser.uid}_${movieId}`);
@@ -84,7 +81,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
       return movieEntries.map(entry => ({
         ...entry,
         userVote: votesMap[entry.imdbID] || null,
-        seen: seenMap[entry.imdbID] || false,
+        seen: entry.seen || false, // Use the movie entry's seen status
         userRating: ratingsMap[entry.imdbID] || 0
       }));
     } catch (err) {
@@ -131,7 +128,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
             thumbsUp: thumbsUpSnap.size,
             thumbsDown: thumbsDownSnap.size,
             userVote: (entry as any).userVote || null,
-            seen: (entry as any).seen || false,
+            seen: entry.seen || false, // Use the movie entry's seen status
             userRating: (entry as any).userRating || 0,
           };
         } catch (err) {
@@ -145,7 +142,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
             thumbsUp: 0,
             thumbsDown: 0,
             userVote: (entry as any).userVote || null,
-            seen: (entry as any).seen || false,
+            seen: entry.seen || false, // Use the movie entry's seen status
             userRating: (entry as any).userRating || 0,
           };
         }
@@ -166,20 +163,21 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
   
   const filterMoviesByActiveTab = (moviesList = allMovies) => {
     let filtered = moviesList.filter(movie => {
-    return activeTab === 'watchlist' ? !movie.seen : movie.seen;
-  });
-
-  if (activeTab === 'watchlist') {
-    // sort by net likes (likes - dislikes)
-    filtered = filtered.sort((a, b) => {
-      const aScore = (a.thumbsUp || 0) - (a.thumbsDown || 0);
-      const bScore = (b.thumbsUp || 0) - (b.thumbsDown || 0);
-      return bScore - aScore;
+      return activeTab === 'watchlist' ? !movie.seen : movie.seen;
     });
-  }
 
-  setMovies(filtered);
-};
+    if (activeTab === 'watchlist') {
+      // sort by net likes (likes - dislikes)
+      filtered = filtered.sort((a, b) => {
+        const aScore = (a.thumbsUp || 0) - (a.thumbsDown || 0);
+        const bScore = (b.thumbsUp || 0) - (b.thumbsDown || 0);
+        return bScore - aScore;
+      });
+    }
+
+    setMovies(filtered);
+  };
+
   useEffect(() => {
     filterMoviesByActiveTab();
   }, [activeTab, allMovies]); 
@@ -353,17 +351,13 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
           movieId: imdbID,
           groupId: groupId,
           vote,
-          seen: false,
           timestamp: new Date()
+          // Removed the seen field since we're now storing it on the movie itself
         });
       }
     } catch (err) {
       console.error('Failed to cast vote', err);
       Alert.alert('Error', 'Failed to save your vote');
-      
-      // Rollback our optimistic update if there was an error
-      // You could refetch data here, but that's expensive
-      // Just notify the user instead
     }
   };
 
@@ -399,27 +393,54 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
       setMovies(filteredMovies);
       
       // Now perform the actual database update in the background
-      const voteId = `${currentUser.uid}_${imdbID}_${groupId}`;
-      const voteRef = doc(FIRESTORE_DB, 'movieVotes', voteId);
-      const voteSnap = await getDoc(voteRef);
-  
-      if (voteSnap.exists()) {
-        await updateDoc(voteRef, { seen: newSeen });
-      } else {
-        await setDoc(voteRef, {
+      // Get the group's movie list reference
+      const groupRef = doc(FIRESTORE_DB, 'groups', groupId);
+      const groupSnap = await getDoc(groupRef);
+      
+      if (!groupSnap.exists()) return;
+      
+      const listId = groupSnap.data()?.groupList;
+      if (!listId) return;
+      
+      const movieListRef = doc(FIRESTORE_DB, 'movieLists', listId);
+      const movieListSnap = await getDoc(movieListRef);
+      
+      if (!movieListSnap.exists()) return;
+      
+      const movieList = movieListSnap.data();
+      const movies = movieList.movies || [];
+      
+      // Find and update the specific movie's seen status
+      const updatedMovies = movies.map((m: MovieEntry) => {
+        if (m.imdbID === imdbID) {
+          return {
+            ...m,
+            seen: newSeen,
+            // If marking as seen, record who marked it and when
+            markedSeenBy: newSeen ? currentUser.uid : null,
+            markedSeenAt: newSeen ? new Date() : null
+          };
+        }
+        return m;
+      });
+      
+      // Update the movie list document
+      await updateDoc(movieListRef, { movies: updatedMovies });
+      
+      // Optional: Record this action in activity log
+      if (newSeen) {
+        const activityRef = collection(FIRESTORE_DB, 'groupActivities');
+        await setDoc(doc(activityRef), {
+          groupId,
           userId: currentUser.uid,
           movieId: imdbID,
-          groupId: groupId,
-          vote: null,
-          seen: newSeen,
+          action: 'marked_as_watched',
           timestamp: new Date()
         });
       }
     } catch (err) {
       console.error('Failed to toggle seen status', err);
       Alert.alert('Error', 'Failed to update seen status');
-      
-      // You could implement a rollback here if needed
     }
   };
 
@@ -436,8 +457,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
       // Update our local state immediately (optimistic update)
       const updatedMovie = {
         ...movie,
-        userRating: rating,
-        seen: true // Also mark as seen when rating
+        userRating: rating
       };
       
       const newAllMovies = [...allMovies];
@@ -463,21 +483,9 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
         timestamp: new Date()
       });
       
-      const voteId = `${currentUser.uid}_${imdbID}_${groupId}`;
-      const voteRef = doc(FIRESTORE_DB, 'movieVotes', voteId);
-      const voteSnap = await getDoc(voteRef);
-      
-      if (voteSnap.exists()) {
-        await updateDoc(voteRef, { seen: true });
-      } else {
-        await setDoc(voteRef, {
-          userId: currentUser.uid,
-          movieId: imdbID,
-          groupId: groupId,
-          vote: null,
-          seen: true,
-          timestamp: new Date()
-        });
+      // If the movie is not already marked as seen, mark it as seen for everyone
+      if (!movie.seen) {
+        await toggleSeen(imdbID);
       }
     } catch (err) {
       console.error('Failed to update rating', err);
@@ -623,7 +631,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
                   // Watched view with ratings
                   <View style={styles.ratingContainer}>
                     <View style={styles.ratingSelectorContainer}>
-                      <Text style={styles.ratingLabel}>Group Rating:</Text>
+                      <Text style={styles.ratingLabel}>Your Rating:</Text>
                       {renderRatingSelector(item.imdbID, item.userRating)}
                     </View>
                     <TouchableOpacity
