@@ -154,12 +154,14 @@ const MovieList: React.FC<Props> = ({ groupId }) => {
       })
     );
   
-    const sortedMovies = sortBy === 'Liked'
+    const sortedMovies = 
+      sortBy === 'Liked'
       ? detailedMovies.sort((a, b) =>
           (b.thumbsUp - b.thumbsDown) - (a.thumbsUp - a.thumbsDown)
         )
       : sortBy === 'Rotten Tomatoes Rating'
       ? detailedMovies.sort((a, b) => (b.rottenTomatoesRating || 0) - (a.rottenTomatoesRating || 0))
+      
       : detailedMovies.sort(
           (a, b) => a.addedAt?.toDate?.() - b.addedAt?.toDate?.()
         );
