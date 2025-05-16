@@ -886,4 +886,12 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: '#aaa',
   },
+  seenContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  watchCountText: {
+    color: '#F7EEDB',
+    fontSize: 14,
+  }
 });
