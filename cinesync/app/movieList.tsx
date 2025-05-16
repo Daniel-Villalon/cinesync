@@ -27,8 +27,8 @@ type MovieEntry = {
   imdbID: string;
   addedBy: string;
   addedAt: any;
-  seen?: boolean; // Add seen status to the movie entry itself
-  rating?: number;
+  seen?: boolean; // Overall seen status
+  watchedBy?: string[]; // Array of user IDs who have watched the movie
 };
 
 type MovieWithDetails = MovieEntry & {
@@ -41,6 +41,9 @@ type MovieWithDetails = MovieEntry & {
   userVote: 'up' | 'down' | null;
   seen: boolean;
   userRating: number;
+  watchedCount: number; // Number of users who watched
+  groupMemberCount: number; // Total number of users in the group
+  userHasWatched: boolean; // Whether current user has watched
 };
 
 type Props = {
@@ -53,8 +56,30 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
   const [allMovies, setAllMovies] = useState<MovieWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'watchlist' | 'watched'>(initialType);
+  const [groupMembers, setGroupMembers] = useState<string[]>([]);
   const router = useRouter();
   const currentUser = getAuth().currentUser;
+
+  // Fetch group members
+  useEffect(() => {
+    if (!groupId) return;
+    
+    const fetchGroupMembers = async () => {
+      try {
+        const groupRef = doc(FIRESTORE_DB, 'groups', groupId);
+        const groupSnap = await getDoc(groupRef);
+        
+        if (groupSnap.exists()) {
+          const members = groupSnap.data()?.members || [];
+          setGroupMembers(members);
+        }
+      } catch (err) {
+        console.error('Error fetching group members:', err);
+      }
+    };
+    
+    fetchGroupMembers();
+  }, [groupId]);
 
   const fetchUserPreferences = async (movieEntries: MovieEntry[]) => {
     if (!currentUser) return movieEntries;
@@ -78,12 +103,22 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
         }
       }));
       
-      return movieEntries.map(entry => ({
-        ...entry,
-        userVote: votesMap[entry.imdbID] || null,
-        seen: entry.seen || false, // Use the movie entry's seen status
-        userRating: ratingsMap[entry.imdbID] || 0
-      }));
+      return movieEntries.map(entry => {
+        // Check if current user has watched this movie
+        const watchedBy = entry.watchedBy || [];
+        const userHasWatched = watchedBy.includes(currentUser.uid);
+        
+        return {
+          ...entry,
+          userVote: votesMap[entry.imdbID] || null,
+          // A movie is only considered "seen" if all group members have watched it
+          seen: watchedBy.length === groupMembers.length && groupMembers.length > 0,
+          userHasWatched: userHasWatched,
+          userRating: ratingsMap[entry.imdbID] || 0,
+          watchedCount: watchedBy.length,
+          groupMemberCount: groupMembers.length
+        };
+      });
     } catch (err) {
       console.error('Error fetching user preferences:', err);
       return movieEntries;
@@ -119,6 +154,11 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
           );
           const thumbsDownSnap = await getDocs(thumbsDownQuery);
           
+          // Calculate watched count and status
+          const watchedBy = entry.watchedBy || [];
+          const userHasWatched = currentUser ? watchedBy.includes(currentUser.uid) : false;
+          const allWatched = watchedBy.length === groupMembers.length && groupMembers.length > 0;
+          
           return {
             ...entry,
             title: details.Title || 'Untitled',
@@ -128,11 +168,19 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
             thumbsUp: thumbsUpSnap.size,
             thumbsDown: thumbsDownSnap.size,
             userVote: (entry as any).userVote || null,
-            seen: entry.seen || false, // Use the movie entry's seen status
+            seen: allWatched, // Movie is seen when all members have watched
+            userHasWatched: userHasWatched,
             userRating: (entry as any).userRating || 0,
+            watchedCount: watchedBy.length,
+            groupMemberCount: groupMembers.length,
           };
         } catch (err) {
           console.warn('Error fetching details for', entry.imdbID, err);
+          // Default values if details can't be fetched
+          const watchedBy = entry.watchedBy || [];
+          const userHasWatched = currentUser ? watchedBy.includes(currentUser.uid) : false;
+          const allWatched = watchedBy.length === groupMembers.length && groupMembers.length > 0;
+          
           return {
             ...entry,
             title: 'Unknown',
@@ -142,8 +190,11 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
             thumbsUp: 0,
             thumbsDown: 0,
             userVote: (entry as any).userVote || null,
-            seen: entry.seen || false, // Use the movie entry's seen status
+            seen: allWatched,
+            userHasWatched: userHasWatched,
             userRating: (entry as any).userRating || 0,
+            watchedCount: watchedBy.length,
+            groupMemberCount: groupMembers.length,
           };
         }
       })
@@ -246,7 +297,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
       if (movieListUnsubscribe) movieListUnsubscribe();
       if (userPreferencesUnsubscribe) userPreferencesUnsubscribe();
     };
-  }, [groupId, currentUser?.uid]);
+  }, [groupId, currentUser?.uid, groupMembers.length]);
 
   const removeMovie = async (imdbID: string) => {
     try {
@@ -352,7 +403,6 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
           groupId: groupId,
           vote,
           timestamp: new Date()
-          // Removed the seen field since we're now storing it on the movie itself
         });
       }
     } catch (err) {
@@ -370,12 +420,33 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
       if (movieIndex === -1) return;
       
       const movie = allMovies[movieIndex];
-      const newSeen = !movie.seen;
+      
+      // Toggle user watched status
+      const newUserHasWatched = !movie.userHasWatched;
+      
+      // Get the current array of users who watched
+      let watchedByUsers = movie.watchedBy || [];
+      
+      if (newUserHasWatched) {
+        // Add current user to watched list if not already there
+        if (!watchedByUsers.includes(currentUser.uid)) {
+          watchedByUsers = [...watchedByUsers, currentUser.uid];
+        }
+      } else {
+        // Remove current user from watched list
+        watchedByUsers = watchedByUsers.filter(id => id !== currentUser.uid);
+      }
+      
+      // Check if all group members have now watched the movie
+      const allWatched = watchedByUsers.length === groupMembers.length && groupMembers.length > 0;
       
       // Update our local state immediately (optimistic update)
       const updatedMovie = {
         ...movie,
-        seen: newSeen
+        watchedBy: watchedByUsers,
+        userHasWatched: newUserHasWatched,
+        watchedCount: watchedByUsers.length,
+        seen: allWatched // Movie is "seen" (for filtering) when all members have watched
       };
       
       const newAllMovies = [...allMovies];
@@ -383,16 +454,8 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
       setAllMovies(newAllMovies);
       
       // Filter movies according to active tab
-      const filteredMovies = newAllMovies.filter(movie => {
-        if (activeTab === 'watchlist') {
-          return !movie.seen;
-        } else {
-          return movie.seen;
-        }
-      });
-      setMovies(filteredMovies);
+      filterMoviesByActiveTab(newAllMovies);
       
-      // Now perform the actual database update in the background
       // Get the group's movie list reference
       const groupRef = doc(FIRESTORE_DB, 'groups', groupId);
       const groupSnap = await getDoc(groupRef);
@@ -410,15 +473,14 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
       const movieList = movieListSnap.data();
       const movies = movieList.movies || [];
       
-      // Find and update the specific movie's seen status
+      // Find and update the specific movie's watched status
       const updatedMovies = movies.map((m: MovieEntry) => {
         if (m.imdbID === imdbID) {
           return {
             ...m,
-            seen: newSeen,
-            // If marking as seen, record who marked it and when
-            markedSeenBy: newSeen ? currentUser.uid : null,
-            markedSeenAt: newSeen ? new Date() : null
+            watchedBy: watchedByUsers,
+            // Set seen status to true only if all members have watched
+            seen: allWatched
           };
         }
         return m;
@@ -428,7 +490,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
       await updateDoc(movieListRef, { movies: updatedMovies });
       
       // Optional: Record this action in activity log
-      if (newSeen) {
+      if (newUserHasWatched) {
         const activityRef = collection(FIRESTORE_DB, 'groupActivities');
         await setDoc(doc(activityRef), {
           groupId,
@@ -439,8 +501,8 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
         });
       }
     } catch (err) {
-      console.error('Failed to toggle seen status', err);
-      Alert.alert('Error', 'Failed to update seen status');
+      console.error('Failed to toggle user watched status', err);
+      Alert.alert('Error', 'Failed to update watched status');
     }
   };
 
@@ -483,8 +545,8 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
         timestamp: new Date()
       });
       
-      // If the movie is not already marked as seen, mark it as seen for everyone
-      if (!movie.seen) {
+      // If the movie is not already marked as watched by this user, mark it as watched
+      if (!movie.userHasWatched) {
         await toggleSeen(imdbID);
       }
     } catch (err) {
@@ -617,15 +679,20 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
                         ]}>{item.thumbsDown}</Text>
                       </TouchableOpacity>
                     </View>
-                    <TouchableOpacity
-                      style={styles.seenButton}
-                      onPress={() => toggleSeen(item.imdbID)}
-                    >
-                      <Image
-                        source={item.seen ? seenIcon : notSeenIcon}
-                        style={styles.voteIcon}
-                      />
-                    </TouchableOpacity>
+                    <View style={styles.seenContainer}>
+                      <Text style={styles.watchCountText}>
+                        {item.watchedCount}/{item.groupMemberCount}
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.seenButton}
+                        onPress={() => toggleSeen(item.imdbID)}
+                      >
+                        <Image
+                          source={item.userHasWatched ? seenIcon : notSeenIcon}
+                          style={styles.voteIcon}
+                        />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 ) : (
                   // Watched view with ratings
@@ -634,15 +701,20 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
                       <Text style={styles.ratingLabel}>Your Rating:</Text>
                       {renderRatingSelector(item.imdbID, item.userRating)}
                     </View>
-                    <TouchableOpacity
-                      style={styles.seenButton}
-                      onPress={() => toggleSeen(item.imdbID)}
-                    >
-                      <Image
-                        source={item.seen ? seenIcon : notSeenIcon}
-                        style={styles.voteIcon}
-                      />
-                    </TouchableOpacity>
+                    <View style={styles.seenContainer}>
+                      <Text style={styles.watchCountText}>
+                        {item.watchedCount}/{item.groupMemberCount}
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.seenButton}
+                        onPress={() => toggleSeen(item.imdbID)}
+                      >
+                        <Image
+                          source={item.userHasWatched ? seenIcon : notSeenIcon}
+                          style={styles.voteIcon}
+                        />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 )}
               </View>

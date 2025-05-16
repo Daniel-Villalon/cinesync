@@ -239,7 +239,7 @@ const EditGroupScreen = () => {
           <View style={styles.infoModalContent}>
             <Text style={styles.infoModalTitle}>Fairness Filter</Text>
             <Text style={styles.infoModalText}>
-              Hello! The fairness filter ensures that movie selections are distributed evenly among group members' preferences.
+              The user whose movie was most recently watched will have all their movies removed from view in the watchlist until a different user's movie is watched.
             </Text>
             <TouchableOpacity
               style={styles.closeButton}
