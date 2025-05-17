@@ -66,15 +66,21 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
     
     const fetchGroupMembers = async () => {
       try {
-        const groupRef = doc(FIRESTORE_DB, 'groups', groupId);
-        const groupSnap = await getDoc(groupRef);
+        // Change: Fetch from the group_members subcollection instead of the groups document
+        const membersCollectionRef = collection(FIRESTORE_DB, `groups/${groupId}/group_members`);
+        const membersSnapshot = await getDocs(membersCollectionRef);
         
-        if (groupSnap.exists()) {
-          const members = groupSnap.data()?.members || [];
-          setGroupMembers(members);
+        if (!membersSnapshot.empty) {
+          const memberIds = membersSnapshot.docs.map(doc => doc.data().userId);
+          setGroupMembers(memberIds);
+          console.log(`Found ${memberIds.length} group members for group ${groupId}`);
+        } else {
+          console.log(`No members found for group ${groupId}`);
+          setGroupMembers([]);
         }
       } catch (err) {
         console.error('Error fetching group members:', err);
+        setGroupMembers([]);
       }
     };
     
