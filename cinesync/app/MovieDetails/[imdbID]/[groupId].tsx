@@ -210,6 +210,14 @@ export default function MovieDetailsScreen() {
           style={styles.poster}
           resizeMode="contain"
         />
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={toggleWatchlistStatus}
+        >
+          <Text style={styles.addButtonText}>
+            {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+          </Text>
+        </TouchableOpacity>
         <Text style={styles.title}>{movie.Title}</Text>
         <Text style={styles.info}>Year: {movie.Year}</Text>
         <Text style={styles.info}>Genre: {movie.Genre}</Text>
@@ -229,9 +237,9 @@ export default function MovieDetailsScreen() {
         )}
 
         <Text style={styles.plot}>{movie.Plot}</Text>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
+        {/* <TouchableOpacity onPress={() => router.back()} style={styles.backButton}> */}
+          {/* <Text style={styles.backButtonText}>← Back</Text> */}
+        {/* </TouchableOpacity> */}
       </ScrollView>
     </SafeAreaView>
   );
@@ -314,5 +322,17 @@ const styles = StyleSheet.create({
   star: {
     fontSize: 28,
     marginHorizontal: 4,
+  },
+  addButton: {
+    backgroundColor: '#F6C343',
+    padding: 12,
+    borderRadius: 8,
+    alignSelf: 'center',
+    marginVertical: 16,
+  },
+  addButtonText: {
+    color: '#000',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });
