@@ -138,6 +138,21 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
     const voteCounts: Record<string, { up: number; down: number }> = {};
     const usernames: Record<string, string> = {};
   
+    // Add this new query to get all ratings for the group's movies
+    const ratingsQuery = query(
+      collection(FIRESTORE_DB, 'userRatings'),
+      where('movieId', 'in', movieEntries.map(entry => entry.imdbID))
+    );
+    const ratingsSnapshots = await getDocs(ratingsQuery);
+  
+    // Calculate average ratings per movie
+    const movieRatings: Record<string, number[]> = {};
+    ratingsSnapshots.forEach((snap) => {
+      const { movieId, rating } = snap.data();
+      if (!movieRatings[movieId]) movieRatings[movieId] = [];
+      movieRatings[movieId].push(rating);
+    });
+  
     voteSnapshots.forEach((snap) => {
       const { movieId, vote } = snap.data();
       if (!voteCounts[movieId]) voteCounts[movieId] = { up: 0, down: 0 };
@@ -157,9 +172,15 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
             username = userSnap.exists() ? userSnap.data()?.username || 'Unknown' : 'Unknown';
             usernames[entry.addedBy] = username;
           }
-
+  
           const rottenTomatoesRating = details.Ratings?.find(r => r.Source === 'Rotten Tomatoes')?.Value;
           const numericRating = rottenTomatoesRating ? parseInt(rottenTomatoesRating) : 0;
+  
+          // Calculate average group rating
+          const ratings = movieRatings[entry.imdbID] || [];
+          const averageRating = ratings.length > 0 
+            ? Math.round(ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length)
+            : 0;
   
           return {
             ...entry,
@@ -172,7 +193,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
             userVote: (entry as any).userVote || null,
             seen: (entry as any).seen || false,
             rottenTomatoesRating: numericRating,
-            userRating: (entry as any).userRating || 0,
+            userRating: averageRating, // This now represents the average group rating
             watchedCount: (entry as any).watchedCount || 0,
             groupMemberCount: (entry as any).groupMemberCount || 0,
             userHasWatched: (entry as any).userHasWatched || false
@@ -194,7 +215,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
             userVote: (entry as any).userVote || null,
             seen: (entry as any).seen || false,
             rottenTomatoesRating: 0,
-            userRating: (entry as any).userRating || 0,
+            userRating: 0, // No ratings available
             watchedCount: (entry as any).watchedCount || 0,
             groupMemberCount: (entry as any).groupMemberCount || 0,
             userHasWatched: (entry as any).userHasWatched || false
@@ -514,9 +535,16 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
 
   const renderStars = (rating: number) => {
     const fullStar = '★';
+    const halfStar = '☆★';
     const emptyStar = '☆';
-    const rounded = Math.round(rating);
-    return fullStar.repeat(rounded) + emptyStar.repeat(5 - rounded);
+    
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating - fullStars >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    
+    return fullStar.repeat(fullStars) + 
+           (hasHalfStar ? halfStar : '') + 
+           emptyStar.repeat(emptyStars);
   };
 
   const renderRatingSelector = (imdbID: string, currentRating: number) => {
@@ -592,14 +620,12 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
               <View style={styles.infoContainer}>
                 <View style={styles.titleContainer}>
                   <Text style={styles.title}>{item.title}</Text>
-                  {currentUser?.uid === item.addedBy && (
                     <TouchableOpacity
                       style={styles.removeButton}
                       onPress={() => removeMovie(item.imdbID)}
                     >
                       <Text style={styles.removeIcon}>−</Text>
                     </TouchableOpacity>
-                  )}
                 </View>
                 <Text style={styles.genre}>{item.genre}</Text>
                 <Text style={styles.user}>Added by {item.username}</Text>
@@ -657,7 +683,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
                   <View style={styles.ratingContainer}>
                     <View style={styles.ratingSelectorContainer}>
                       <Text style={styles.ratingLabel}>Group Rating:</Text>
-                      {renderRatingSelector(item.imdbID, item.userRating)}
+                      <Text style={styles.ratingDisplay}>{renderStars(item.userRating)}</Text>
                     </View>
                     <View style={styles.seenContainer}>
                       <Text style={styles.watchCountText}>
@@ -853,5 +879,10 @@ const styles = StyleSheet.create({
   watchCountText: {
     color: '#F7EEDB',
     fontSize: 14,
+  },
+  ratingDisplay: {
+    color: '#FFD700',
+    fontSize: 18,
+    marginTop: 4,
   },
 });

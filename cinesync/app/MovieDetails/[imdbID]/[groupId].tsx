@@ -140,6 +140,7 @@ export default function MovieDetailsScreen() {
       await setDoc(ratingRef, {
         imdbID,
         userId: user.uid,
+        movieId: imdbID, 
         rating,
         updatedAt: new Date(),
       });
