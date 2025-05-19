@@ -473,17 +473,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
       });
       
       await updateDoc(movieListRef, { movies: updatedMovies });
-      
-      if (newUserHasWatched) {
-        const activityRef = collection(FIRESTORE_DB, 'groupActivities');
-        await setDoc(doc(activityRef), {
-          groupId,
-          userId: currentUser.uid,
-          movieId: imdbID,
-          action: 'marked_as_watched',
-          timestamp: new Date()
-        });
-      }
+
     } catch (err) {
       console.error('Failed to toggle user watched status', err);
       Alert.alert('Error', 'Failed to update watched status');
