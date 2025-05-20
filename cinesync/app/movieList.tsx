@@ -141,104 +141,118 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
     const usernames: Record<string, string> = {};
   
     // Add this new query to get all ratings for the group's movies
-    const ratingsQuery = query(
-      collection(FIRESTORE_DB, 'userRatings'),
-      where('movieId', 'in', movieEntries.map(entry => entry.imdbID))
-    );
-    const ratingsSnapshots = await getDocs(ratingsQuery);
-  
-    // Calculate average ratings per movie
-    const movieRatings: Record<string, number[]> = {};
-    ratingsSnapshots.forEach((snap) => {
-      const { movieId, rating } = snap.data();
-      if (!movieRatings[movieId]) movieRatings[movieId] = [];
-      movieRatings[movieId].push(rating);
-    });
-  
-    voteSnapshots.forEach((snap) => {
-      const { movieId, vote } = snap.data();
-      if (!voteCounts[movieId]) voteCounts[movieId] = { up: 0, down: 0 };
-      if (vote === 'up') voteCounts[movieId].up += 1;
-      else if (vote === 'down') voteCounts[movieId].down += 1;
-    });
-  
-    const detailedMovies = await Promise.all(
-      entriesWithPreferences.map(async (entry) => {
-        try {
-          const details = await getMovieDetails(entry.imdbID);
-          const voteStat = voteCounts[entry.imdbID] || { up: 0, down: 0 };
-  
-          let username = usernames[entry.addedBy];
-          if (!username) {
-            const userSnap = await getDoc(doc(FIRESTORE_DB, 'users', entry.addedBy));
-            username = userSnap.exists() ? userSnap.data()?.username || 'Unknown' : 'Unknown';
-            usernames[entry.addedBy] = username;
+    try {
+      // Skip ratings query if there are no movies
+      if (movieEntries.length === 0) {
+        setAllMovies([]);
+        setMovies([]);
+        return;
+      }
+
+      const ratingsQuery = query(
+        collection(FIRESTORE_DB, 'userRatings'),
+        where('movieId', 'in', movieEntries.map(entry => entry.imdbID))
+      );
+      const ratingsSnapshots = await getDocs(ratingsQuery);
+    
+      // Calculate average ratings per movie
+      const movieRatings: Record<string, number[]> = {};
+      ratingsSnapshots.forEach((snap) => {
+        const { movieId, rating } = snap.data();
+        if (!movieRatings[movieId]) movieRatings[movieId] = [];
+        movieRatings[movieId].push(rating);
+      });
+    
+      voteSnapshots.forEach((snap) => {
+        const { movieId, vote } = snap.data();
+        if (!voteCounts[movieId]) voteCounts[movieId] = { up: 0, down: 0 };
+        if (vote === 'up') voteCounts[movieId].up += 1;
+        else if (vote === 'down') voteCounts[movieId].down += 1;
+      });
+    
+      const detailedMovies = await Promise.all(
+        entriesWithPreferences.map(async (entry) => {
+          try {
+            const details = await getMovieDetails(entry.imdbID);
+            const voteStat = voteCounts[entry.imdbID] || { up: 0, down: 0 };
+    
+            let username = usernames[entry.addedBy];
+            if (!username) {
+              const userSnap = await getDoc(doc(FIRESTORE_DB, 'users', entry.addedBy));
+              username = userSnap.exists() ? userSnap.data()?.username || 'Unknown' : 'Unknown';
+              usernames[entry.addedBy] = username;
+            }
+    
+            const rottenTomatoesRating = details.Ratings?.find(r => r.Source === 'Rotten Tomatoes')?.Value;
+            const numericRating = rottenTomatoesRating ? parseInt(rottenTomatoesRating) : 0;
+    
+            // Calculate average group rating
+            const ratings = movieRatings[entry.imdbID] || [];
+            const averageRating = ratings.length > 0 
+              ? Math.round(ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length)
+              : 0;
+    
+            return {
+              ...entry,
+              title: details.Title || 'Untitled',
+              poster: details.Poster || '',
+              genre: details.Genre || 'Unknown genre',
+              username,
+              thumbsUp: voteStat.up,
+              thumbsDown: voteStat.down,
+              userVote: (entry as any).userVote || null,
+              seen: (entry as any).seen || false,
+              rottenTomatoesRating: numericRating,
+              userRating: averageRating, // This now represents the average group rating
+              watchedCount: (entry as any).watchedCount || 0,
+              groupMemberCount: (entry as any).groupMemberCount || 0,
+              userHasWatched: (entry as any).userHasWatched || false
+            };
+          } catch (err) {
+            console.warn('Error fetching details for', entry.imdbID, err);
+            const watchedBy = entry.watchedBy || [];
+            const userHasWatched = currentUser ? watchedBy.includes(currentUser.uid) : false;
+            const allWatched = watchedBy.length === groupMembers.length && groupMembers.length > 0;
+            
+            return {
+              ...entry,
+              title: 'Unknown',
+              poster: '',
+              genre: 'Unknown genre',
+              username: 'Unknown',
+              thumbsUp: 0,
+              thumbsDown: 0,
+              userVote: (entry as any).userVote || null,
+              seen: (entry as any).seen || false,
+              rottenTomatoesRating: 0,
+              userRating: 0, // No ratings available
+              watchedCount: (entry as any).watchedCount || 0,
+              groupMemberCount: (entry as any).groupMemberCount || 0,
+              userHasWatched: (entry as any).userHasWatched || false
+            };
           }
-  
-          const rottenTomatoesRating = details.Ratings?.find(r => r.Source === 'Rotten Tomatoes')?.Value;
-          const numericRating = rottenTomatoesRating ? parseInt(rottenTomatoesRating) : 0;
-  
-          // Calculate average group rating
-          const ratings = movieRatings[entry.imdbID] || [];
-          const averageRating = ratings.length > 0 
-            ? Math.round(ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length)
-            : 0;
-  
-          return {
-            ...entry,
-            title: details.Title || 'Untitled',
-            poster: details.Poster || '',
-            genre: details.Genre || 'Unknown genre',
-            username,
-            thumbsUp: voteStat.up,
-            thumbsDown: voteStat.down,
-            userVote: (entry as any).userVote || null,
-            seen: (entry as any).seen || false,
-            rottenTomatoesRating: numericRating,
-            userRating: averageRating, // This now represents the average group rating
-            watchedCount: (entry as any).watchedCount || 0,
-            groupMemberCount: (entry as any).groupMemberCount || 0,
-            userHasWatched: (entry as any).userHasWatched || false
-          };
-        } catch (err) {
-          console.warn('Error fetching details for', entry.imdbID, err);
-          const watchedBy = entry.watchedBy || [];
-          const userHasWatched = currentUser ? watchedBy.includes(currentUser.uid) : false;
-          const allWatched = watchedBy.length === groupMembers.length && groupMembers.length > 0;
-          
-          return {
-            ...entry,
-            title: 'Unknown',
-            poster: '',
-            genre: 'Unknown genre',
-            username: 'Unknown',
-            thumbsUp: 0,
-            thumbsDown: 0,
-            userVote: (entry as any).userVote || null,
-            seen: (entry as any).seen || false,
-            rottenTomatoesRating: 0,
-            userRating: 0, // No ratings available
-            watchedCount: (entry as any).watchedCount || 0,
-            groupMemberCount: (entry as any).groupMemberCount || 0,
-            userHasWatched: (entry as any).userHasWatched || false
-          };
-        }
-      })
-    );
-  
-    const sortedMovies = 
-      sortBy === 'Liked'
-      ? detailedMovies.sort((a, b) =>
-          (b.thumbsUp - b.thumbsDown) - (a.thumbsUp - a.thumbsDown)
-        )
-      : sortBy === 'Rotten Tomatoes Rating'
-      ? detailedMovies.sort((a, b) => (b.rottenTomatoesRating || 0) - (a.rottenTomatoesRating || 0))
-      : detailedMovies.sort(
-          (a, b) => a.addedAt?.toDate?.() - b.addedAt?.toDate?.()
-        );
-  
-    setAllMovies(sortedMovies);
-    filterMoviesByActiveTab(sortedMovies);
+        })
+      );
+    
+      const sortedMovies = 
+        sortBy === 'Liked'
+        ? detailedMovies.sort((a, b) =>
+            (b.thumbsUp - b.thumbsDown) - (a.thumbsUp - a.thumbsDown)
+          )
+        : sortBy === 'Rotten Tomatoes Rating'
+        ? detailedMovies.sort((a, b) => (b.rottenTomatoesRating || 0) - (a.rottenTomatoesRating || 0))
+        : detailedMovies.sort(
+            (a, b) => a.addedAt?.toDate?.() - b.addedAt?.toDate?.()
+          );
+    
+      setAllMovies(sortedMovies);
+      filterMoviesByActiveTab(sortedMovies);
+    } catch (err) {
+      console.error('Error fetching movie ratings:', err);
+      // Set empty arrays to prevent undefined behavior
+      setAllMovies([]);
+      setMovies([]);
+    }
   };
 
   const filterMoviesByActiveTab = (moviesList = allMovies) => {
