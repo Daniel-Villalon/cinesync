@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   View,
   Text,
@@ -62,6 +63,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
   const [groupMembers, setGroupMembers] = useState<string[]>([]);
   const router = useRouter();
   const currentUser = getAuth().currentUser;
+  const insets = useSafeAreaInsets();
 
   // Fetch group members
   useEffect(() => {
@@ -473,17 +475,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
       });
       
       await updateDoc(movieListRef, { movies: updatedMovies });
-      
-      if (newUserHasWatched) {
-        const activityRef = collection(FIRESTORE_DB, 'groupActivities');
-        await setDoc(doc(activityRef), {
-          groupId,
-          userId: currentUser.uid,
-          movieId: imdbID,
-          action: 'marked_as_watched',
-          timestamp: new Date()
-        });
-      }
+
     } catch (err) {
       console.error('Failed to toggle user watched status', err);
       Alert.alert('Error', 'Failed to update watched status');
@@ -612,6 +604,9 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
         <FlatList
           data={movies}
           keyExtractor={(item) => item.imdbID}
+          contentContainerStyle={{
+            paddingBottom: insets.bottom + 80,
+          }}
           renderItem={({ item }) => (
             <View style={styles.movieCard}>
               <TouchableOpacity onPress={() => router.push(`/MovieDetails/${item.imdbID}/${groupId}`)}>
