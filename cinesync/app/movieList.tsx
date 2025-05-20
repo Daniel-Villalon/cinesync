@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   View,
   Text,
@@ -62,6 +63,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
   const [groupMembers, setGroupMembers] = useState<string[]>([]);
   const router = useRouter();
   const currentUser = getAuth().currentUser;
+  const insets = useSafeAreaInsets();
 
   // Fetch group members
   useEffect(() => {
@@ -602,6 +604,9 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
         <FlatList
           data={movies}
           keyExtractor={(item) => item.imdbID}
+          contentContainerStyle={{
+            paddingBottom: insets.bottom + 80,
+          }}
           renderItem={({ item }) => (
             <View style={styles.movieCard}>
               <TouchableOpacity onPress={() => router.push(`/MovieDetails/${item.imdbID}/${groupId}`)}>
