@@ -527,7 +527,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
         userHasWatched: newUserHasWatched,
         watchedCount: watchedByUsers.length,
         seen: allWatched,
-        watchedAt: allWatched ? new Date() : movie.watchedAt,
+        watchedAt: allWatched ? new Date() : null
       };
 
       const newAllMovies = [...allMovies];
@@ -559,7 +559,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
             ...m,
             watchedBy: watchedByUsers,
             seen: nowFully,
-            watchedAt: nowFully ? new Date() : m.watchedAt,
+            watchedAt: nowFully ? new Date() : null,
           };
         }
         return m;
