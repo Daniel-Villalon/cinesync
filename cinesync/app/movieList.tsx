@@ -535,7 +535,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
 
   const renderStars = (rating: number) => {
     const fullStar = '★';
-    const halfStar = '☆★';
+    const halfStar = '🟊';
     const emptyStar = '☆';
     
     const fullStars = Math.floor(rating);
