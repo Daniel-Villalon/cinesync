@@ -1,7 +1,7 @@
 // services/GroupService.ts
 import { createGroupDoc, addGroupMember } from '../data/groups';
 import { FIRESTORE_DB } from '@/FirebaseConfig';
-import { doc,setDoc, updateDoc, arrayUnion, collection, addDoc } from 'firebase/firestore';
+import { doc,setDoc, updateDoc, arrayUnion, collection, addDoc, getDoc } from 'firebase/firestore';
 
 export const createGroup = async (name: string, userId: string, profilePicture: null | string, fairnessFilter: boolean, sortBy: string): Promise<string> => {
   // 1. Create the group document
@@ -44,4 +44,9 @@ export const addUserToGroup = async (groupId: string, userId: string): Promise<v
   await setDoc(userRef, {
     groups: arrayUnion(groupId),
   }, { merge: true });
+};
+
+export async function getGroupMembersCount(groupId: string): Promise<number> {
+  const snap = await getDoc(doc(FIRESTORE_DB, 'groups', groupId));
+  return snap.exists() ? (snap.data().members?.length ?? 0) : 0;
 };

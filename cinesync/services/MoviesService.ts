@@ -1,4 +1,4 @@
-// omdbApi.ts
+// services/MovieService.ts
 
 // Use your provided API key directly.
 const API_KEY = '46f4be8d';
@@ -95,3 +95,4 @@ export const getMovieDetails = async (imdbID: string): Promise<MovieDetails> => 
 export const getPosterUrl = (imdbID: string, height: number = 600): string => {
   return `${POSTER_BASE_URL}?i=${encodeURIComponent(imdbID)}&h=${height}&apikey=${API_KEY}`;
 };
+
