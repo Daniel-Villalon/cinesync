@@ -294,8 +294,12 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
     if (fairnessFilter && activeTab === 'watchlist' && watched.length > 0) {
       // sort by the watchedAt timestamp, newest first
       const sorted = [...watched].sort((a, b) => {
-        const aTime = new Date(a.watchedAt ?? 0).getTime();
-        const bTime = new Date(b.watchedAt ?? 0).getTime();
+        const aTime = a.watchedAt?.toDate
+          ? a.watchedAt.toDate().getTime()
+          : new Date(a.watchedAt).getTime();
+        const bTime = b.watchedAt?.toDate
+          ? b.watchedAt.toDate().getTime()
+          : new Date(b.watchedAt).getTime();
         return bTime - aTime;
       });
       const culprit = sorted[0].addedBy;
@@ -432,7 +436,8 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
         userVote: newVote,
         thumbsUp: movie.thumbsUp + thumbsUpDelta,
         thumbsDown: movie.thumbsDown + thumbsDownDelta
-      };
+      }
+    
       
       const newAllMovies = [...allMovies];
       newAllMovies[movieIndex] = updatedMovie;
@@ -473,68 +478,77 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
 
   const toggleSeen = async (imdbID: string) => {
     if (!currentUser) return;
-    
+
     try {
-      const movieIndex = allMovies.findIndex(m => m.imdbID === imdbID);
+      const movieIndex = allMovies.findIndex(
+        m => m.imdbID === imdbID
+      );
       if (movieIndex === -1) return;
-      
+
       const movie = allMovies[movieIndex];
       const newUserHasWatched = !movie.userHasWatched;
-      
+
       let watchedByUsers = movie.watchedBy || [];
       if (newUserHasWatched) {
         if (!watchedByUsers.includes(currentUser.uid)) {
           watchedByUsers = [...watchedByUsers, currentUser.uid];
         }
       } else {
-        watchedByUsers = watchedByUsers.filter(id => id !== currentUser.uid);
+        watchedByUsers = watchedByUsers.filter(
+          id => id !== currentUser.uid
+        );
       }
-      
-      const allWatched = watchedByUsers.length === groupMembers.length && groupMembers.length > 0;
-      
+
+      const allWatched =
+        watchedByUsers.length === groupMembers.length &&
+        groupMembers.length > 0;
+
+      // update local state
       const updatedMovie = {
         ...movie,
         watchedBy: watchedByUsers,
         userHasWatched: newUserHasWatched,
         watchedCount: watchedByUsers.length,
-        seen: allWatched
+        seen: allWatched,
+        watchedAt: allWatched ? new Date() : null
       };
-      
+
       const newAllMovies = [...allMovies];
       newAllMovies[movieIndex] = updatedMovie;
       setAllMovies(newAllMovies);
-      
       filterMoviesByActiveTab(newAllMovies);
-      
+
+      // update Firestore array
       const groupRef = doc(FIRESTORE_DB, 'groups', groupId);
       const groupSnap = await getDoc(groupRef);
-      
       if (!groupSnap.exists()) return;
-      
       const listId = groupSnap.data()?.groupList;
       if (!listId) return;
-      
-      const movieListRef = doc(FIRESTORE_DB, 'movieLists', listId);
+
+      const movieListRef = doc(
+        FIRESTORE_DB,
+        'movieLists',
+        listId
+      );
       const movieListSnap = await getDoc(movieListRef);
-      
       if (!movieListSnap.exists()) return;
-      
-      const movieList = movieListSnap.data();
-      const movies = movieList.movies || [];
-      
-      const updatedMovies = movies.map((m: MovieEntry) => {
+
+      const movieListData = movieListSnap.data();
+      const persisted: MovieEntry[] = movieListData.movies || [];
+      const updatedMovies = persisted.map(m => {
         if (m.imdbID === imdbID) {
+          const nowFully = watchedByUsers.length === groupMembers.length;
           return {
             ...m,
             watchedBy: watchedByUsers,
-            seen: allWatched
+            seen: nowFully,
+            watchedAt: nowFully ? new Date() : null,
           };
         }
         return m;
       });
-      
-      await updateDoc(movieListRef, { movies: updatedMovies });
 
+      await updateDoc(movieListRef, { movies: updatedMovies });
     } catch (err) {
       console.error('Failed to toggle user watched status', err);
       Alert.alert('Error', 'Failed to update watched status');
