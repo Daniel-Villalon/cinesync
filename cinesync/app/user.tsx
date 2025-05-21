@@ -136,16 +136,16 @@ const User = () => {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={[styles.container, { backgroundColor: themeStyles.backgroundColor }]}>
+      <View style={[styles.container]}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: themeStyles.textColor }]}>Profile</Text>
+          <Text style={[styles.headerTitle]}>Profile</Text>
           <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center' }} >
-            <MaterialCommunityIcons name="chevron-left" size={24} color={themeStyles.highlightColor} />
-            <Text style={[styles.backText, { color: themeStyles.highlightColor }]}>{'Back'}</Text>
+            <MaterialCommunityIcons name="chevron-left" size={24} color='#F5CB5C' />
+            <Text style={[styles.backText]}>{'Back'}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={saveUserInfo}>
-            <Text style={[styles.saveButtonText, { color: themeStyles.textColor }]}>Save</Text>
+            <Text style={[styles.saveButtonText]}>Save</Text>
           </TouchableOpacity>
           
         </View>

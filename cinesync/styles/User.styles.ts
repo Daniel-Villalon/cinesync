@@ -21,6 +21,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         textAlign: 'center',
+        color: '#fff'
     },   
     backText: {
         fontSize: 16,
@@ -30,6 +31,7 @@ const styles = StyleSheet.create({
     saveButtonText: {
         fontSize: 16,
         fontWeight: '600',
+        color: '#fff'
     },
     avatarContainer: {
         alignItems: 'center',
