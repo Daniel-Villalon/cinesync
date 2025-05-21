@@ -1,4 +1,4 @@
-// omdbApi.ts
+// services/MovieService.ts
 
 // Use your provided API key directly.
 const API_KEY = '46f4be8d';

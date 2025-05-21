@@ -103,13 +103,9 @@ export default function GroupsScreen() {
 
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>
-            {isEditing ? 'Edit Groups' : "Who's watching?"}
+            {"Who's watching?"}
           </Text>
         </View>
-
-        <TouchableOpacity onPress={toggleEdit} style={styles.headerSide}>
-          <Text style={styles.selectText}>{isEditing ? 'Done' : 'Edit'}</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Groups Grid */}
