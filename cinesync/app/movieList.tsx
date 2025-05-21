@@ -169,11 +169,6 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
         return;
       }
 
-    if (movieEntries.length === 0) {
-      setAllMovies([]);
-      setMovies([]);
-      return;
-    }
   
     let movieRatings: Record<string, number[]> = {};
     try {
