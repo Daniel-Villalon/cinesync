@@ -36,7 +36,7 @@ export default StyleSheet.create({
     padding: 2,
     elevation: 2,
     borderWidth: 3,
-    borderColor: '#111', 
+    borderColor: '#242423', 
   },
   groupNameInput: {
     color: '#FFF',
