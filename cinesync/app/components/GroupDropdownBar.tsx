@@ -56,7 +56,7 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => handleEditGroup(currentGroup?.id)} style={styles.iconRight}>
-          <MaterialCommunityIcons name="cog" size={24} color="#000" />
+          <MaterialCommunityIcons name="email" size={24} color="#000" />
         </TouchableOpacity>
       </View>
 
@@ -75,7 +75,7 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
                 </TouchableOpacity>
 
                 <TouchableOpacity onPress={() => handleEditGroup(group.id)}>
-                  <MaterialCommunityIcons name="email" size={20} color="#000" style={{ marginLeft: 8 }} />
+                  <MaterialCommunityIcons name="cog" size={20} color="#000" style={{ marginLeft: 8 }} />
                 </TouchableOpacity>
               </View>
             ))}
