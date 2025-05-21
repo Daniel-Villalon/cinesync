@@ -4,12 +4,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#242423',
-        padding: 20,
+        padding: 12,
     },
     header: {
         width: '100%',
-        paddingTop: 30,
-        paddingHorizontal: 20,
         paddingBottom: 10,
         flexDirection: 'row',
         alignItems: 'center',
@@ -23,7 +21,6 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         textAlign: 'center',
-        top: 30, 
     },   
     backText: {
         fontSize: 16,
