@@ -18,6 +18,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import MovieSearch from './MovieSearch';
 import MovieList from './movieList';
 import GroupDropdownBar from './components/GroupDropdownBar';
+import GenreFilter from './components/GenreFilter';
 
 export default function Homescreen() {
   const router = useRouter();
@@ -25,6 +26,7 @@ export default function Homescreen() {
   const [authChecked, setAuthChecked] = useState(false);
   const [groups, setGroups] = useState<any[]>([]);
   const [currentGroupId, setCurrentGroupId] = useState<string | null>(groupId as string);
+  const [genre, setGenre] = useState('');
   const user = FIREBASE_AUTH.currentUser;
 
   useEffect(() => {
@@ -106,9 +108,8 @@ export default function Homescreen() {
         }}
       />
 
-
-      <MovieList groupId={currentGroupId!} />
-
+      <GenreFilter genre={genre} onGenreChange={setGenre} />
+      <MovieList groupId={currentGroupId!} genreFilter={genre} />
 
       <View style={styles.floatingIconsContainer}>
         <TouchableOpacity style={styles.person} onPress={() => router.push('/user')}>

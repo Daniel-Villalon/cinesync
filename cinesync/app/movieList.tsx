@@ -69,9 +69,10 @@ type MovieWithDetails = MovieEntry & {
 type Props = {
   groupId: string;
   initialType?: 'watchlist' | 'watched';
+  genreFilter: string;
 };
 
-const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
+const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist', genreFilter }) => {
   const [movies, setMovies] = useState<MovieWithDetails[]>([]);
   const [allMovies, setAllMovies] = useState<MovieWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -320,12 +321,19 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
       filtered = filtered.filter(m => m.addedBy !== last.addedBy);
     }
 
+    // genre filter
+    if (genreFilter.trim()) {
+      filtered = filtered.filter(m =>
+        m.genre?.toLowerCase().includes(genreFilter.toLowerCase())
+      );
+    }
+
     setMovies(filtered);
   };
 
   useEffect(() => {
     filterMoviesByActiveTab();
-  }, [activeTab, allMovies, fairnessFilter]);
+  }, [activeTab, allMovies, fairnessFilter, genreFilter]);
 
   useEffect(() => {
     if (!groupId) return;
