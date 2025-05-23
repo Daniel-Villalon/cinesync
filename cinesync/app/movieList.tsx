@@ -26,12 +26,19 @@ const thumbsDownSelectedIcon = require('@/assets/images/icons/dislikeSelected.pn
 const seenIcon = require('@/assets/images/icons/seen.png');
 const notSeenIcon = require('@/assets/images/icons/notSeen.png');
 
+
 type MovieEntry = {
   imdbID: string;
   addedBy: string;
   addedAt: any;
   rating?: number;
   watchedBy?: string[]; // Array of user IDs who have watched the movie
+  watchedAt?: any;      // ← added for fairness filter
+  userVote?: 'up' | 'down' | null;
+  seen?: boolean;
+  userHasWatched?: boolean;
+  watchedCount?: number;
+  groupMemberCount?: number;
 };
 
 type MovieWithDetails = MovieEntry & {
@@ -64,6 +71,8 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
   const router = useRouter();
   const currentUser = getAuth().currentUser;
   const insets = useSafeAreaInsets();
+  const [fairnessFilter, setFairnessFilter] = useState<boolean>(false);
+
 
   // Fetch group members
   useEffect(() => {
@@ -84,6 +93,17 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
       }
     };
     fetchGroupMembers();
+  }, [groupId]);
+
+  useEffect(() => {
+    if (!groupId) return;
+    const unsub = onSnapshot(
+      doc(FIRESTORE_DB, 'groups', groupId),
+      snap => {
+        setFairnessFilter(snap.data()?.fairnessFilter ?? false);
+      }
+    );
+    return () => unsub();
   }, [groupId]);
 
   const fetchUserPreferences = async (movieEntries: MovieEntry[]) => {
@@ -149,19 +169,22 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
         return;
       }
 
+  
+    let movieRatings: Record<string, number[]> = {};
+    try {
       const ratingsQuery = query(
         collection(FIRESTORE_DB, 'userRatings'),
-        where('movieId', 'in', movieEntries.map(entry => entry.imdbID))
+        where('movieId', 'in', movieEntries.map(e => e.imdbID))
       );
       const ratingsSnapshots = await getDocs(ratingsQuery);
-    
-      // Calculate average ratings per movie
-      const movieRatings: Record<string, number[]> = {};
-      ratingsSnapshots.forEach((snap) => {
-        const { movieId, rating } = snap.data();
+      ratingsSnapshots.forEach(snap => {
+        const { movieId, rating } = snap.data() as any;
         if (!movieRatings[movieId]) movieRatings[movieId] = [];
         movieRatings[movieId].push(rating);
       });
+    } catch (err) {
+      console.warn('Error fetching group ratings:', err);
+    }
     
       voteSnapshots.forEach((snap) => {
         const { movieId, vote } = snap.data();
@@ -256,15 +279,36 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
   };
 
   const filterMoviesByActiveTab = (moviesList = allMovies) => {
-    let filtered = moviesList.filter(movie => {
-      return activeTab === 'watchlist' ? !movie.seen : movie.seen;
-    });
+    // split out watched vs. watchlist
+    const watched = moviesList.filter(m => m.seen);
+    let filtered = moviesList.filter(m =>
+      activeTab === 'watchlist' ? !m.seen : m.seen
+    );
+  
+    // fairness filter: hide culprit’s remaining movies
+    if (fairnessFilter && activeTab === 'watchlist' && watched.length > 0) {
+      // sort by the watchedAt timestamp, newest first
+      const sorted = [...watched].sort((a, b) => {
+        const aTime = a.watchedAt?.toDate
+          ? a.watchedAt.toDate().getTime()
+          : new Date(a.watchedAt).getTime();
+        const bTime = b.watchedAt?.toDate
+          ? b.watchedAt.toDate().getTime()
+          : new Date(b.watchedAt).getTime();
+        return bTime - aTime;
+      });
+      const culprit = sorted[0].addedBy;
+      filtered = filtered.filter(m => m.addedBy !== culprit);
+    }
+  
     setMovies(filtered);
   };
 
+
   useEffect(() => {
     filterMoviesByActiveTab();
-  }, [activeTab, allMovies]);
+  }, [activeTab, allMovies, fairnessFilter]);
+
 
   useEffect(() => {
     if (!groupId) return;
@@ -387,7 +431,8 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
         userVote: newVote,
         thumbsUp: movie.thumbsUp + thumbsUpDelta,
         thumbsDown: movie.thumbsDown + thumbsDownDelta
-      };
+      }
+    
       
       const newAllMovies = [...allMovies];
       newAllMovies[movieIndex] = updatedMovie;
@@ -428,68 +473,77 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
 
   const toggleSeen = async (imdbID: string) => {
     if (!currentUser) return;
-    
+
     try {
-      const movieIndex = allMovies.findIndex(m => m.imdbID === imdbID);
+      const movieIndex = allMovies.findIndex(
+        m => m.imdbID === imdbID
+      );
       if (movieIndex === -1) return;
-      
+
       const movie = allMovies[movieIndex];
       const newUserHasWatched = !movie.userHasWatched;
-      
+
       let watchedByUsers = movie.watchedBy || [];
       if (newUserHasWatched) {
         if (!watchedByUsers.includes(currentUser.uid)) {
           watchedByUsers = [...watchedByUsers, currentUser.uid];
         }
       } else {
-        watchedByUsers = watchedByUsers.filter(id => id !== currentUser.uid);
+        watchedByUsers = watchedByUsers.filter(
+          id => id !== currentUser.uid
+        );
       }
-      
-      const allWatched = watchedByUsers.length === groupMembers.length && groupMembers.length > 0;
-      
+
+      const allWatched =
+        watchedByUsers.length === groupMembers.length &&
+        groupMembers.length > 0;
+
+      // update local state
       const updatedMovie = {
         ...movie,
         watchedBy: watchedByUsers,
         userHasWatched: newUserHasWatched,
         watchedCount: watchedByUsers.length,
-        seen: allWatched
+        seen: allWatched,
+        watchedAt: allWatched ? new Date() : null
       };
-      
+
       const newAllMovies = [...allMovies];
       newAllMovies[movieIndex] = updatedMovie;
       setAllMovies(newAllMovies);
-      
       filterMoviesByActiveTab(newAllMovies);
-      
+
+      // update Firestore array
       const groupRef = doc(FIRESTORE_DB, 'groups', groupId);
       const groupSnap = await getDoc(groupRef);
-      
       if (!groupSnap.exists()) return;
-      
       const listId = groupSnap.data()?.groupList;
       if (!listId) return;
-      
-      const movieListRef = doc(FIRESTORE_DB, 'movieLists', listId);
+
+      const movieListRef = doc(
+        FIRESTORE_DB,
+        'movieLists',
+        listId
+      );
       const movieListSnap = await getDoc(movieListRef);
-      
       if (!movieListSnap.exists()) return;
-      
-      const movieList = movieListSnap.data();
-      const movies = movieList.movies || [];
-      
-      const updatedMovies = movies.map((m: MovieEntry) => {
+
+      const movieListData = movieListSnap.data();
+      const persisted: MovieEntry[] = movieListData.movies || [];
+      const updatedMovies = persisted.map(m => {
         if (m.imdbID === imdbID) {
+          const nowFully = watchedByUsers.length === groupMembers.length;
           return {
             ...m,
             watchedBy: watchedByUsers,
-            seen: allWatched
+            seen: nowFully,
+            watchedAt: nowFully ? new Date() : null,
           };
         }
         return m;
       });
-      
-      await updateDoc(movieListRef, { movies: updatedMovies });
 
+      await updateDoc(movieListRef, { movies: updatedMovies });
     } catch (err) {
       console.error('Failed to toggle user watched status', err);
       Alert.alert('Error', 'Failed to update watched status');

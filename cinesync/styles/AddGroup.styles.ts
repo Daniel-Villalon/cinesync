@@ -6,8 +6,7 @@ export default StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#242423',
-    paddingTop: 20,
-    paddingHorizontal: 20,
+    padding: 12,
     alignItems: 'center',
   },
   imageWrapper: {
@@ -175,8 +174,6 @@ export default StyleSheet.create({
   },
   header: {
         width: '100%',
-        paddingTop: 30,
-        paddingHorizontal: 20,
         paddingBottom: 10,
         flexDirection: 'row',
         alignItems: 'center',
