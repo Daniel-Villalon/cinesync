@@ -252,7 +252,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
       // Set empty arrays to prevent undefined behavior
       setAllMovies([]);
       setMovies([]);
-    }
+        }
   };
 
   const filterMoviesByActiveTab = (moviesList = allMovies) => {
