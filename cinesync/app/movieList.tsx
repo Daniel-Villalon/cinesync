@@ -60,9 +60,10 @@ type MovieWithDetails = MovieEntry & {
 type Props = {
   groupId: string;
   initialType?: 'watchlist' | 'watched';
+  genreFilter: string;
 };
 
-const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
+const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist', genreFilter }) => {
   const [movies, setMovies] = useState<MovieWithDetails[]>([]);
   const [allMovies, setAllMovies] = useState<MovieWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,11 +170,6 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
         return;
       }
 
-    if (movieEntries.length === 0) {
-      setAllMovies([]);
-      setMovies([]);
-      return;
-    }
   
     let movieRatings: Record<string, number[]> = {};
     try {
@@ -280,7 +276,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
       // Set empty arrays to prevent undefined behavior
       setAllMovies([]);
       setMovies([]);
-    }
+        }
   };
 
   const filterMoviesByActiveTab = (moviesList = allMovies) => {
@@ -289,7 +285,7 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
     let filtered = moviesList.filter(m =>
       activeTab === 'watchlist' ? !m.seen : m.seen
     );
-  
+
     // fairness filter: hide culprit’s remaining movies
     if (fairnessFilter && activeTab === 'watchlist' && watched.length > 0) {
       // sort by the watchedAt timestamp, newest first
@@ -305,14 +301,21 @@ const MovieList: React.FC<Props> = ({ groupId, initialType = 'watchlist' }) => {
       const culprit = sorted[0].addedBy;
       filtered = filtered.filter(m => m.addedBy !== culprit);
     }
-  
+
+    // genre filter
+    if (genreFilter.trim()) {
+      filtered = filtered.filter(m =>
+        m.genre?.toLowerCase().includes(genreFilter.toLowerCase())
+      );
+    }
+
     setMovies(filtered);
   };
 
 
   useEffect(() => {
     filterMoviesByActiveTab();
-  }, [activeTab, allMovies, fairnessFilter]);
+  }, [activeTab, allMovies, fairnessFilter, genreFilter]);
 
 
   useEffect(() => {
