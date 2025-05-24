@@ -142,4 +142,15 @@ export default StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
   },
+  loadingContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingTop: 70,
+    paddingHorizontal: 10,
+  },
+  loadingText: {
+    color: '#aaa',
+    fontSize: 16,
+    textAlign: 'center',
+  },
 });

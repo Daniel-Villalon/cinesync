@@ -1,9 +1,10 @@
 // app/InviteUser.tsx
 import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, Alert } from 'react-native';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { styles } from '@/styles/InviteUser.styles';
 
 export default function InviteUser() {
   const { groupId } = useLocalSearchParams();
@@ -47,16 +48,3 @@ export default function InviteUser() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { padding: 20, flex: 1, backgroundColor: '#242423' },
-  label: { color: '#F7EEDB', fontSize: 18, marginBottom: 12 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#F5CB5C',
-    color: '#F7EEDB',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-});

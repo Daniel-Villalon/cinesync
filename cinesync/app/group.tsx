@@ -1,5 +1,5 @@
 import React, { useEffect, useState,useCallback } from 'react';
-import { View, Text, TouchableOpacity, Image, SafeAreaView, ScrollView, Alert} from 'react-native';
+import { View, Text, TouchableOpacity, Image, SafeAreaView, ScrollView, Alert, ActivityIndicator} from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { onAuthStateChanged, getAuth } from 'firebase/auth';
@@ -32,7 +32,7 @@ export default function GroupsScreen() {
     return unsubscribe;
   }, []);
 
-  // 🚀 Optimized fetchUserGroups
+  // 🚀 Optimized fetchUserGroups with faster loading
   const fetchUserGroups = async () => {
     if (!user) return;
     try {
@@ -42,27 +42,41 @@ export default function GroupsScreen() {
 
       if (userGroupsIds.length === 0) {
         setGroups([]);
+        setLoading(false);
         return;
       }
 
-      const groupPromises = userGroupsIds.map((groupId: string) =>
-        getDoc(doc(FIRESTORE_DB, 'groups', groupId))
-      );
+      // Start loading groups in parallel immediately
+      const groupPromises = userGroupsIds.map(async (groupId: string) => {
+        try {
+          const groupDoc = await getDoc(doc(FIRESTORE_DB, 'groups', groupId));
+          if (groupDoc.exists()) {
+            return { id: groupDoc.id, ...groupDoc.data() };
+          }
+          return null;
+        } catch (err) {
+          console.warn(`Failed to fetch group ${groupId}:`, err);
+          return null;
+        }
+      });
 
-      const groupDocs = await Promise.all(groupPromises);
-
-      const userGroups = groupDocs
-        .filter(docSnap => docSnap.exists())
-        .map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+      // Load groups and update UI as soon as we start getting data
+      setLoading(false); // Set loading to false immediately after starting the requests
+      
+      const groupResults = await Promise.allSettled(groupPromises);
+      
+      const userGroups = groupResults
+        .filter(result => result.status === 'fulfilled' && result.value !== null)
+        .map(result => (result as any).value);
 
       setGroups(userGroups);
     } catch (err) {
       console.error('Error loading user groups:', err);
       Alert.alert('Failed to load groups');
-    } finally {
       setLoading(false);
     }
   };
+
   //fetching Pending Invites
   const fetchPendingInvites = async () => {
     if (!user) return;
@@ -84,6 +98,7 @@ export default function GroupsScreen() {
   useFocusEffect(
     useCallback(() => {
       if (authChecked) {
+        setLoading(true); // Set loading when starting to fetch
         fetchUserGroups();
         fetchPendingInvites();
       }
@@ -109,14 +124,14 @@ export default function GroupsScreen() {
       </View>
 
       {/* Groups Grid */}
-      <ScrollView contentContainerStyle={styles.groupContainer}>
-        <View style={styles.groupGrid}>
-          {loading ? (
-            <Text style={{ color: '#aaa' }}>Loading...</Text>
-          ) : groups.length === 0 ? (
-            <Text style={{ color: '#aaa' }}>No groups yet.</Text>
-          ) : (
-            groups.map((group, index) => (
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#F6C343" />
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.groupContainer}>
+          <View style={styles.groupGrid}>
+            {groups.map((group, index) => (
               <TouchableOpacity
                 key={index}
                 style={styles.groupWrapper}
@@ -140,25 +155,25 @@ export default function GroupsScreen() {
                 </View>
                 <Text style={styles.groupLabel}>{group.name}</Text>
               </TouchableOpacity>
-            ))
-          )}
+            ))}
 
-          {/* Add Group Button */}
-          {!isEditing && (
-            <TouchableOpacity style={styles.groupWrapper} onPress={() => router.push('/addgroup')}>
-              <View style={styles.avatarCircleLarge}>
-                <MaterialCommunityIcons name="plus" size={48} color="#ccc" />
-              </View>
-              <Text style={styles.addGroupText}>Add Group</Text>
-            </TouchableOpacity>
-          )}
+            {/* Add Group Button */}
+            {!isEditing && (
+              <TouchableOpacity style={styles.groupWrapper} onPress={() => router.push('/addgroup')}>
+                <View style={styles.avatarCircleLarge}>
+                  <MaterialCommunityIcons name="plus" size={48} color="#ccc" />
+                </View>
+                <Text style={styles.addGroupText}>Add Group</Text>
+              </TouchableOpacity>
+            )}
 
-          {/* Make grid even */}
-          {(groups.length + (!isEditing ? 1 : 0)) % 2 !== 0 && (
-            <View style={[styles.groupWrapper, { opacity: 0 }]} />
-          )}
-        </View>
-      </ScrollView>
+            {/* Make grid even */}
+            {(groups.length + (!isEditing ? 1 : 0)) % 2 !== 0 && (
+              <View style={[styles.groupWrapper, { opacity: 0 }]} />
+            )}
+          </View>
+        </ScrollView>
+      )}
       
       {/* Invite Notification Function */}
       {!isEditing && (

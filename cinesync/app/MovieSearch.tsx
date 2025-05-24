@@ -7,7 +7,6 @@ import {
   TextInput,
   ActivityIndicator,
   FlatList,
-  StyleSheet,
   TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,6 +17,7 @@ import { DismissKeyboardView } from '../services/DismissKeyboardView';
 import { getAuth } from 'firebase/auth';
 import { FIRESTORE_DB } from '@/FirebaseConfig';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { styles } from '@/styles/MovieSearch.styles';
 
 const MovieSearch = () => {
   const { groupId } = useLocalSearchParams();
@@ -165,46 +165,3 @@ const MovieSearch = () => {
 };
 
 export default MovieSearch;
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#242423' },
-  heading: {
-    fontSize: 24,
-    color: '#F7EEDB',
-    marginHorizontal: 16,
-    marginBottom: 8,
-    textAlign: 'center',
-    fontWeight: 'bold',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#F7D491',
-    borderRadius: 8,
-    padding: 8,
-    marginHorizontal: 16,
-    marginBottom: 12,
-    color: '#F7EEDB',
-  },
-  errorText: {
-    color: '#FF5555',
-    marginTop: 12,
-    textAlign: 'center',
-  },
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#444',
-    paddingVertical: 12,
-    marginHorizontal: 16,
-  },
-  title: {
-    fontSize: 18,
-    color: '#F7EEDB',
-  },
-  toggleButton: {
-    fontSize: 20,
-    color: '#F7EEDB',
-    marginLeft: 12,
-  },
-});

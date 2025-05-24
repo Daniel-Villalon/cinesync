@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Button, StyleSheet, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, Button, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { collection, getDocs, query, where, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { addUserToGroup } from '@/services/GroupService';
@@ -7,7 +7,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
+import { styles } from '@/styles/PendingInvites.styles';
 
 export default function PendingInvites() {
   const [invites, setInvites] = useState<any[]>([]);
@@ -107,28 +107,3 @@ export default function PendingInvites() {
       </SafeAreaView>
     );
   }
-
-const styles = StyleSheet.create({
-  container: { padding: 20, backgroundColor: '#242423', flex: 1 },
-  title: { fontSize: 18, fontWeight: 'bold', color: '#F7EEDB', marginBottom: 10 },
-  inviteItem: {
-    padding: 12,
-    backgroundColor: '#333',
-    marginBottom: 10,
-    borderRadius: 8,
-  },
-  declineContainer: {
-    elevation: 2,
-    position: 'absolute',
-    right: 10,
-    cursor: 'pointer',
-    zIndex: 1,
-  },
-  declineText: {
-    color: '#F7EEDB',
-  },
-  text: { 
-    color: '#F7EEDB',
-    marginBottom: 4, 
-  },
-});

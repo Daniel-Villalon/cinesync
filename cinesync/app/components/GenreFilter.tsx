@@ -1,6 +1,7 @@
 // src/components/GenreFilter.tsx
 import React from 'react';
-import { View, TextInput, StyleSheet } from 'react-native';
+import { View, TextInput } from 'react-native';
+import { styles } from '@/styles/GenreFilter.styles';
 
 interface GenreFilterProps {
   genre: string;
@@ -19,20 +20,5 @@ const GenreFilter: React.FC<GenreFilterProps> = ({ genre, onGenreChange }) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    marginVertical: 10,
-    paddingHorizontal: 16,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
-    color: 'white',
-  },
-});
 
 export default GenreFilter;
