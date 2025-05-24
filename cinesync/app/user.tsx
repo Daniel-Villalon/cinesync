@@ -18,6 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { onAuthStateChanged, getAuth, signOut } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
+import { uploadImageToStorage, generateImagePath } from '@/utils/imageUpload';
 import styles from '../styles/User.styles';
 
 const genreOptions = [
@@ -83,6 +84,7 @@ const User = () => {
   }, [authChecked]);
 
   const pickImage = async () => {
+    console.log('pickImage called');
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       Alert.alert('Permission to access media library is required!');
@@ -93,11 +95,54 @@ const User = () => {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 1,
+      quality: 0.8, // Reduce quality to keep file size reasonable
     });
 
-    if (!result.canceled) {
-      setAvatarUri(result.assets[0].uri);  
+    console.log('Image picker result:', result);
+
+    if (!result.canceled && user) {
+      console.log('Starting image upload process...');
+      console.log('Selected image URI:', result.assets[0].uri);
+      console.log('User ID:', user.uid);
+      
+      try {
+        // First, immediately update the local state to show the image
+        const selectedImageUri = result.assets[0].uri;
+        setAvatarUri(selectedImageUri);
+        console.log('Local state updated with selected image');
+        
+        // Generate a unique path for the image
+        const imagePath = generateImagePath(user.uid, 'avatar');
+        console.log('Generated image path:', imagePath);
+        
+        // Upload to Firebase Storage (with development fallback)
+        console.log('Starting Firebase Storage upload...');
+        const downloadURL = await uploadImageToStorage(selectedImageUri, imagePath);
+        console.log('Upload successful! Download URL:', downloadURL);
+        
+        // Update with the download URL
+        setAvatarUri(downloadURL);
+        
+        // Save to Firestore
+        console.log('Saving to Firestore...');
+        await updateDoc(doc(FIRESTORE_DB, 'users', user.uid), {
+          avatarUri: downloadURL,
+        });
+        console.log('Firestore update successful');
+        
+        Alert.alert('Success', 'Avatar updated successfully!');
+      } catch (error: any) {
+        console.error('Error in pickImage:', error);
+        // Revert to original avatar on error
+        const userRef = doc(FIRESTORE_DB, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+        const userData = userSnap.data();
+        setAvatarUri(userData?.avatarUri || null);
+        
+        Alert.alert('Error', `Failed to upload avatar: ${error.message}`);
+      }
+    } else {
+      console.log('Image picker was canceled or user not found');
     }
   };
 

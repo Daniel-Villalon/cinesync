@@ -15,6 +15,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, updateDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
 import { FIRESTORE_DB } from '@/FirebaseConfig';
+import { uploadImageToStorage, generateImagePath } from '@/utils/imageUpload';
 import styles from '../styles/AddGroup.styles';
 
 const EditGroupScreen = () => {
@@ -44,11 +45,27 @@ const EditGroupScreen = () => {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 1,
+      quality: 0.8, // Reduce quality to keep file size reasonable
     });
 
-    if (!result.canceled) {
-      setGroupImage(result.assets[0].uri);
+    if (!result.canceled && user && groupId) {
+      try {
+        const selectedImageUri = result.assets[0].uri;
+        
+        // Generate a unique path for the group image
+        const imagePath = generateImagePath(user.uid, 'group', groupId as string);
+        
+        // Upload to Firebase Storage
+        const downloadURL = await uploadImageToStorage(selectedImageUri, imagePath);
+        
+        // Update local state with the download URL
+        setGroupImage(downloadURL);
+        
+        Alert.alert('Success', 'Group image updated successfully!');
+      } catch (error) {
+        console.error('Error uploading group image:', error);
+        Alert.alert('Error', 'Failed to upload group image. Please try again.');
+      }
     }
   };
 

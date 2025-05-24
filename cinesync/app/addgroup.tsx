@@ -13,6 +13,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { createGroup } from '../services/GroupService';
 import { getAuth } from 'firebase/auth';
 import { useRouter } from 'expo-router';
+import { uploadImageToStorage, generateImagePath } from '@/utils/imageUpload';
 import styles from '../styles/AddGroup.styles';
 
 const AddGroupScreen = () => {
@@ -28,15 +29,37 @@ const AddGroupScreen = () => {
   const user = auth.currentUser;
   
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission to access media library is required!');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 1,
+      quality: 0.8, // Reduce quality to keep file size reasonable
     });
 
-    if (!result.canceled) {
-      setGroupImage(result.assets[0].uri);
+    if (!result.canceled && user) {
+      try {
+        const selectedImageUri = result.assets[0].uri;
+        
+        // Generate a temporary path for the group image (we'll use a temp ID)
+        const tempImagePath = generateImagePath(user.uid, 'group', 'temp_' + Date.now());
+        
+        // Upload to Firebase Storage
+        const downloadURL = await uploadImageToStorage(selectedImageUri, tempImagePath);
+        
+        // Update local state with the download URL
+        setGroupImage(downloadURL);
+        
+        Alert.alert('Success', 'Group image uploaded successfully!');
+      } catch (error) {
+        console.error('Error uploading group image:', error);
+        Alert.alert('Error', 'Failed to upload group image. Please try again.');
+      }
     }
   };
 
@@ -46,6 +69,7 @@ const AddGroupScreen = () => {
       return;
     }
     try {
+      // The groupImage now contains the Firebase Storage download URL
       await createGroup(groupName.trim(), user!.uid, groupImage, fairnessFilter, sortBy);
       router.replace('/group'); // go back to group page
     } catch (error) {
