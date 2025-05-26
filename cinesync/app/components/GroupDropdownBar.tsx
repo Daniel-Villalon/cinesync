@@ -40,7 +40,7 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
   // };
 
   return (
-    <View style={{ zIndex: 10 }}>
+    <View style={styles.container}>
       {/* Top bar */}
       <View style={styles.topBar}>
         <TouchableOpacity
@@ -115,11 +115,20 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   dropdown: {
+    position: 'absolute',  
+    top: '100%',            
+    left: 10,              
+    right: 10,            
     backgroundColor: '#F6C343',
-    marginHorizontal: 10,
     borderBottomLeftRadius: 12,
     borderBottomRightRadius: 12,
     overflow: 'hidden',
+    zIndex: 1001,        
+    shadowColor: '#000',  
+    shadowOffset: { width: 0, height: 2 },  
+    shadowOpacity: 0.25,   
+    shadowRadius: 3.84,     
+    elevation: 5,          
   },
   groupRow: {
     flexDirection: 'row',
@@ -141,5 +150,9 @@ const styles = StyleSheet.create({
   pendingButtonText: {
     color: '#F6C343',
     fontWeight: 'bold',
+  },
+  container: {
+    position: 'relative',   // NEW - creates positioning context
+    zIndex: 1000,          // NEW - high z-index
   },
 });
