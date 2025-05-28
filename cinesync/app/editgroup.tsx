@@ -8,6 +8,7 @@ import {
   Image,
   Alert,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -16,6 +17,7 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, updateDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
 import { FIRESTORE_DB } from '@/FirebaseConfig';
 import styles from '../styles/AddGroup.styles';
+import { uploadImageToFirebase, deleteImageFromFirebase } from '../utils/imageUpload';
 
 const EditGroupScreen = () => {
   const { groupId } = useLocalSearchParams();
@@ -28,27 +30,63 @@ const EditGroupScreen = () => {
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [userRole, setUserRole] = useState<'admin' | 'member' | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
   const auth = getAuth();
   const user = auth.currentUser;
 
   const pickImage = async () => {
+    if (isLoading) return;
+
+    console.log("Starting image picker...");
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       Alert.alert('Permission to access media library is required!');
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
+    try {
+      setIsLoading(true);
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+      });
 
-    if (!result.canceled) {
-      setGroupImage(result.assets[0].uri);
+      if (!result.canceled && result.assets[0].uri) {
+        try {
+          // Delete old image if it exists
+          if (groupImage) {
+            console.log("Deleting old image:", groupImage);
+            await deleteImageFromFirebase(groupImage);
+          }
+
+          // Upload new image
+          const downloadURL = await uploadImageToFirebase(result.assets[0].uri, 'groupImages');
+          console.log("New image uploaded:", downloadURL);
+
+          // Update Firestore
+          const groupRef = doc(FIRESTORE_DB, 'groups', groupId as string);
+          await updateDoc(groupRef, {
+            profilePicture: downloadURL,
+            updatedAt: new Date(),
+            lastUpdatedBy: user!.uid,
+          });
+
+          setGroupImage(downloadURL);
+          Alert.alert('Success', 'Image updated successfully!');
+        } catch (uploadError) {
+          console.error('Error updating image:', uploadError);
+          Alert.alert('Error', 'Failed to update image. Please try again.');
+        }
+      }
+    } catch (pickError) {
+      console.error('Error picking image:', pickError);
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -208,17 +246,34 @@ const EditGroupScreen = () => {
 
       <View style={{ flex: 1, width: '100%', alignItems: 'center' }}>
         {/* Group Image */}
-        <TouchableOpacity onPress={pickImage} style={styles.imageWrapper}>
-          {groupImage ? (
-            <Image source={{ uri: groupImage }} style={styles.groupImage} />
+        <TouchableOpacity 
+          onPress={pickImage} 
+          style={styles.imageWrapper}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <View style={[styles.defaultImage, { justifyContent: 'center', alignItems: 'center' }]}>
+              <ActivityIndicator size="large" color="#FFD700" />
+            </View>
+          ) : groupImage ? (
+            <Image 
+              source={{ uri: groupImage }} 
+              style={styles.groupImage}
+              onError={(error) => {
+                console.error('Error loading image:', error);
+                setGroupImage(null);
+              }}
+            />
           ) : (
             <View style={styles.defaultImage}>
               <MaterialCommunityIcons name="account" size={64} color="#C9A84F" />
             </View>
           )}
-          <View style={styles.editIcon}>
-            <MaterialCommunityIcons name="pencil" size={32} color="#000" />
-          </View>
+          {!isLoading && (
+            <View style={styles.editIcon}>
+              <MaterialCommunityIcons name="pencil" size={32} color="#000" />
+            </View>
+          )}
         </TouchableOpacity>
 
         {/* Group Name */}
