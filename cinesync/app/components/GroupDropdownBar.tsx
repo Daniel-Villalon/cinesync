@@ -16,6 +16,7 @@ interface GroupDropdownBarProps {
   groups: Group[];
   currentGroup: Group;
   onGroupSelect: (groupId: string) => void;
+  pendingInvites: number;
 }
 
 const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGroup, onGroupSelect }) => {
