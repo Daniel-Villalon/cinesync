@@ -55,7 +55,7 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
           <Text style={styles.groupName}>{currentGroup?.name ?? ''}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => handleEditGroup(currentGroup?.id)} style={styles.iconRight}>
+        <TouchableOpacity onPress={() => router.push('/PendingInvites')} style={styles.iconRight}>
           <MaterialCommunityIcons name="email" size={24} color="#000" />
         </TouchableOpacity>
       </View>
