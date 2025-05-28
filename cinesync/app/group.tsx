@@ -114,7 +114,7 @@ export default function GroupsScreen() {
           {loading ? (
             <Text style={{ color: '#aaa' }}>Loading...</Text>
           ) : groups.length === 0 ? (
-            <Text style={{ color: '#aaa' }}>No groups yet.</Text>
+            <Text style={{ color: '#aaa' }}></Text>
           ) : (
             groups.map((group, index) => (
               <TouchableOpacity
