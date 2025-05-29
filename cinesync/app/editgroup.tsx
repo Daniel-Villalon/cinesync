@@ -406,7 +406,7 @@ const EditGroupScreen = () => {
             <Text style={styles.infoModalText}>
               Are you sure you want to delete this group? This action cannot be undone.
             </Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20, gap: 15  }}>
               <TouchableOpacity
                 style={[styles.closeButton, { backgroundColor: '#aaa' }]}
                 onPress={() => setShowDeleteModal(false)}
