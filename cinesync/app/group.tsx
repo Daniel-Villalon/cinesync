@@ -162,16 +162,23 @@ export default function GroupsScreen() {
       
       {/* Invite Notification Function */}
       {!isEditing && (
+        <TouchableOpacity style={styles.userProfile} onPress={() => router.push('/user')}>
+          <MaterialCommunityIcons name="account-circle-outline" size={28} color="#000" />
+        </TouchableOpacity>      
+      )}
+      
+      {/* Invite Notification Function - Bottom Right */}
+      {!isEditing && (
         <TouchableOpacity style={styles.mail} onPress={() => router.push('/PendingInvites')}>
-        {pendingInvites > 0 && (
-          <View style={styles.notificationBadge}>
-            <Text style={styles.notificationText}>
-              {pendingInvites > 9 ? '9+' : pendingInvites}
-            </Text>
-          </View>
-        )}
-        <MaterialCommunityIcons name="email-outline" size={28} color="#000" />
-      </TouchableOpacity>      
+          {pendingInvites > 0 && (
+            <View style={styles.notificationBadge}>
+              <Text style={styles.notificationText}>
+                {pendingInvites > 9 ? '9+' : pendingInvites}
+              </Text>
+            </View>
+          )}
+          <MaterialCommunityIcons name="email-outline" size={28} color="#000" />
+        </TouchableOpacity>      
       )}
     </SafeAreaView>
   );

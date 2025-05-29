@@ -118,7 +118,7 @@ export default StyleSheet.create({
   mail: {
     position: 'absolute',
     bottom: 20,
-    left: 20,
+    right: 20,
     backgroundColor: '#F6C343',
     borderRadius: 30,
     padding: 10,
@@ -142,4 +142,15 @@ export default StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
   },
+  userProfile: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    backgroundColor: '#F6C343',
+    borderRadius: 30,
+    padding: 10,
+    elevation: 5, 
+    boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)'
+  },
 });
+
