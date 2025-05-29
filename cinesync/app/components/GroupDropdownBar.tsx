@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { getAuth } from 'firebase/auth';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { FIRESTORE_DB } from '@/FirebaseConfig';
+import { useFocusEffect } from '@react-navigation/native';
 
 interface Group {
   id: string;
@@ -16,7 +20,10 @@ interface GroupDropdownBarProps {
 
 const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGroup, onGroupSelect }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [pendingInvites, setPendingInvites] = useState<number>(0);
   const router = useRouter();
+  const auth = getAuth();
+  const user = auth.currentUser;
 
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
 
@@ -30,14 +37,30 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
     setDropdownOpen(false);
   };
 
-//   const goToPendingInvites = () => {
-//     router.push('/PendingInvites');
-//     setDropdownOpen(false);
-//   };
+  // Fetching Pending Invites
+  const fetchPendingInvites = async () => {
+    if (!user) return;
+  
+    try {
+      const q = query(
+        collection(FIRESTORE_DB, 'invites'),
+        where('email', '==', user.email),
+        where('status', '==', 'pending')
+      );
+      const snapshot = await getDocs(q);
+      const inviteCount = snapshot.size;
+      setPendingInvites(inviteCount);
+    } catch (err) {
+      console.error('Error fetching invites:', err);
+    }
+  };
 
-  // const goToUserProfile = () => {
-  //   router.push('/user');
-  // };
+  // Fetch pending invites when component focuses
+  useFocusEffect(
+    useCallback(() => {
+      fetchPendingInvites();
+    }, [user])
+  );
 
   return (
     <View style={styles.container}>
@@ -56,6 +79,13 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push('/PendingInvites')} style={styles.iconRight}>
+          {pendingInvites > 0 && (
+            <View style={styles.notificationBadge}>
+              <Text style={styles.notificationText}>
+                {pendingInvites > 9 ? '9+' : pendingInvites}
+              </Text>
+            </View>
+          )}
           <MaterialCommunityIcons name="email" size={24} color="#000" />
         </TouchableOpacity>
       </View>
@@ -80,11 +110,6 @@ const GroupDropdownBar: React.FC<GroupDropdownBarProps> = ({ groups, currentGrou
               </View>
             ))}
           </ScrollView>
-
-          {/* Pending Invites Button */}
-          {/* <TouchableOpacity style={styles.pendingButton} onPress={goToPendingInvites}>
-            <Text style={styles.pendingButtonText}>Pending Invites</Text>
-          </TouchableOpacity> */}
         </View>
       )}
     </View>
@@ -108,6 +133,7 @@ const styles = StyleSheet.create({
   },
   iconRight: {
     paddingLeft: 8,
+    position: 'relative', // Added for notification badge positioning
   },
   groupName: {
     fontSize: 18,
@@ -152,7 +178,25 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   container: {
-    position: 'relative',   // NEW - creates positioning context
-    zIndex: 1000,          // NEW - high z-index
+    position: 'relative',   
+    zIndex: 1000,          
+  },
+  // Notification badge styles (copied from group.tsx)
+  notificationBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#FF4444',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  notificationText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
