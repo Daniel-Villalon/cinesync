@@ -95,11 +95,23 @@ export default function PendingInvites() {
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <View style={styles.inviteItem}>
-                <TouchableOpacity style={styles.declineContainer} onPress={() => declineInvite(item)}> 
-                  <Text style={styles.declineText}>X</Text>
-                </TouchableOpacity>
                 <Text style={styles.text}>Group ID: {item.groupId}</Text>
-                <Button title="Accept Invite" onPress={() => acceptInvite(item)} />
+                <View style={styles.buttonRow}>
+                  <View style={styles.buttonWrapper}>
+                    <Button
+                      title="Accept Invite"
+                      onPress={() => acceptInvite(item)}
+                      color="#007BFF" // Replace with your actual blue if different
+                    />
+                  </View>
+                  <View style={styles.buttonWrapper}>
+                    <Button
+                      title="Decline Invite"
+                      onPress={() => declineInvite(item)}
+                      color="#FF3B30" // Hue-shifted red from blue
+                    />
+                  </View>
+                </View>
               </View>
             )}
           />
@@ -117,18 +129,15 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 8,
   },
-  declineContainer: {
-    elevation: 2,
-    position: 'absolute',
-    right: 10,
-    cursor: 'pointer',
-    zIndex: 1,
-  },
-  declineText: {
-    color: '#F7EEDB',
+  buttonRow: {
+    flexDirection: 'row',
+    marginTop: 10,
   },
   text: { 
     color: '#F7EEDB',
     marginBottom: 4, 
+  },
+  buttonWrapper: {
+    flex: 1,
   },
 });

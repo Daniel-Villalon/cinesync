@@ -300,7 +300,7 @@ const EditGroupScreen = () => {
             </TouchableOpacity>
             {dropdownOpen === 'sort' && (
               <View style={styles.dropdownMenu}>
-                {['Rotten Tomatoes Rating', 'Liked', 'Not seen']
+                {['Rotten Tomatoes Rating', 'Liked']
                   .filter(option => option !== sortBy)
                   .map(option => (
                     <TouchableOpacity

@@ -11,6 +11,7 @@ import {
   Modal,
   ScrollView,
   Alert,
+  SafeAreaView,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -135,8 +136,9 @@ const User = () => {
   };
 
   return (
+    <SafeAreaView style={styles.container}>
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={[styles.container]}>
+      <View style={styles.container2}>
         {/* Header */}
         <View style={styles.header}>
           <Text style={[styles.headerTitle]}>Profile</Text>
@@ -271,6 +273,7 @@ const User = () => {
         </Modal>
       </View>
     </TouchableWithoutFeedback>
+    </SafeAreaView>
   );
 };
 

@@ -4,15 +4,18 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#242423',
-        padding: 12,
+    },
+    container2: {
+        paddingLeft: 15,
+        paddingRight: 15
     },
     header: {
-        width: '100%',
-        paddingBottom: 10,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        position: 'relative', 
+        paddingHorizontal: 4,
+        height: 50,
+        position: 'relative',
     },
     headerTitle: {
         fontSize: 20,
@@ -55,7 +58,7 @@ const styles = StyleSheet.create({
         padding: 2,
         elevation: 4,
         borderWidth: 3,
-        borderColor: '#111', 
+        borderColor: '#242423', 
     },
     usernameInput: {
         color: '#ffffff',
@@ -95,6 +98,7 @@ const styles = StyleSheet.create({
         marginTop: 30,
         flexDirection: 'row',
         alignItems: 'center',
+        paddingLeft: 8,
     },
     label: {
         color: '#ffffff',
