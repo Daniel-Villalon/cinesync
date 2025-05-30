@@ -163,14 +163,14 @@ const User = () => {
               )}
             </View>
             <View style={styles.editIcon}>
-              <MaterialCommunityIcons name="pencil" size={32} color="#000" />
+              <MaterialCommunityIcons name="pencil" size={32} color="#242423" />
             </View>
           </View>
         </TouchableOpacity>
 
         {/* Username */}
         <TextInput
-          style={[styles.usernameInput, { color: themeStyles.textColor, borderColor: themeStyles.textColor }]}
+          style={[styles.usernameInput]}
           value={username}
           onChangeText={setUsername}
           placeholder="Username"
@@ -181,14 +181,7 @@ const User = () => {
         {/* Bio */}
         <View style={styles.bioContainer}>
           <TextInput
-            style={[
-              styles.bioInput,
-              {
-                color: themeStyles.textColor,
-                borderColor: themeStyles.inputBorderColor,
-                backgroundColor: themeStyles.inputBackground,
-              },
-            ]}
+            style={[ styles.bioInput, { backgroundColor: themeStyles.inputBackground,},]}
             placeholder="Write your bio..."
             placeholderTextColor="#888"
             multiline
@@ -202,7 +195,7 @@ const User = () => {
 
         {/* Favorite Genres */}
         <View style={styles.infoSection}>
-          <Text style={[styles.label, { color: themeStyles.textColor }]}>Favorite Genres: </Text>
+          <Text style={[styles.label]}>Favorite Genres: </Text>
           <TouchableOpacity onPress={() => setShowGenreSelector(true)}>
             <Text style={styles.genres}>
               {favoriteGenres.length > 0
@@ -214,7 +207,7 @@ const User = () => {
 
         {/* Theme Toggle */}
         <View style={[styles.infoSection, { marginTop: 20 }]}>
-          <Text style={[styles.label, { color: themeStyles.textColor }]}>Theme: </Text>
+          <Text style={[styles.label]}>Theme: </Text>
           {['dark', 'light'].map((mode) => (
             <Pressable key={mode} onPress={() => setTheme(mode as 'light' | 'dark')}>
               <Ionicons

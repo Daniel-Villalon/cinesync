@@ -28,10 +28,10 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 0,
     backgroundColor: '#1C1C1E',
+    color: '#8E8E93',
     borderRadius: 8,
     padding: 10,
     fontSize: 16,
-    color: '#8E8E93',
   },
 });
 
