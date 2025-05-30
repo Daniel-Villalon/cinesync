@@ -1,13 +1,15 @@
 // app/InviteUser.tsx
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function InviteUser() {
   const { groupId } = useLocalSearchParams();
   const [email, setEmail] = useState('');
+  const router = useRouter();
 
   const handleInvite = async () => {
     const user = FIREBASE_AUTH.currentUser;
@@ -34,6 +36,14 @@ export default function InviteUser() {
 
   return (
     <View style={styles.container}>
+
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+        <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Ionicons name="chevron-back" size={24} color="#FFD700" />
+          <Text style={{ color: '#FFD700', fontSize: 16, fontWeight: '600' }}>Back</Text>
+        </TouchableOpacity>
+      </View>
+
       <Text style={styles.label}>Invite someone to join this group</Text>
       <TextInput
         style={styles.input}
@@ -50,7 +60,7 @@ export default function InviteUser() {
 
 const styles = StyleSheet.create({
   container: { padding: 20, flex: 1, backgroundColor: '#242423' },
-  label: { color: '#F7EEDB', fontSize: 18, marginBottom: 12 },
+  label: { textAlign: 'center', color: '#F7EEDB', fontWeight: 'bold', fontSize: 18, marginBottom: 20 },
   input: {
     borderWidth: 1,
     borderColor: '#F5CB5C',

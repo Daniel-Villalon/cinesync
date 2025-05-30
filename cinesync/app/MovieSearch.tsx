@@ -178,12 +178,13 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#F7D491',
+    borderColor: '#444',
+    backgroundColor: '#1e1e1e',
     borderRadius: 8,
-    padding: 8,
+    padding: 10,
     marginHorizontal: 16,
     marginBottom: 12,
-    color: '#F7EEDB',
+    color: '#fff',
   },
   errorText: {
     color: '#FF5555',

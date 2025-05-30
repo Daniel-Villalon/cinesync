@@ -11,6 +11,7 @@ import {
   Modal,
   ScrollView,
   Alert,
+  SafeAreaView,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -135,17 +136,18 @@ const User = () => {
   };
 
   return (
+    <SafeAreaView style={styles.container}>
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={[styles.container, { backgroundColor: themeStyles.backgroundColor }]}>
+      <View style={styles.container2}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: themeStyles.textColor }]}>Profile</Text>
+          <Text style={[styles.headerTitle]}>Profile</Text>
           <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center' }} >
-            <MaterialCommunityIcons name="chevron-left" size={24} color={themeStyles.highlightColor} />
-            <Text style={[styles.backText, { color: themeStyles.highlightColor }]}>{'Back'}</Text>
+            <MaterialCommunityIcons name="chevron-left" size={24} color='#F5CB5C' />
+            <Text style={[styles.backText]}>{'Back'}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={saveUserInfo}>
-            <Text style={[styles.saveButtonText, { color: themeStyles.textColor }]}>Save</Text>
+            <Text style={[styles.saveButtonText]}>Save</Text>
           </TouchableOpacity>
           
         </View>
@@ -161,14 +163,14 @@ const User = () => {
               )}
             </View>
             <View style={styles.editIcon}>
-              <MaterialCommunityIcons name="pencil" size={32} color="#000" />
+              <MaterialCommunityIcons name="pencil" size={32} color="#242423" />
             </View>
           </View>
         </TouchableOpacity>
 
         {/* Username */}
         <TextInput
-          style={[styles.usernameInput, { color: themeStyles.textColor, borderColor: themeStyles.textColor }]}
+          style={[styles.usernameInput]}
           value={username}
           onChangeText={setUsername}
           placeholder="Username"
@@ -179,14 +181,7 @@ const User = () => {
         {/* Bio */}
         <View style={styles.bioContainer}>
           <TextInput
-            style={[
-              styles.bioInput,
-              {
-                color: themeStyles.textColor,
-                borderColor: themeStyles.inputBorderColor,
-                backgroundColor: themeStyles.inputBackground,
-              },
-            ]}
+            style={[ styles.bioInput,]}
             placeholder="Write your bio..."
             placeholderTextColor="#888"
             multiline
@@ -200,7 +195,7 @@ const User = () => {
 
         {/* Favorite Genres */}
         <View style={styles.infoSection}>
-          <Text style={[styles.label, { color: themeStyles.textColor }]}>Favorite Genres: </Text>
+          <Text style={[styles.label]}>Favorite Genres: </Text>
           <TouchableOpacity onPress={() => setShowGenreSelector(true)}>
             <Text style={styles.genres}>
               {favoriteGenres.length > 0
@@ -212,13 +207,13 @@ const User = () => {
 
         {/* Theme Toggle */}
         <View style={[styles.infoSection, { marginTop: 20 }]}>
-          <Text style={[styles.label, { color: themeStyles.textColor }]}>Theme: </Text>
+          <Text style={[styles.label]}>Theme: </Text>
           {['dark', 'light'].map((mode) => (
             <Pressable key={mode} onPress={() => setTheme(mode as 'light' | 'dark')}>
               <Ionicons
                 name={mode === 'dark' ? 'moon' : 'sunny'}
                 size={30}
-                color={theme === mode ? themeStyles.highlightColor : themeStyles.textColor}
+                color={theme === mode ? themeStyles.highlightColor : '#fff'}
                 style={{ marginHorizontal: 8 }}
               />
             </Pressable>
@@ -227,10 +222,10 @@ const User = () => {
 
         {/* Logout */}
         <Pressable
-          style={[styles.logoutButton, { backgroundColor: isDarkMode ? '#ffffff' : '#121212' }]}
+          style={[styles.logoutButton,]}
           onPress={handleLogout}
         >
-          <Text style={[styles.logoutText, { color: isDarkMode ? '#121212' : '#ffffff' }]}>Logout</Text>
+          <Text style={[styles.logoutText,]}>Logout</Text>
         </Pressable>
 
         {/* Genre Modal */}
@@ -271,6 +266,7 @@ const User = () => {
         </Modal>
       </View>
     </TouchableWithoutFeedback>
+    </SafeAreaView>
   );
 };
 

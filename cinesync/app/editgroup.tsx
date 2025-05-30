@@ -311,7 +311,7 @@ const EditGroupScreen = () => {
             )}
             {!isLoading && (
               <View style={styles.editIcon}>
-                <MaterialCommunityIcons name="pencil" size={32} color="#000" />
+                <MaterialCommunityIcons name="pencil" size={32} color="#242423" />
               </View>
             )}
           </TouchableOpacity>

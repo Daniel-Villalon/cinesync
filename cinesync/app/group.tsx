@@ -14,6 +14,7 @@ export default function GroupsScreen() {
   const [isEditing, setIsEditing] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [pendingInvites, setPendingInvites] = useState<number>(0);
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
 
   const router = useRouter();
   const auth = getAuth();
@@ -63,6 +64,7 @@ export default function GroupsScreen() {
       setLoading(false);
     }
   };
+
   //fetching Pending Invites
   const fetchPendingInvites = async () => {
     if (!user) return;
@@ -80,6 +82,24 @@ export default function GroupsScreen() {
       console.error('Error fetching invites:', err);
     }
   };
+
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      if (!user) return;
+      try {
+        const userRef = doc(FIRESTORE_DB, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+        setAvatarUri(userSnap.data()?.avatarUri || null);
+      } catch (error) {
+        console.error('Failed to fetch avatar:', error);
+      }
+    };
+
+    if (authChecked) {
+      fetchAvatar();
+    }
+  }, [authChecked]);
+
 
   useFocusEffect(
     useCallback(() => {
@@ -160,11 +180,20 @@ export default function GroupsScreen() {
         </View>
       </ScrollView>
       
-      {/* Invite Notification Function */}
+      {/* Profile */}
       {!isEditing && (
         <TouchableOpacity style={styles.userProfile} onPress={() => router.push('/user')}>
-          <MaterialCommunityIcons name="account" size={32} color="#000" />
-        </TouchableOpacity>      
+          {avatarUri ? (
+            <Image
+              source={{ uri: avatarUri }}
+              style={{ width: 50, height: 50, borderRadius: 25 }}
+              resizeMode="cover"
+              onError={() => setAvatarUri(null)} // fallback to icon if image fails
+            />
+          ) : (
+            <MaterialCommunityIcons name="account" size={32} color="#000" style={{padding: 9,}} />
+          )}
+        </TouchableOpacity>  
       )}
       
       {/* Invite Notification Function - Bottom Right */}

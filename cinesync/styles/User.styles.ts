@@ -4,15 +4,18 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#242423',
-        padding: 12,
+    },
+    container2: {
+        paddingLeft: 15,
+        paddingRight: 15
     },
     header: {
-        width: '100%',
-        paddingBottom: 10,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        position: 'relative', 
+        paddingHorizontal: 4,
+        height: 50,
+        position: 'relative',
     },
     headerTitle: {
         fontSize: 20,
@@ -21,6 +24,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         textAlign: 'center',
+        color: '#fff'
     },   
     backText: {
         fontSize: 16,
@@ -30,6 +34,7 @@ const styles = StyleSheet.create({
     saveButtonText: {
         fontSize: 16,
         fontWeight: '600',
+        color: '#F5CB5C'
     },
     avatarContainer: {
         alignItems: 'center',
@@ -53,20 +58,21 @@ const styles = StyleSheet.create({
         padding: 2,
         elevation: 4,
         borderWidth: 3,
-        borderColor: '#111', 
+        borderColor: '#242423', 
     },
     usernameInput: {
-        color: '#ffffff',
         fontSize: 28,
         fontWeight: '500',
         textAlign: 'center',
         marginTop: 20,
-        borderColor: '#ffffff',
+        color: '#fff',
+        borderColor: '#444',
         borderWidth: 1,
+        backgroundColor: '#1e1e1e',
         borderRadius: 10,
         paddingVertical: 5,
         paddingHorizontal: 15,
-        alignSelf: 'center',
+        width: '100%',
     },
     bioContainer: {
         marginTop: 20,
@@ -81,6 +87,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         height: 150,
         textAlignVertical: 'top',
+        backgroundColor: '#1e1e1e',
     },
     charCount: {
         position: 'absolute',
@@ -93,6 +100,7 @@ const styles = StyleSheet.create({
         marginTop: 30,
         flexDirection: 'row',
         alignItems: 'center',
+        paddingHorizontal: 10,
     },
     label: {
         color: '#ffffff',
@@ -110,7 +118,7 @@ const styles = StyleSheet.create({
         paddingVertical: 15,
         paddingHorizontal: 20,
         borderRadius: 15,
-        marginTop: 50,
+        marginTop: 30,
         alignItems: 'center',
     },
     logoutText: {
