@@ -22,16 +22,16 @@ const GenreFilter: React.FC<GenreFilterProps> = ({ genre, onGenreChange }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 10,
+    marginTop: 5,
     paddingHorizontal: 16,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
+    borderWidth: 0,
+    backgroundColor: '#1C1C1E',
     borderRadius: 8,
     padding: 10,
     fontSize: 16,
-    color: 'white',
+    color: '#8E8E93',
   },
 });
 

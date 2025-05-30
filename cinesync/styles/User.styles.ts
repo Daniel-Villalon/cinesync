@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         paddingVertical: 5,
         paddingHorizontal: 15,
-        alignSelf: 'center',
+        width: '100%',
     },
     bioContainer: {
         marginTop: 20,
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
         marginTop: 30,
         flexDirection: 'row',
         alignItems: 'center',
-        paddingLeft: 8,
+        paddingHorizontal: 10,
     },
     label: {
         color: '#ffffff',
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
         paddingVertical: 15,
         paddingHorizontal: 20,
         borderRadius: 15,
-        marginTop: 50,
+        marginTop: 30,
         alignItems: 'center',
     },
     logoutText: {
