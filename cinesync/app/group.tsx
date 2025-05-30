@@ -163,7 +163,7 @@ export default function GroupsScreen() {
       {/* Invite Notification Function */}
       {!isEditing && (
         <TouchableOpacity style={styles.userProfile} onPress={() => router.push('/user')}>
-          <MaterialCommunityIcons name="account-circle-outline" size={28} color="#000" />
+          <MaterialCommunityIcons name="account" size={32} color="#000" />
         </TouchableOpacity>      
       )}
       
@@ -177,7 +177,7 @@ export default function GroupsScreen() {
               </Text>
             </View>
           )}
-          <MaterialCommunityIcons name="email-outline" size={28} color="#000" />
+          <MaterialCommunityIcons name="email" size={32} color="#000" />
         </TouchableOpacity>      
       )}
     </SafeAreaView>

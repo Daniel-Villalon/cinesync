@@ -117,12 +117,12 @@ export default StyleSheet.create({
   },
   mail: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 30,
     right: 20,
     backgroundColor: '#F6C343',
     borderRadius: 30,
-    padding: 10,
-    elevation: 5, 
+    padding: 9,
+    zIndex: 5, 
     boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)'
   },  
   notificationBadge: {
@@ -144,12 +144,12 @@ export default StyleSheet.create({
   },
   userProfile: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 30,
     left: 20,
     backgroundColor: '#F6C343',
     borderRadius: 30,
-    padding: 10,
-    elevation: 5, 
+    padding: 9,
+    zIndex: 5, 
     boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)'
   },
 });
