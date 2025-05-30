@@ -50,7 +50,7 @@ export default StyleSheet.create({
     marginBottom: 20,
     marginTop: 5,
     textAlign: 'center',
-    width: '95%',
+    width: '100%',
   },
   settingRow: {
     flexDirection: 'row',

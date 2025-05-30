@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     saveButtonText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#fff'
+        color: '#F5CB5C'
     },
     avatarContainer: {
         alignItems: 'center',
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
         color: '#fff',
         borderColor: '#444',
         borderWidth: 1,
-        backgroundColor: '#1C1C1E',
+        backgroundColor: '#1e1e1e',
         borderRadius: 10,
         paddingVertical: 5,
         paddingHorizontal: 15,
@@ -87,6 +87,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         height: 150,
         textAlignVertical: 'top',
+        backgroundColor: '#1e1e1e',
     },
     charCount: {
         position: 'absolute',

@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc, collection, getDocs, query, where  } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 
 import MovieSearch from './MovieSearch';
 import MovieList from './movieList';
@@ -28,7 +28,6 @@ export default function Homescreen() {
   const [currentGroupId, setCurrentGroupId] = useState<string | null>(groupId as string);
   const [genre, setGenre] = useState('');
   const user = FIREBASE_AUTH.currentUser;
-  const [pendingInvites, setPendingInvites] = useState<number>(0);
 
 
   useEffect(() => {
@@ -42,23 +41,7 @@ export default function Homescreen() {
   }, []);
 
   useEffect(() => {
-    const fetchPendingInvites = async () => {
-      if (!user || !user.email) return 0;
-      try {
-        const q = query(
-          collection(FIRESTORE_DB, 'invites'),
-          where('email', '==', user.email),
-          where('status', '==', 'pending')
-        );
-        const snapshot = await getDocs(q);
-        return snapshot.size;
-      } catch (error) {
-        console.error('Error fetching pending invites:', error);
-        return 0;
-      }
-    };
-
-    const fetchGroupsAndInvites = async () => {
+    const fetchGroups = async () => {
       if (!user) return;
       try {
         const userRef = doc(FIRESTORE_DB, 'users', user.uid);
@@ -81,16 +64,12 @@ export default function Homescreen() {
         if (!currentGroupId && fetchedGroups.length > 0) {
           setCurrentGroupId(fetchedGroups[0].id);
         }
-
-        // 🔔 Fetch pending invites
-        const inviteCount = await fetchPendingInvites();
-        setPendingInvites(inviteCount);
       } catch (error) {
-        console.error('Error fetching groups or invites:', error);
+        console.error('Error fetching groups:', error);
       }
     };
 
-    fetchGroupsAndInvites();
+    fetchGroups();
   }, [user]);
 
   const handleLogout = async () => {
@@ -128,7 +107,6 @@ export default function Homescreen() {
           setCurrentGroupId(newGroupId);
           router.push({ pathname: '/homescreen', params: { groupId: newGroupId } });
         }}
-        pendingInvites={pendingInvites}
       />
 
 

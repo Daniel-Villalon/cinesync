@@ -181,7 +181,7 @@ const User = () => {
         {/* Bio */}
         <View style={styles.bioContainer}>
           <TextInput
-            style={[ styles.bioInput, { backgroundColor: themeStyles.inputBackground,},]}
+            style={[ styles.bioInput,]}
             placeholder="Write your bio..."
             placeholderTextColor="#888"
             multiline
@@ -213,7 +213,7 @@ const User = () => {
               <Ionicons
                 name={mode === 'dark' ? 'moon' : 'sunny'}
                 size={30}
-                color={theme === mode ? themeStyles.highlightColor : themeStyles.textColor}
+                color={theme === mode ? themeStyles.highlightColor : '#fff'}
                 style={{ marginHorizontal: 8 }}
               />
             </Pressable>
@@ -222,10 +222,10 @@ const User = () => {
 
         {/* Logout */}
         <Pressable
-          style={[styles.logoutButton, { backgroundColor: isDarkMode ? '#ffffff' : '#121212' }]}
+          style={[styles.logoutButton,]}
           onPress={handleLogout}
         >
-          <Text style={[styles.logoutText, { color: isDarkMode ? '#121212' : '#ffffff' }]}>Logout</Text>
+          <Text style={[styles.logoutText,]}>Logout</Text>
         </Pressable>
 
         {/* Genre Modal */}
