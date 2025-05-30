@@ -30,6 +30,7 @@ const EditGroupScreen = () => {
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [userRole, setUserRole] = useState<'admin' | 'member' | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
@@ -367,7 +368,7 @@ const EditGroupScreen = () => {
           if (userRole === 'admin') {
             setShowDeleteModal(true);
           } else {
-            handleLeaveGroup();
+            setShowLeaveModal(true);
           }
         }}
       >
@@ -393,7 +394,7 @@ const EditGroupScreen = () => {
         </View>
       </Modal>
 
-      {/* Custom Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal */}
       <Modal
         visible={showDeleteModal}
         animationType="fade"
@@ -421,6 +422,40 @@ const EditGroupScreen = () => {
                 }}
               >
                 <Text style={[styles.closeButtonText, { color: '#fff' }]}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Leave Group Confirmation Modal */}
+      <Modal
+        visible={showLeaveModal}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowLeaveModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.infoModalContent}>
+            <Text style={styles.infoModalTitle}>Leave Group</Text>
+            <Text style={styles.infoModalText}>
+              Are you sure you want to leave this group? You will need to be re-invited to rejoin.
+            </Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20, gap: 15  }}>
+              <TouchableOpacity
+                style={[styles.closeButton, { backgroundColor: '#aaa' }]}
+                onPress={() => setShowLeaveModal(false)}
+              >
+                <Text style={styles.closeButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.closeButton, { backgroundColor: '#FF6B6B' }]}
+                onPress={async () => {
+                  setShowLeaveModal(false);
+                  await handleLeaveGroup();
+                }}
+              >
+                <Text style={[styles.closeButtonText, { color: '#fff' }]}>Leave</Text>
               </TouchableOpacity>
             </View>
           </View>
