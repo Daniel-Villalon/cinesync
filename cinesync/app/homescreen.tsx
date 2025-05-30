@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   StyleSheet,
   View,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -28,6 +29,7 @@ export default function Homescreen() {
   const [currentGroupId, setCurrentGroupId] = useState<string | null>(groupId as string);
   const [genre, setGenre] = useState('');
   const user = FIREBASE_AUTH.currentUser;
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -41,12 +43,14 @@ export default function Homescreen() {
   }, []);
 
   useEffect(() => {
-    const fetchGroups = async () => {
+    const fetchGroupsAndAvatar = async () => {
       if (!user) return;
       try {
         const userRef = doc(FIRESTORE_DB, 'users', user.uid);
         const userSnap = await getDoc(userRef);
-        const groupIds = userSnap.data()?.groups || [];
+        const userData = userSnap.data();
+        const groupIds = userData?.groups || [];
+        setAvatarUri(userData?.avatarUri || null);
 
         const groupDocs = await Promise.all(
           groupIds.map((id: string) => getDoc(doc(FIRESTORE_DB, 'groups', id)))
@@ -65,11 +69,11 @@ export default function Homescreen() {
           setCurrentGroupId(fetchedGroups[0].id);
         }
       } catch (error) {
-        console.error('Error fetching groups:', error);
+        console.error('Error fetching groups or avatar:', error);
       }
     };
 
-    fetchGroups();
+    fetchGroupsAndAvatar();
   }, [user]);
 
   const handleLogout = async () => {
@@ -115,9 +119,20 @@ export default function Homescreen() {
 
 
       <View style={styles.floatingIconsContainer}>
+
         <TouchableOpacity style={styles.person} onPress={() => router.push('/user')}>
-          <MaterialCommunityIcons name="account" size={32} color="black" />
+          {avatarUri ? (
+            <Image
+              source={{ uri: avatarUri }}
+              style={{ width: 50, height: 50, borderRadius: 25 }}
+              resizeMode="cover"
+              onError={() => setAvatarUri(null)} // fallback to icon if image fails
+            />
+          ) : (
+            <MaterialCommunityIcons name="account" size={32} color="black" />
+          )}
         </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.add}
           onPress={() => router.push({ pathname: '/MovieSearch', params: { groupId: currentGroupId! } })}

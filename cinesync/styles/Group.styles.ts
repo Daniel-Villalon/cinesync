@@ -148,7 +148,6 @@ export default StyleSheet.create({
     left: 20,
     backgroundColor: '#F6C343',
     borderRadius: 30,
-    padding: 9,
     zIndex: 5, 
     boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)'
   },
