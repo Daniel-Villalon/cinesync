@@ -38,7 +38,8 @@ export const addUserToGroup = async (groupId: string, userId: string): Promise<v
   await setDoc(memberRef, {
     joinedAt: new Date(),
     role: 'member',
-  }, { merge: true });
+    userId: userId
+  });
 
   const userRef = doc(FIRESTORE_DB, 'users', userId);
   await setDoc(userRef, {

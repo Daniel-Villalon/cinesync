@@ -20,8 +20,8 @@ export const createGroupDoc = async (name: string, userId: string) => {
 export const addGroupMember = async (groupId: string, userId: string, role = 'member') => {
   const memberRef = doc(FIRESTORE_DB, `groups/${groupId}/group_members/${userId}`);
   await setDoc(memberRef, {
-    userId,
-    role,
     joinedAt: serverTimestamp(),
+    role: role,
+    userId: userId
   });
 };

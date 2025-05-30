@@ -9,6 +9,7 @@ import {
   Alert,
   Modal,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -18,6 +19,21 @@ import { doc, getDoc, updateDoc, collection, getDocs, deleteDoc } from 'firebase
 import { FIRESTORE_DB } from '@/FirebaseConfig';
 import styles from '../styles/AddGroup.styles';
 import { uploadImageToFirebase, deleteImageFromFirebase } from '../utils/imageUpload';
+
+interface GroupMember {
+  id: string;
+  username: string;
+  role: 'admin' | 'member';
+}
+
+interface UserData {
+  username?: string;
+  groups?: string[];
+}
+
+interface MemberData {
+  role?: 'admin' | 'member';
+}
 
 const EditGroupScreen = () => {
   const { groupId } = useLocalSearchParams();
@@ -31,6 +47,7 @@ const EditGroupScreen = () => {
   const [userRole, setUserRole] = useState<'admin' | 'member' | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [members, setMembers] = useState<GroupMember[]>([]);
 
   const router = useRouter();
   const auth = getAuth();
@@ -39,7 +56,7 @@ const EditGroupScreen = () => {
   const pickImage = async () => {
     if (isLoading) return;
 
-    console.log("Starting image picker...");
+
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       Alert.alert('Permission to access media library is required!');
@@ -59,13 +76,13 @@ const EditGroupScreen = () => {
         try {
           // Delete old image if it exists
           if (groupImage) {
-            console.log("Deleting old image:", groupImage);
+   
             await deleteImageFromFirebase(groupImage);
           }
 
           // Upload new image
           const downloadURL = await uploadImageToFirebase(result.assets[0].uri, 'groupImages');
-          console.log("New image uploaded:", downloadURL);
+  
 
           // Update Firestore
           const groupRef = doc(FIRESTORE_DB, 'groups', groupId as string);
@@ -114,12 +131,34 @@ const EditGroupScreen = () => {
           setSortBy(data.sortBy || 'Rotten Tomatoes Rating');
           setFairnessFilter(data.fairnessFilter ?? true);
 
-          // Fetch user's role from group_members
-          const memberRef = doc(FIRESTORE_DB, `groups/${groupId}/group_members/${user?.uid}`);
-          const memberSnap = await getDoc(memberRef);
-          const memberData = memberSnap.data();
-          console.log('User role data:', memberData);
-          setUserRole(memberData?.role || null);
+          // Fetch all members first
+          const membersRef = collection(FIRESTORE_DB, `groups/${groupId}/group_members`);
+          const membersSnap = await getDocs(membersRef);
+          
+          // Get current user's role
+          const currentUserMember = membersSnap.docs.find(doc => doc.id === user?.uid);
+          const currentUserRole = currentUserMember?.data()?.role || null;
+  
+          setUserRole(currentUserRole);
+
+          // Process all members
+          const memberPromises = membersSnap.docs.map(async (memberDoc) => {
+            const memberData = memberDoc.data();
+     
+            const userRef = doc(FIRESTORE_DB, 'users', memberData.userId || memberDoc.id);
+            const userSnap = await getDoc(userRef);
+            const userDataTyped = userSnap.data() as UserData;
+            const member = {
+              id: memberData.userId || memberDoc.id,
+              username: userDataTyped?.username || 'Unknown User',
+              role: memberData.role || 'member',
+            };
+    
+            return member;
+          });
+          const membersList = await Promise.all(memberPromises);
+
+          setMembers(membersList);
         }
       } catch (err) {
         console.error('Error loading group info:', err);
@@ -244,120 +283,145 @@ const EditGroupScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <View style={{ flex: 1, width: '100%', alignItems: 'center' }}>
-        {/* Group Image */}
-        <TouchableOpacity 
-          onPress={pickImage} 
-          style={styles.imageWrapper}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <View style={[styles.defaultImage, { justifyContent: 'center', alignItems: 'center' }]}>
-              <ActivityIndicator size="large" color="#FFD700" />
-            </View>
-          ) : groupImage ? (
-            <Image 
-              source={{ uri: groupImage }} 
-              style={styles.groupImage}
-              onError={(error) => {
-                console.error('Error loading image:', error);
-                setGroupImage(null);
-              }}
-            />
-          ) : (
-            <View style={styles.defaultImage}>
-              <MaterialCommunityIcons name="account" size={64} color="#C9A84F" />
-            </View>
-          )}
-          {!isLoading && (
-            <View style={styles.editIcon}>
-              <MaterialCommunityIcons name="pencil" size={32} color="#000" />
-            </View>
-          )}
-        </TouchableOpacity>
-
-        {/* Group Name */}
-        <TextInput
-          style={styles.groupNameInput}
-          value={groupName}
-          onChangeText={setGroupName}
-        />
-
-        {/* Sort By */}
-        <View style={styles.settingRow}>
-          <Text style={styles.settingLabel}>Sort by:</Text>
-          <View style={{ flex: 1 }}>
-            <TouchableOpacity
-              onPress={() => setDropdownOpen(dropdownOpen === 'sort' ? null : 'sort')}
-              style={styles.dropdown}
-            >
-              <Text style={styles.dropdownText}>{sortBy}</Text>
-              <Ionicons
-                name={dropdownOpen === 'sort' ? 'chevron-up' : 'chevron-down'}
-                size={16}
-                color="#FFD700"
+      <ScrollView style={{ flex: 1, width: '100%' }}>
+        <View style={{ alignItems: 'center' }}>
+          {/* Group Image */}
+          <TouchableOpacity 
+            onPress={pickImage} 
+            style={styles.imageWrapper}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <View style={[styles.defaultImage, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color="#FFD700" />
+              </View>
+            ) : groupImage ? (
+              <Image 
+                source={{ uri: groupImage }} 
+                style={styles.groupImage}
+                onError={(error) => {
+                  console.error('Error loading image:', error);
+                  setGroupImage(null);
+                }}
               />
-            </TouchableOpacity>
-            {dropdownOpen === 'sort' && (
-              <View style={styles.dropdownMenu}>
-                {['Rotten Tomatoes Rating', 'Liked', 'Not seen']
-                  .filter(option => option !== sortBy)
-                  .map(option => (
-                    <TouchableOpacity
-                      key={option}
-                      onPress={() => {
-                        setSortBy(option);
-                        setDropdownOpen(null);
-                      }}
-                      style={styles.dropdownItem}
-                    >
-                      <Text style={styles.dropdownItemText}>{option}</Text>
-                    </TouchableOpacity>
-                  ))}
+            ) : (
+              <View style={styles.defaultImage}>
+                <MaterialCommunityIcons name="account" size={64} color="#C9A84F" />
               </View>
             )}
-          </View>
-        </View>
-
-        {/* Fairness Filter */}
-        <View style={styles.settingRow}>
-          <Text style={styles.settingLabel}>Fairness filter:</Text>
-          <View style={styles.filterControlGroup}>
-            <TouchableOpacity
-              onPress={() => setDropdownOpen(dropdownOpen === 'fairness' ? null : 'fairness')}
-              style={[styles.dropdown, { width: 50 }]}
-            >
-              <Text style={styles.dropdownText}>{fairnessFilter ? 'On' : 'Off'}</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => setShowInfoModal(true)}
-              style={styles.infoIconContainer}
-            >
-              <MaterialCommunityIcons name="information-outline" size={20} color="#F5CB5C" />
-            </TouchableOpacity>
-
-            {dropdownOpen === 'fairness' && (
-              <View style={[styles.dropdownMenu, { width: 50, position: 'absolute', top: '100%', left: 0, zIndex: 10 }]}>
-                {['On', 'Off']
-                  .filter(option => option !== (fairnessFilter ? 'On' : 'Off'))
-                  .map(option => (
-                    <TouchableOpacity
-                      key={option}
-                      onPress={() => {
-                        setFairnessFilter(option === 'On');
-                        setDropdownOpen(null);
-                      }}
-                      style={styles.dropdownItem}
-                    >
-                      <Text style={styles.dropdownItemText}>{option}</Text>
-                    </TouchableOpacity>
-                  ))}
+            {!isLoading && (
+              <View style={styles.editIcon}>
+                <MaterialCommunityIcons name="pencil" size={32} color="#000" />
               </View>
             )}
+          </TouchableOpacity>
+
+          {/* Group Name */}
+          <TextInput
+            style={styles.groupNameInput}
+            value={groupName}
+            onChangeText={setGroupName}
+          />
+
+          {/* Sort By */}
+          <View style={styles.settingRow}>
+            <Text style={styles.settingLabel}>Sort by:</Text>
+            <View style={{ flex: 1 }}>
+              <TouchableOpacity
+                onPress={() => setDropdownOpen(dropdownOpen === 'sort' ? null : 'sort')}
+                style={styles.dropdown}
+              >
+                <Text style={styles.dropdownText}>{sortBy}</Text>
+                <Ionicons
+                  name={dropdownOpen === 'sort' ? 'chevron-up' : 'chevron-down'}
+                  size={16}
+                  color="#FFD700"
+                />
+              </TouchableOpacity>
+              {dropdownOpen === 'sort' && (
+                <View style={styles.dropdownMenu}>
+                  {['Rotten Tomatoes Rating', 'Liked', 'Not seen']
+                    .filter(option => option !== sortBy)
+                    .map(option => (
+                      <TouchableOpacity
+                        key={option}
+                        onPress={() => {
+                          setSortBy(option);
+                          setDropdownOpen(null);
+                        }}
+                        style={styles.dropdownItem}
+                      >
+                        <Text style={styles.dropdownItemText}>{option}</Text>
+                      </TouchableOpacity>
+                    ))}
+                </View>
+              )}
+            </View>
+          </View>
+
+          {/* Fairness Filter */}
+          <View style={styles.settingRow}>
+            <Text style={styles.settingLabel}>Fairness filter:</Text>
+            <View style={styles.filterControlGroup}>
+              <TouchableOpacity
+                onPress={() => setDropdownOpen(dropdownOpen === 'fairness' ? null : 'fairness')}
+                style={[styles.dropdown, { width: 50 }]}
+              >
+                <Text style={styles.dropdownText}>{fairnessFilter ? 'On' : 'Off'}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => setShowInfoModal(true)}
+                style={styles.infoIconContainer}
+              >
+                <MaterialCommunityIcons name="information-outline" size={20} color="#F5CB5C" />
+              </TouchableOpacity>
+
+              {dropdownOpen === 'fairness' && (
+                <View style={[styles.dropdownMenu, { width: 50, position: 'absolute', top: '100%', left: 0, zIndex: 10 }]}>
+                  {['On', 'Off']
+                    .filter(option => option !== (fairnessFilter ? 'On' : 'Off'))
+                    .map(option => (
+                      <TouchableOpacity
+                        key={option}
+                        onPress={() => {
+                          setFairnessFilter(option === 'On');
+                          setDropdownOpen(null);
+                        }}
+                        style={styles.dropdownItem}
+                      >
+                        <Text style={styles.dropdownItemText}>{option}</Text>
+                      </TouchableOpacity>
+                    ))}
+                </View>
+              )}
+            </View>
+          </View>
+
+          {/* Members List */}
+          <View style={[styles.settingRow, { marginTop: 20 }]}>
+            <Text style={[styles.settingLabel, { marginBottom: 10 }]}>Members:</Text>
+            <View style={{ width: '100%' }}>
+              {members.map((member) => (
+                <View key={member.id} style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingVertical: 10,
+                  paddingHorizontal: 15,
+                  backgroundColor: '#2A2A2A',
+                  marginBottom: 8,
+                  borderRadius: 8,
+                }}>
+                  <Text style={{ color: '#FFD700', fontSize: 16 }}>{member.username}</Text>
+                  {member.role === 'admin' && (
+                    <Text style={{ color: '#FFD700', fontSize: 12, marginLeft: 8 }}>(Owner)</Text>
+                  )}
+                </View>
+              ))}
+            </View>
           </View>
         </View>
-      </View>
+      </ScrollView>
 
       {/* Update/Delete/Leave Group Button */}
       <TouchableOpacity 
