@@ -212,7 +212,11 @@ export default function MovieDetailsScreen() {
         />
         <TouchableOpacity
           style={styles.addButton}
-          onPress={toggleWatchlistStatus}
+          onPress={() => {
+            toggleWatchlistStatus();
+            // v-- I need someone else to test this since I can't add movies on a codespace - Mari
+            router.replace('/homescreen');
+          }}
         >
           <Text style={styles.addButtonText}>
             {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}

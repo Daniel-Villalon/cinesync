@@ -85,7 +85,7 @@ export default function PendingInvites() {
         </TouchableOpacity>
       </View>
 
-      <Text style={[styles.title, { textAlign: 'center' }]}>Pending Invites</Text>
+      <Text style={[styles.title]}>Pending Invites</Text>
 
         {invites.length === 0 ? (
           <Text style={{ color: '#aaa', marginTop: 16, textAlign: 'center' }}>You have no pending invites.</Text>
@@ -99,14 +99,14 @@ export default function PendingInvites() {
                 <View style={styles.buttonRow}>
                   <View style={styles.buttonWrapper}>
                     <Button
-                      title="Accept Invite"
+                      title="Accept"
                       onPress={() => acceptInvite(item)}
                       color="#007BFF" // Replace with your actual blue if different
                     />
                   </View>
                   <View style={styles.buttonWrapper}>
                     <Button
-                      title="Decline Invite"
+                      title="Decline"
                       onPress={() => declineInvite(item)}
                       color="#FF3B30" // Hue-shifted red from blue
                     />
@@ -122,7 +122,7 @@ export default function PendingInvites() {
 
 const styles = StyleSheet.create({
   container: { padding: 20, backgroundColor: '#242423', flex: 1 },
-  title: { fontSize: 18, fontWeight: 'bold', color: '#F7EEDB', marginBottom: 10 },
+  title: { textAlign: 'center', fontSize: 18, fontWeight: 'bold', color: '#F7EEDB', marginBottom: 20 },
   inviteItem: {
     padding: 12,
     backgroundColor: '#333',
