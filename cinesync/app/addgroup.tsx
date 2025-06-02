@@ -14,6 +14,7 @@ import { createGroup } from '../services/GroupService';
 import { getAuth } from 'firebase/auth';
 import { useRouter } from 'expo-router';
 import styles from '../styles/AddGroup.styles';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const AddGroupScreen = () => {
   const [groupName, setGroupName] = useState('New Group');
@@ -55,7 +56,7 @@ const AddGroupScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center' }} >
@@ -188,7 +189,7 @@ const AddGroupScreen = () => {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 };
 

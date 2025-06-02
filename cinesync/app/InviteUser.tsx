@@ -5,6 +5,7 @@ import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity } fr
 import { Ionicons } from '@expo/vector-icons';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '@/FirebaseConfig';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function InviteUser() {
   const { groupId } = useLocalSearchParams();
@@ -35,7 +36,7 @@ export default function InviteUser() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
         <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -54,7 +55,7 @@ export default function InviteUser() {
         keyboardType="email-address"
       />
       <Button title="Send Invite" onPress={handleInvite} />
-    </View>
+    </SafeAreaView>
   );
 }
 
