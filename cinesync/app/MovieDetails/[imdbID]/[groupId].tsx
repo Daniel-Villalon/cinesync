@@ -210,11 +210,14 @@ export default function MovieDetailsScreen() {
           style={styles.poster}
           resizeMode="contain"
         />
+        <Text style={styles.title}>{movie.Title}</Text>
+        <Text style={styles.info}>Year: {movie.Year}</Text>
+        <Text style={styles.info}>Genre: {movie.Genre}</Text>
+
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => {
             toggleWatchlistStatus();
-            // v-- I need someone else to test this since I can't add movies on a codespace - Mari
             router.replace('/homescreen');
           }}
         >
@@ -222,9 +225,6 @@ export default function MovieDetailsScreen() {
             {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
           </Text>
         </TouchableOpacity>
-        <Text style={styles.title}>{movie.Title}</Text>
-        <Text style={styles.info}>Year: {movie.Year}</Text>
-        <Text style={styles.info}>Genre: {movie.Genre}</Text>
 
         <Text style={styles.sectionHeading}>Your Rating</Text>
         <StarRating rating={userRating} onRate={setUserRating} />
@@ -241,9 +241,6 @@ export default function MovieDetailsScreen() {
         )}
 
         <Text style={styles.plot}>{movie.Plot}</Text>
-        {/* <TouchableOpacity onPress={() => router.back()} style={styles.backButton}> */}
-          {/* <Text style={styles.backButtonText}>← Back</Text> */}
-        {/* </TouchableOpacity> */}
       </ScrollView>
     </SafeAreaView>
   );
