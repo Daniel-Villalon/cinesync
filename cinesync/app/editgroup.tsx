@@ -9,6 +9,7 @@ import {
   Alert,
   Modal,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -18,6 +19,12 @@ import { doc, getDoc, updateDoc, collection, getDocs, deleteDoc } from 'firebase
 import { FIRESTORE_DB } from '@/FirebaseConfig';
 import styles from '../styles/AddGroup.styles';
 import { uploadImageToFirebase, deleteImageFromFirebase } from '../utils/imageUpload';
+
+interface GroupMember {
+  uid: string;
+  username: string;
+  role: 'admin' | 'member';
+}
 
 const EditGroupScreen = () => {
   const { groupId } = useLocalSearchParams();
@@ -32,6 +39,7 @@ const EditGroupScreen = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
 
   const router = useRouter();
   const auth = getAuth();
@@ -102,6 +110,35 @@ const EditGroupScreen = () => {
     return unsubscribe;
   }, []);
 
+  const fetchGroupMembers = async () => {
+    try {
+      // Get all group members
+      const membersRef = collection(FIRESTORE_DB, `groups/${groupId}/group_members`);
+      const membersSnap = await getDocs(membersRef);
+      
+      const memberPromises = membersSnap.docs.map(async (memberDoc) => {
+        const memberData = memberDoc.data();
+        const userId = memberDoc.id;
+        
+        // Get user details from users collection
+        const userRef = doc(FIRESTORE_DB, 'users', userId);
+        const userSnap = await getDoc(userRef);
+        const userData = userSnap.data();
+        
+        return {
+          uid: userId,
+          username: userData?.username || 'Unknown User',
+          role: memberData.role || 'member'
+        };
+      });
+      
+      const members = await Promise.all(memberPromises);
+      setGroupMembers(members);
+    } catch (error) {
+      console.error('Error fetching group members:', error);
+    }
+  };
+
   useEffect(() => {
     const fetchGroupInfo = async () => {
       try {
@@ -122,6 +159,9 @@ const EditGroupScreen = () => {
           console.log('User role data:', memberData);
           setUserRole(memberData?.role || null);
         }
+
+        // Fetch all group members
+        await fetchGroupMembers();
       } catch (err) {
         console.error('Error loading group info:', err);
       }
@@ -245,7 +285,7 @@ const EditGroupScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <View style={{ flex: 1, width: '100%', alignItems: 'center' }}>
+      <ScrollView style={{ flex: 1, width: '100%' }} contentContainerStyle={{ alignItems: 'center' }}>
         {/* Group Image */}
         <TouchableOpacity 
           onPress={pickImage} 
@@ -358,7 +398,56 @@ const EditGroupScreen = () => {
             )}
           </View>
         </View>
-      </View>
+
+        {/* Group Members Section */}
+        <View style={[styles.settingRow, { flexDirection: 'column', alignItems: 'flex-start', marginTop: 20 }]}>
+          <Text style={[styles.settingLabel, { marginBottom: 10 }]}>Group Members:</Text>
+          <View style={{
+            width: '100%',
+            backgroundColor: '#242423',
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: '#FFD700',
+            paddingVertical: 12,
+            paddingHorizontal: 12,
+          }}>
+            {groupMembers.map((member) => (
+              <View 
+                key={member.uid} 
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  paddingVertical: 8,
+                }}
+              >
+                <Text style={{ 
+                  color: '#E8EDDF', 
+                  fontSize: 16,
+                  flex: 1
+                }}>
+                  {member.username}
+                </Text>
+                <View style={{
+                  backgroundColor: member.role === 'admin' ? '#FFD700' : '#666',
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 4,
+                }}>
+                  <Text style={{ 
+                    color: member.role === 'admin' ? '#242423' : '#E8EDDF',
+                    fontSize: 12,
+                    fontWeight: 'bold',
+                    textTransform: 'uppercase'
+                  }}>
+                    {member.role}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
 
       {/* Update/Delete/Leave Group Button */}
       <TouchableOpacity 
