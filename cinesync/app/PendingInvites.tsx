@@ -16,7 +16,6 @@ export default function PendingInvites() {
   const router = useRouter();
 
 
-  // ✅ Wait for auth to fully initialize
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(FIREBASE_AUTH, (firebaseUser) => {
       if (firebaseUser) {
@@ -27,7 +26,6 @@ export default function PendingInvites() {
     return unsubscribe;
   }, []);
 
-  // 🔁 Fetch invites when user is loaded
   useEffect(() => {
     if (!user?.email) return;
 

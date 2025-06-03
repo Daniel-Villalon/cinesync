@@ -1,16 +1,12 @@
-// services/GroupService.ts
 import { createGroupDoc, addGroupMember } from '../data/groups';
 import { FIRESTORE_DB } from '@/FirebaseConfig';
 import { doc,setDoc, updateDoc, arrayUnion, collection, addDoc, getDoc } from 'firebase/firestore';
 
 export const createGroup = async (name: string, userId: string, profilePicture: null | string, fairnessFilter: boolean, sortBy: string): Promise<string> => {
-  // 1. Create the group document
   const groupRef = await createGroupDoc(name, userId);
 
-  // 2. Add user to group_members subcollection
   await addGroupMember(groupRef.id, userId, 'admin');
 
-  // 3. Update the user's group list
   const userRef = doc(FIRESTORE_DB, 'users', userId);
   const newListRef = await addDoc(collection(FIRESTORE_DB, 'movieLists'), {
     groupId: groupRef.id,

@@ -1,4 +1,3 @@
-// data/groups.ts
 import { FIRESTORE_DB } from '@/FirebaseConfig';
 import {
   collection,
